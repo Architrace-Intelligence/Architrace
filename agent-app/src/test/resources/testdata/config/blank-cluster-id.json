@@ -1,8 +1,0 @@
-{
-  "environment": "DEV",
-  "clusterId": " ",
-  "domainId": "domain-1",
-  "namespace": "team-a",
-  "agent": { "name": "demo-agent" },
-  "control": { "plane-bootstrap": { "server": "localhost:50051" } }
-}

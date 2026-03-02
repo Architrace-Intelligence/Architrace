@@ -1,0 +1,12 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: control-plane
+
+  grpc:
+    server:
+      transport: netty
+      port: 9090
+      address: 0.0.0.0

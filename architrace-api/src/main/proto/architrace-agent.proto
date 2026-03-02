@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package architrace.controlplane.v1;
+
+option java_multiple_files = true;
+option java_package = "io.github.architrace.grpc.proto";
+option java_outer_classname = "ArchitraceProto";
+
+service ControlPlaneService {
+  rpc Connect(stream AgentRegisterRequestedEvent) returns (stream ControlPlaneCommand);
+  rpc GetAgentHealth(AgentHealthRequest) returns (AgentHealthResponse);
+}
+
+message AgentRegisterRequestedEvent {
+  oneof payload {
+    AgentRegister register = 1;
+    GraphBatch graph_batch = 2;
+  }
+}
+
+message AgentRegister {
+  string agent_name = 1;
+  string cluster_id = 2;
+}
+
+message GraphBatch {
+  string agent_name = 1;
+  int64 observed_at_epoch_ms = 2;
+  repeated GraphNode nodes = 3;
+  repeated GraphEdge edges = 4;
+}
+
+message GraphNode {
+  string id = 1;
+  string type = 2;
+  string name = 3;
+}
+
+message GraphEdge {
+  string source_node_id = 1;
+  string target_node_id = 2;
+  string operation = 3;
+  int64 call_count = 4;
+}
+
+message ControlPlaneCommand {
+  oneof payload {
+    ConfigUpdate config_update = 1;
+  }
+}
+
+message ConfigUpdate {
+  string version = 1;
+  map<string, string> config = 2;
+}
+
+message AgentHealthRequest {
+  string agent_name = 1;
+}
+
+message AgentHealthResponse {
+  bool live = 1;
+  int64 last_seen_epoch_ms = 2;
+}

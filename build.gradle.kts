@@ -7,14 +7,20 @@ plugins {
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.graalvm.native)
+    alias(libs.plugins.shadow) apply false
+    alias(libs.plugins.protobuf) apply false
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependency.management) apply false
 }
 
 allprojects {
-    group = "io.github.architrace.inteligence"
-    version = "0.1.0"
+    group = property("group").toString()
+    version = property("version").toString()
 
     repositories {
         mavenCentral()
+        maven("https://repo.spring.io/milestone")
+        maven("https://repo.spring.io/snapshot")
     }
 }
 
@@ -25,12 +31,17 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(25))
+            languageVersion = JavaLanguageVersion.of(property("javaVersion").toString().toInt())
         }
+    }
+
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("--enable-preview")
     }
 
     tasks.withType<Test> {
         useJUnitPlatform()
+        jvmArgs("--enable-preview")
     }
 
     dependencies {
@@ -112,8 +123,9 @@ subprojects {
 tasks.register<JavaExec>("runArchitrace") {
     group = "application"
     description = "Run Architrace CLI"
-    classpath = project(":agent-app").sourceSets["main"].runtimeClasspath
+    classpath = project(":agent").sourceSets["main"].runtimeClasspath
     mainClass.set("io.github.architrace.MainApp")
+    jvmArgs("--enable-preview")
 }
 
 tasks.register("buildRuntime") {

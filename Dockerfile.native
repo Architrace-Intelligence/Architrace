@@ -6,12 +6,12 @@ WORKDIR /workspace
 COPY . .
 
 RUN chmod +x ./gradlew \
-    && ./gradlew --no-daemon :agent-app:shadowJar \
+    && ./gradlew --no-daemon :agent:shadowJar \
     && native-image \
       --no-fallback \
       --initialize-at-run-time=io.grpc.netty.shaded.io.netty.channel.ChannelHandlerMask \
       --initialize-at-build-time=ch.qos.logback.classic,ch.qos.logback.core,org.slf4j \
-      -jar agent-app/build/libs/agent-app-*-all.jar \
+      -jar agent/build/libs/agent-*-all.jar \
       architrace
 
 FROM debian:bookworm-slim AS runtime-libs

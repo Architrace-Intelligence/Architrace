@@ -1,23 +1,29 @@
 [versions]
 slf4j = "2.0.17"
-junit = "5.10.2"
-junit-platform = "1.10.2"
+junit = "6.0.3"
+junit-platform = "6.0.3"
 picocli = "4.7.5"
 guice = "7.0.0"
 logback = "1.5.32"
-jackson = "2.17.2"
+jackson = "2.20.2"
 mockito = "5.14.2"
 spotless = "6.25.0"
 shadow = "9.3.0"
 guava = "33.2.1-jre"
-grpc = "1.74.0"
-protobuf = "3.25.3"
+grpc = "1.77.1"
+protobuf = "4.33.4"
 otel-proto = "1.9.0-alpha"
 sonarqube = "7.1.0.6387"
 graalvm-native = "0.10.2"
-protobuf-gradle-plugin = "0.9.4"
+protobuf-gradle-plugin = "0.9.5"
 javax-annotation = "1.3.2"
 assertj = "3.27.4"
+spring-boot = "4.0.3"
+spring-dependency-management = "1.1.7"
+spring-grpc = "1.0.2"
+springdoc = "3.0.1"
+swagger = "2.2.21"
+jakarta-validation = "3.1.1"
 
 [libraries]
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
@@ -41,9 +47,23 @@ grpc-protobuf = { group = "io.grpc", name = "grpc-protobuf", version.ref = "grpc
 grpc-util = { group = "io.grpc", name = "grpc-util", version.ref = "grpc" }
 grpc-stub = { group = "io.grpc", name = "grpc-stub", version.ref = "grpc" }
 protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
+protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref = "protobuf" }
+grpc-protoc-gen-java = { group = "io.grpc", name = "protoc-gen-grpc-java", version.ref = "grpc" }
 javax-annotation-api = { group = "javax.annotation", name = "javax.annotation-api", version.ref = "javax-annotation" }
 opentelemetry-proto = { group = "io.opentelemetry.proto", name = "opentelemetry-proto", version.ref = "otel-proto" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
+jakarta-validation-api = { group = "jakarta.validation", name = "jakarta.validation-api", version.ref = "jakarta-validation" }
+swagger-annotations = { group = "io.swagger.core.v3", name = "swagger-annotations", version.ref = "swagger" }
+spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
+spring-boot-starter-webmvc = { group = "org.springframework.boot", name = "spring-boot-starter-webmvc" }
+spring-boot-configuration-processor = { group = "org.springframework.boot", name = "spring-boot-configuration-processor" }
+spring-boot-starter-actuator-test = { group = "org.springframework.boot", name = "spring-boot-starter-actuator-test" }
+spring-boot-starter-webmvc-test = { group = "org.springframework.boot", name = "spring-boot-starter-webmvc-test" }
+spring-grpc-spring-boot-starter = { group = "org.springframework.grpc", name = "spring-grpc-spring-boot-starter" }
+spring-grpc-test = { group = "org.springframework.grpc", name = "spring-grpc-test" }
+springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+postgresql = { group = "org.postgresql", name = "postgresql" }
+spring-grpc-bom = { group = "org.springframework.grpc", name = "spring-grpc-dependencies", version.ref = "spring-grpc" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
@@ -51,3 +71,5 @@ shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf-gradle-plugin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }

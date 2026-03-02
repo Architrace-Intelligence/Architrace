@@ -1,112 +1,155 @@
-# Architrace
-[![CI/CD](https://github.com/Architrace-Intelligence/Architrace-agent/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Architrace-Intelligence/Architrace-agent/actions/workflows/ci-cd.yml)
-[![gradle pass](https://img.shields.io/github/actions/workflow/status/Architrace-Intelligence/Architrace-agent/ci-cd.yml?branch=main&label=gradle%20pass)](https://github.com/Architrace-Intelligence/Architrace-agent/actions/workflows/ci-cd.yml)
-[![maintainability](https://sonarcloud.io/api/project_badges/measure?project=Architrace-Intelligence_Architrace-agent&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Architrace-Intelligence_Architrace-agent)
-[![lines of code](https://sonarcloud.io/api/project_badges/measure?project=Architrace-Intelligence_Architrace-agent&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Architrace-Intelligence_Architrace-agent)
-[![licence](https://img.shields.io/github/license/Architrace-Intelligence/Architrace-agent?label=licence)](#license)
-[![code quality](https://sonarcloud.io/api/project_badges/measure?project=Architrace-Intelligence_Architrace-agent&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Architrace-Intelligence_Architrace-agent)
-[![code coverage](https://sonarcloud.io/api/project_badges/measure?project=Architrace-Intelligence_Architrace-agent&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Architrace-Intelligence_Architrace-agent)
-[![snyk security](https://snyk.io/test/github/Architrace-Intelligence/Architrace-agent/badge.svg)](https://snyk.io/test/github/Architrace-Intelligence/Architrace-agent)
-[![code smells](https://sonarcloud.io/api/project_badges/measure?project=Architrace-Intelligence_Architrace-agent&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=Architrace-Intelligence_Architrace-agent)
+<div align="center">
+  <h1>Architrace</h1>
 
-Architrace agent with embedded control-plane flow and OTLP trace receiver.
+  <p align="center">
+    <strong>Runtime architecture intelligence for distributed systems</strong>
+    <br/>
+    Collect OTLP traces, build service graphs, and stream topology to a control plane
+    <br/><br/>
+  </p>
 
-## Requirements
-- Java 25
+  ![Java](https://img.shields.io/badge/Java-25-blue)
+  ![Gradle](https://img.shields.io/badge/Gradle-9.3.1-02303A?logo=gradle)
+  ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 
-## Project Layout
-- Single module: `agent-app`
-- CLI commands: `version`, `dry-run`, `run`
+  [Quick Start](#-quick-start) | [Docker Demo](#-docker-demo) | [Contributing](#-contributing)
+</div>
 
-## Build
+---
+
+## Quick Start
+
+Run quality gates + tests:
+
 ```bash
-./gradlew :agent-app:shadowJar
+./gradlew spotlessCheck classes test jacocoTestReport
 ```
 
-Artifact:
-- `agent-app/build/libs/agent-app-0.1.0-all.jar`
+Build all modules:
 
-## CLI
-Show help:
 ```bash
-java -jar agent-app/build/libs/agent-app-0.1.0-all.jar --help
+./gradlew build
 ```
 
-Validate config only:
+Run control-plane locally:
+
 ```bash
-java -jar agent-app/build/libs/agent-app-0.1.0-all.jar dry-run --config ./architrace.yaml
+./gradlew :control-plane:bootRun
 ```
 
-Run agent:
+Build runnable agent fat jar:
+
 ```bash
-java -jar agent-app/build/libs/agent-app-0.1.0-all.jar run --config ./architrace.yaml
+./gradlew :agent:shadowJar
 ```
 
-## Runtime Flow (`run`)
-When `run` starts:
-1. Agent loads and validates YAML config.
-2. Agent starts OTLP gRPC receiver on port `4319`.
-3. Agent may start embedded control-plane gRPC server if `control.plane-bootstrap.server` points to `localhost` or `127.0.0.1`.
-4. Agent registers in control-plane over gRPC stream.
-5. Control-plane periodically sends `ping`; agent replies with `pong`.
-6. Control-plane can send config updates over the same stream; agent applies updates in runtime.
+---
 
-## Configuration (YAML)
-Required fields:
-- `environment`: one of `DEV`, `TEST`, `STG`, `PROD`
-- `clusterId`: string
-- `domainId`: string
-- `namespace`: string
-- `agent.name`: string
-- `control.plane-bootstrap.server`: `host:port`
+## Features
 
-Example `architrace.yaml`:
-```yaml
-environment: DEV
-clusterId: cluster-1
-domainId: domain-abc
-namespace: team-a
+- **OTLP Ingestion** - Receives traces on OTLP gRPC (`:4319`)
+- **Graph Transformation** - Converts spans into nodes/edges and graph batches
+- **Control Plane Stream** - Bidirectional gRPC session between agent and control-plane
+- **Structured Concurrency** - Runtime built on Java 25 concurrency primitives
+- **Modular Monorepo** - Separate modules for runtime agent, control-plane, and shared API contracts
 
-agent:
-  name: demo-agent
+---
 
-control:
-  plane-bootstrap:
-    server: localhost:50051
+## Monorepo Structure
+
+- **[`architrace-agent`](./architrace-agent)** - Runtime agent CLI, OTLP receiver, graph pipeline
+- **[`architrace-control-plane`](./architrace-control-plane)** - Spring Boot service (HTTP + gRPC)
+- **[`architrace-api`](./architrace-api)** - Shared protobuf contracts and generated classes
+- **[`otel-test-app`](./otel-test-app)** - End-to-end demo stack (Python services + collector + Architrace)
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  OTel[OTel SDK / Collector] -->|OTLP gRPC :4319| Agent[Architrace Agent]
+  Agent -->|Bidirectional gRPC :9090| CP[Control Plane]
+  CP -->|HTTP :8085| Ops[Operators / APIs]
+  Agent --> API[Shared API]
+  CP --> API
 ```
 
-## OTLP Receiver
-- Receiver protocol: OTLP gRPC TraceService `Export`
-- Receiver listen port: `4319`
+---
 
-Collector should export traces to this agent endpoint, for example:
-- `localhost:4319`
+## Docker Demo
 
-## Testing
-Run all tests:
+Run full local demo stack:
+
 ```bash
-./gradlew test
+cd otel-test-app
+docker compose build
+docker compose up -d
 ```
 
-## Snyk Security Monitoring
-- CI/CD includes a `Snyk Security Monitor` job in `.github/workflows/ci-cd.yml`.
-- Required GitHub secret: `SNYK_TOKEN`.
-- Optional GitHub variable: `SNYK_ORG` (if you want to monitor under a specific Snyk organization).
-- The pipeline runs:
+Traffic generator endpoint:
+
 ```bash
-snyk monitor --all-projects
-```
-- The `snyk security` badge is live and reads status from the Snyk project page for this repository.
-
-Run OTLP receiver integration test only:
-```bash
-./gradlew :agent-app:test --tests io.github.architrace.otlp.OtlpTraceReceiverServerIntegrationTest
+curl http://localhost:8080/
 ```
 
-## Formatting
+Expected response:
+
+```text
+A -> B -> C
+```
+
+---
+
+## Common Commands
+
+Format all modules:
+
 ```bash
 ./gradlew spotlessApply
 ```
 
+Run only agent tests:
+
+```bash
+./gradlew :agent:test
+```
+
+Run only control-plane tests:
+
+```bash
+./gradlew :control-plane:test
+```
+
+Generate protobuf classes:
+
+```bash
+./gradlew :agent:generateProto :control-plane:generateProto :api:generateProto
+```
+
+---
+
+## CI
+
+PR workflow: [`/.github/workflows/pr-ci.yml`](./.github/workflows/pr-ci.yml)
+
+Pipeline includes:
+
+- Spotless check
+- Compile
+- Unit/integration tests
+- Jacoco coverage
+- Sonar (if `SONAR_TOKEN` is configured)
+- Snyk (if `SNYK_TOKEN` is configured)
+
+---
+
+## Contributing
+
+Contributions are welcome. Open an issue or submit a pull request with a clear scope and test coverage for behavior changes.
+
+---
+
 ## License
-Apache-2.0
+
+Apache-2.0. See [LICENSE](./LICENSE).

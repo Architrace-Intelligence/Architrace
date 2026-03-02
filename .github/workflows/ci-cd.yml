@@ -154,23 +154,6 @@ jobs:
       - name: Generate coverage reports
         run: ./gradlew --no-daemon test jacocoTestReport
 
-      - name: Resolve Sonar project key
-        id: sonar-meta
-        shell: bash
-        run: |
-          if [ -n "${{ vars.SONAR_ORGANIZATION }}" ]; then
-            org="${{ vars.SONAR_ORGANIZATION }}"
-            echo "organization=${org,,}" >> "$GITHUB_OUTPUT"
-          else
-            echo "organization=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
-          fi
-
-          if [ -n "${{ vars.SONAR_PROJECT_KEY }}" ]; then
-            echo "project_key=${{ vars.SONAR_PROJECT_KEY }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "project_key=${GITHUB_REPOSITORY/\//_}" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Validate SonarCloud configuration
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -184,12 +167,14 @@ jobs:
       - name: SonarCloud Scan via Gradle
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION || 'architrace-intelligence' }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY || 'Architrace-Intelligence_Architrace-agent' }}
         run: >
-          ./gradlew --no-daemon test jacocoTestReport sonar
+          ./gradlew --no-daemon test jacocoTestReport sonarqube
           -Dsonar.token=$SONAR_TOKEN
           -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.organization=${{ steps.sonar-meta.outputs.organization }}
-          -Dsonar.projectKey=${{ steps.sonar-meta.outputs.project_key }}
+          -Dsonar.organization=$SONAR_ORGANIZATION
+          -Dsonar.projectKey=$SONAR_PROJECT_KEY
           -Dsonar.java.binaries=**/build/classes
           -Dsonar.coverage.jacoco.xmlReportPaths=**/build/reports/jacoco/test/jacocoTestReport.xml
 
@@ -227,14 +212,14 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build artifacts
-        run: ./gradlew --no-daemon build -x test :agent-app:shadowJar
+        run: ./gradlew --no-daemon build -x test :agent:shadowJar
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: architrace-artifacts
           path: |
-            agent-app/build/libs/*.jar
+            architrace-agent/build/libs/*.jar
             **/build/libs/*.jar
 
   native-image-docker:
@@ -332,10 +317,10 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build release fat jar
-        run: ./gradlew --no-daemon :agent-app:shadowJar
+        run: ./gradlew --no-daemon :agent:shadowJar
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
         with:
           files: |
-            agent-app/build/libs/agent-app-*-all.jar
+            architrace-agent/build/libs/agent-*-all.jar

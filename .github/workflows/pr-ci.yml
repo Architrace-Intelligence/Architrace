@@ -1,0 +1,195 @@
+name: PR CI
+
+on:
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  api-ci:
+    name: API PR CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      - name: Spotless check (api)
+        run: ./gradlew :api:spotlessCheck --stacktrace
+
+      - name: Compile (api)
+        run: ./gradlew :api:classes --stacktrace
+
+      - name: Unit tests (api)
+        run: ./gradlew :api:test --stacktrace
+
+      - name: Integration tests (api)
+        shell: bash
+        run: |
+          if ./gradlew :api:tasks --all | grep -q "^integrationTest"; then
+            ./gradlew :api:integrationTest --stacktrace
+          else
+            echo "No integrationTest task found for :api, skipping."
+          fi
+
+      - name: Code coverage (api)
+        run: ./gradlew :api:jacocoTestReport :api:jacocoTestCoverageVerification --stacktrace
+
+      - name: Upload coverage report (api)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-jacoco-report
+          path: architrace-api/build/reports/jacoco/
+
+      - name: Sonar (api scope)
+        if: ${{ secrets.SONAR_TOKEN != '' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonarqube -Dsonar.token=${SONAR_TOKEN} --stacktrace
+
+      - name: Set up Snyk CLI
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
+
+      - name: Snyk test (api)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-sub-projects --sub-project=api --severity-threshold=high
+
+  control-plane-ci:
+    name: Control Plane PR CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      - name: Spotless check (control-plane)
+        run: ./gradlew :control-plane:spotlessCheck --stacktrace
+
+      - name: Compile (control-plane)
+        run: ./gradlew :control-plane:classes --stacktrace
+
+      - name: Unit tests (control-plane)
+        run: ./gradlew :control-plane:test --stacktrace
+
+      - name: Integration tests (control-plane)
+        shell: bash
+        run: |
+          if ./gradlew :control-plane:tasks --all | grep -q "^integrationTest"; then
+            ./gradlew :control-plane:integrationTest --stacktrace
+          else
+            echo "No integrationTest task found for :control-plane, skipping."
+          fi
+
+      - name: Code coverage (control-plane)
+        run: ./gradlew :control-plane:jacocoTestReport :control-plane:jacocoTestCoverageVerification --stacktrace
+
+      - name: Upload coverage report (control-plane)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: control-plane-jacoco-report
+          path: architrace-control-plane/build/reports/jacoco/
+
+      - name: Sonar (control-plane scope)
+        if: ${{ secrets.SONAR_TOKEN != '' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonarqube -Dsonar.token=${SONAR_TOKEN} --stacktrace
+
+      - name: Set up Snyk CLI
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
+
+      - name: Snyk test (control-plane)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-sub-projects --sub-project=control-plane --severity-threshold=high
+
+  all-modules-ci:
+    name: All Modules PR CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      - name: Spotless check (all modules)
+        run: ./gradlew spotlessCheck --stacktrace
+
+      - name: Compile (all modules)
+        run: ./gradlew classes --stacktrace
+
+      - name: Unit tests (all modules)
+        run: ./gradlew test --stacktrace
+
+      - name: Integration tests (all modules)
+        shell: bash
+        run: |
+          if ./gradlew tasks --all | grep -q "^integrationTest"; then
+            ./gradlew integrationTest --stacktrace
+          else
+            echo "No integrationTest task found at root, skipping."
+          fi
+
+      - name: Code coverage (all modules)
+        run: ./gradlew jacocoTestReport jacocoTestCoverageVerification --stacktrace
+
+      - name: Upload coverage report (all modules)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-modules-jacoco-report
+          path: |
+            build/reports/jacoco/
+            **/build/reports/jacoco/
+
+      - name: Sonar (all modules)
+        if: ${{ secrets.SONAR_TOKEN != '' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonarqube -Dsonar.token=${SONAR_TOKEN} --stacktrace
+
+      - name: Set up Snyk CLI
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
+
+      - name: Snyk test (all modules)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-sub-projects --severity-threshold=high
