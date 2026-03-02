@@ -6,12 +6,11 @@ package io.github.architrace.grpc;
 
 
 import io.github.architrace.controlplane.ControlPlaneRegistry;
-import io.github.architrace.grpc.proto.AgentEvent;
 import io.github.architrace.grpc.proto.AgentHealthRequest;
 import io.github.architrace.grpc.proto.AgentHealthResponse;
-import io.github.architrace.grpc.proto.AgentPong;
 import io.github.architrace.grpc.proto.AgentRegister;
-import io.github.architrace.grpc.proto.ControlPlaneEvent;
+import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
+import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +26,6 @@ class ControlPlaneServiceImplTest {
   private static final String AGENT_B = "agent-b";
   private static final String UNKNOWN_AGENT = "agent-x";
   private static final long HEALTH_LIVE_THRESHOLD_MS = 15_000L;
-  private static final long PING_ID = 42L;
-  private static final long PING_SENT_AT_EPOCH_MS = 100L;
 
   private ControlPlaneRegistry registry;
   private ControlPlaneServiceImpl sut;
@@ -45,30 +42,20 @@ class ControlPlaneServiceImplTest {
   }
 
   @Test
-  void connectShouldRegisterHandlePongAndComplete() {
-    RecordingObserver<ControlPlaneEvent> responseObserver = new RecordingObserver<>();
-    StreamObserver<AgentEvent> requestObserver = sut.connect(responseObserver);
+  void connectShouldRegisterAndComplete() {
+    RecordingObserver<ControlPlaneCommand> responseObserver = new RecordingObserver<>();
+    StreamObserver<AgentRegisterRequestedEvent> requestObserver = sut.connect(responseObserver);
 
     requestObserver.onNext(
-        AgentEvent.newBuilder()
+        AgentRegisterRequestedEvent.newBuilder()
             .setRegister(AgentRegister.newBuilder().setAgentName(AGENT_A).build())
             .build());
 
-    assertThat(responseObserver.values.stream().anyMatch(ControlPlaneEvent::hasConfigUpdate)).isTrue();
-
-    requestObserver.onNext(
-        AgentEvent.newBuilder()
-            .setPong(
-                AgentPong.newBuilder()
-                    .setAgentName(AGENT_A)
-                    .setPingId(PING_ID)
-                    .setSentAtEpochMs(PING_SENT_AT_EPOCH_MS)
-                    .build())
-            .build());
+    assertThat(responseObserver.values.stream().anyMatch(ControlPlaneCommand::hasConfigUpdate)).isTrue();
 
     ControlPlaneRegistry.HealthState health = registry.health(AGENT_A, HEALTH_LIVE_THRESHOLD_MS);
     assertThat(health.live()).isTrue();
-    assertThat(health.lastSeenEpochMs()).isGreaterThanOrEqualTo(PING_SENT_AT_EPOCH_MS);
+    assertThat(health.lastSeenEpochMs()).isPositive();
 
     requestObserver.onCompleted();
     assertThat(responseObserver.completed).isTrue();
@@ -77,11 +64,11 @@ class ControlPlaneServiceImplTest {
 
   @Test
   void connectShouldUnregisterOnError() {
-    RecordingObserver<ControlPlaneEvent> responseObserver = new RecordingObserver<>();
-    StreamObserver<AgentEvent> requestObserver = sut.connect(responseObserver);
+    RecordingObserver<ControlPlaneCommand> responseObserver = new RecordingObserver<>();
+    StreamObserver<AgentRegisterRequestedEvent> requestObserver = sut.connect(responseObserver);
 
     requestObserver.onNext(
-        AgentEvent.newBuilder()
+        AgentRegisterRequestedEvent.newBuilder()
             .setRegister(AgentRegister.newBuilder().setAgentName(AGENT_B).build())
             .build());
     requestObserver.onError(new RuntimeException("boom"));
@@ -90,20 +77,20 @@ class ControlPlaneServiceImplTest {
   }
 
   @Test
-  void connectShouldIgnoreEventsWithoutRegisterOrPong() {
-    RecordingObserver<ControlPlaneEvent> responseObserver = new RecordingObserver<>();
-    StreamObserver<AgentEvent> requestObserver = sut.connect(responseObserver);
+  void connectShouldIgnoreEventsWithoutRegister() {
+    RecordingObserver<ControlPlaneCommand> responseObserver = new RecordingObserver<>();
+    StreamObserver<AgentRegisterRequestedEvent> requestObserver = sut.connect(responseObserver);
 
-    requestObserver.onNext(AgentEvent.getDefaultInstance());
+    requestObserver.onNext(AgentRegisterRequestedEvent.getDefaultInstance());
 
     assertThat(registry.health(UNKNOWN_AGENT, HEALTH_LIVE_THRESHOLD_MS).live()).isFalse();
   }
 
   @Test
   void getAgentHealthShouldReturnRegistryHealth() {
-    RecordingObserver<ControlPlaneEvent> connectObserver = new RecordingObserver<>();
+    RecordingObserver<ControlPlaneCommand> connectObserver = new RecordingObserver<>();
     sut.connect(connectObserver).onNext(
-        AgentEvent.newBuilder()
+        AgentRegisterRequestedEvent.newBuilder()
             .setRegister(AgentRegister.newBuilder().setAgentName(AGENT_A).build())
             .build());
     RecordingObserver<AgentHealthResponse> responseObserver = new RecordingObserver<>();

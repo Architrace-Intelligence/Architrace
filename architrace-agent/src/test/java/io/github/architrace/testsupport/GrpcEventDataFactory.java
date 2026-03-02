@@ -18,6 +18,6 @@ public final class GrpcEventDataFactory {
     Map<String, Object> payload = TestDataProvider.readJsonObject(resourcePath);
     String version = (String) payload.get("version");
     Map<String, String> entries = (Map<String, String>) payload.get("entries");
-    return ConfigUpdate.newBuilder().setVersion(version).putAllEntries(entries).build();
+    return ConfigUpdate.newBuilder().setVersion(version).putAllConfig(entries).build();
   }
 }

@@ -5,6 +5,9 @@
 package io.github.architrace.otlp;
 
 
+import io.github.architrace.graph.ControlPlanePublisher;
+import io.github.architrace.graph.GraphAggregator;
+import io.github.architrace.graph.SpanToGraphConverter;
 import io.github.architrace.testsupport.TestDataProvider;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +18,14 @@ class OtlpTraceReceiverServerTest {
   @Test
   void closeShouldHandleInterruptedThread() throws Exception {
     int port = TestDataProvider.findFreePort();
-    OtlpTraceReceiverServer sut = new OtlpTraceReceiverServer(port);
+    OtlpTraceReceiverServer sut =
+        new OtlpTraceReceiverServer(
+            port,
+            new OtlpTraceServiceImpl(
+                "test-agent",
+                new SpanToGraphConverter(),
+                new GraphAggregator(),
+                new ControlPlanePublisher(() -> null)));
     sut.start();
 
     Thread.currentThread().interrupt();

@@ -5,23 +5,32 @@
 package io.github.architrace.otlp;
 
 
+import io.github.architrace.graph.ControlPlanePublisher;
+import io.github.architrace.graph.GraphAggregator;
+import io.github.architrace.graph.SpanToGraphConverter;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(MockitoExtension.class)
 class OtlpTraceServiceImplTest {
 
-  @InjectMocks
   private OtlpTraceServiceImpl sut;
+
+  @BeforeEach
+  void setUp() {
+    sut =
+        new OtlpTraceServiceImpl(
+            "test-agent",
+            new SpanToGraphConverter(),
+            new GraphAggregator(),
+            new ControlPlanePublisher(() -> null));
+  }
 
   @Test
   void exportShouldRespondAndComplete() {

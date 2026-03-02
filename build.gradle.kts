@@ -35,8 +35,13 @@ subprojects {
         }
     }
 
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("--enable-preview")
+    }
+
     tasks.withType<Test> {
         useJUnitPlatform()
+        jvmArgs("--enable-preview")
     }
 
     dependencies {
@@ -120,6 +125,7 @@ tasks.register<JavaExec>("runArchitrace") {
     description = "Run Architrace CLI"
     classpath = project(":agent").sourceSets["main"].runtimeClasspath
     mainClass.set("io.github.architrace.MainApp")
+    jvmArgs("--enable-preview")
 }
 
 tasks.register("buildRuntime") {

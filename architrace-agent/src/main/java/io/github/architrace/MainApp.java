@@ -4,9 +4,12 @@
  */
 package io.github.architrace;
 
+import com.google.inject.Guice;
 import io.github.architrace.cli.DryRunCommand;
 import io.github.architrace.cli.RunCommand;
 import io.github.architrace.cli.VersionCommand;
+import io.github.architrace.config.AgentModule;
+import io.github.architrace.config.PicoCliGuiceFactory;
 import java.util.Objects;
 import java.util.function.IntConsumer;
 import org.slf4j.Logger;
@@ -37,7 +40,11 @@ public class MainApp implements Runnable {
   }
 
   static int execute(String[] args) {
-    CommandLine cmd = new CommandLine(new MainApp());
+    var injector = Guice.createInjector(new AgentModule());
+    CommandLine cmd =
+        new CommandLine(
+            injector.getInstance(MainApp.class),
+            new PicoCliGuiceFactory(injector));
 
     cmd.setExecutionExceptionHandler((ex, commandLine, parseResult) -> {
       log.error("Execution failed: {}", ex.getMessage(), ex);

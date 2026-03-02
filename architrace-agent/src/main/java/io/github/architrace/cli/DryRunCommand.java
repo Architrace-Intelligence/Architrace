@@ -4,8 +4,6 @@
  */
 package io.github.architrace.cli;
 
-import io.github.architrace.runtime.AgentRuntimeService;
-import java.nio.file.Path;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

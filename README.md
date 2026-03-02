@@ -1,130 +1,155 @@
-# Architrace
+<div align="center">
+  <h1>Architrace</h1>
 
-Distributed monitoring platform prototype built as a Gradle multi-module project.
+  <p align="center">
+    <strong>Runtime architecture intelligence for distributed systems</strong>
+    <br/>
+    Collect OTLP traces, build service graphs, and stream topology to a control plane
+    <br/><br/>
+  </p>
 
-## Modules
-| Module | Purpose |
-|---|---|
-| [`agent`](./agent) | Runtime agent CLI. Receives OTLP traces and talks to control-plane via gRPC. |
-| [`control-plane`](./control-plane) | Spring Boot control-plane service (HTTP + gRPC). |
-| [`api`](./api) | Shared API/contract module for common dependencies and generated classes. |
+  ![Java](https://img.shields.io/badge/Java-25-blue)
+  ![Gradle](https://img.shields.io/badge/Gradle-9.3.1-02303A?logo=gradle)
+  ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 
-## Architecture
-```mermaid
-flowchart LR
-  OTel[OTel Collector / SDK] -->|OTLP gRPC :4319| Agent[agent module]
-  Agent -->|Bidirectional gRPC| CP[control-plane module]
-  CP -->|HTTP :8080| Ops[Operators / API Clients]
-  Agent --> API[api module]
-  CP --> API
-```
+  [Quick Start](#-quick-start) | [Docker Demo](#-docker-demo) | [Contributing](#-contributing)
+</div>
 
-## Tech Stack
-- Java 25
-- Gradle (Kotlin DSL)
-- gRPC + Protobuf
-- Spring Boot (control-plane)
-- Spotless, Jacoco, Sonar, Snyk
-
-## Prerequisites
-- JDK 25
-- Git
+---
 
 ## Quick Start
+
+Run quality gates + tests:
+
 ```bash
 ./gradlew spotlessCheck classes test jacocoTestReport
 ```
 
 Build all modules:
+
 ```bash
 ./gradlew build
 ```
 
-Build runnable agent fat jar:
-```bash
-./gradlew :agent:shadowJar
-```
-
 Run control-plane locally:
+
 ```bash
 ./gradlew :control-plane:bootRun
 ```
 
-## CI
-PR CI is defined in:
-- `.github/workflows/pr-ci.yml`
+Build runnable agent fat jar:
 
-It includes (per module and all-modules job):
-- checkout
-- spotless check
-- compile
-- unit tests
-- integration tests (if task exists)
-- code coverage (Jacoco)
-- sonar (when `SONAR_TOKEN` is configured)
-- snyk (when `SNYK_TOKEN` is configured)
-
-CI flow (PR):
-```mermaid
-flowchart LR
-  PR[Pull Request] --> A[api-ci]
-  PR --> C[control-plane-ci]
-  PR --> M[all-modules-ci]
-  A --> Checks[Spotless + Compile + Test + Coverage + Sonar + Snyk]
-  C --> Checks
-  M --> Checks
+```bash
+./gradlew :agent:shadowJar
 ```
 
+---
+
+## Features
+
+- **OTLP Ingestion** - Receives traces on OTLP gRPC (`:4319`)
+- **Graph Transformation** - Converts spans into nodes/edges and graph batches
+- **Control Plane Stream** - Bidirectional gRPC session between agent and control-plane
+- **Structured Concurrency** - Runtime built on Java 25 concurrency primitives
+- **Modular Monorepo** - Separate modules for runtime agent, control-plane, and shared API contracts
+
+---
+
+## Monorepo Structure
+
+- **[`architrace-agent`](./architrace-agent)** - Runtime agent CLI, OTLP receiver, graph pipeline
+- **[`architrace-control-plane`](./architrace-control-plane)** - Spring Boot service (HTTP + gRPC)
+- **[`architrace-api`](./architrace-api)** - Shared protobuf contracts and generated classes
+- **[`otel-test-app`](./otel-test-app)** - End-to-end demo stack (Python services + collector + Architrace)
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  OTel[OTel SDK / Collector] -->|OTLP gRPC :4319| Agent[Architrace Agent]
+  Agent -->|Bidirectional gRPC :9090| CP[Control Plane]
+  CP -->|HTTP :8085| Ops[Operators / APIs]
+  Agent --> API[Shared API]
+  CP --> API
+```
+
+---
+
+## Docker Demo
+
+Run full local demo stack:
+
+```bash
+cd otel-test-app
+docker compose build
+docker compose up -d
+```
+
+Traffic generator endpoint:
+
+```bash
+curl http://localhost:8080/
+```
+
+Expected response:
+
+```text
+A -> B -> C
+```
+
+---
+
 ## Common Commands
+
 Format all modules:
+
 ```bash
 ./gradlew spotlessApply
 ```
 
 Run only agent tests:
+
 ```bash
 ./gradlew :agent:test
 ```
 
 Run only control-plane tests:
+
 ```bash
 ./gradlew :control-plane:test
 ```
 
 Generate protobuf classes:
+
 ```bash
 ./gradlew :agent:generateProto :control-plane:generateProto :api:generateProto
 ```
 
-## Current Notes
-- Protobuf contracts currently live in module sources:
-  - `agent/src/main/proto/architrace-control-plane.proto`
-  - `control-plane/src/main/proto/architrace-agent.proto`
-- `api/src/main/resources/openapi.yaml` exists but is currently empty.
+---
 
-## Troubleshooting
-1. Java version mismatch
-   - Symptom: build fails before compilation.
-   - Fix: install JDK 25 and verify `java -version`.
+## CI
 
-2. Missing generated gRPC/protobuf classes
-   - Symptom: `cannot find symbol` for classes under `io.github.architrace.grpc.proto`.
-   - Fix:
-     ```bash
-     ./gradlew :agent:generateProto :control-plane:generateProto :api:generateProto
-     ./gradlew classes
-     ```
+PR workflow: [`/.github/workflows/pr-ci.yml`](./.github/workflows/pr-ci.yml)
 
-3. Spotless check failures
-   - Symptom: CI/local `spotlessCheck` fails.
-   - Fix:
-     ```bash
-     ./gradlew spotlessApply
-     ```
+Pipeline includes:
 
-4. Sonar/Snyk steps skipped in CI
-   - Symptom: security/quality scan steps do not run.
-   - Fix: configure repository secrets `SONAR_TOKEN` and `SNYK_TOKEN`.
+- Spotless check
+- Compile
+- Unit/integration tests
+- Jacoco coverage
+- Sonar (if `SONAR_TOKEN` is configured)
+- Snyk (if `SNYK_TOKEN` is configured)
+
+---
+
+## Contributing
+
+Contributions are welcome. Open an issue or submit a pull request with a clear scope and test coverage for behavior changes.
+
+---
 
 ## License
+
 Apache-2.0. See [LICENSE](./LICENSE).

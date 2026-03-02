@@ -5,16 +5,18 @@
 package io.github.architrace.core.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record AgentConfig(
-    Environment environment,
     String clusterId,
-    String domainId,
-    String namespace,
     Agent agent,
-    Control control) {
+    @JsonProperty("control-plane") ControlPlane controlPlane,
+    @JsonProperty("otlp-receiver-port")
+    @JsonAlias("oltp-receiver-port")
+    Integer otlpReceiverPort,
+    @JsonProperty("control-plane-retry-seconds") Long controlPlaneRetrySeconds) {
 
   public enum Environment {
     DEV,
@@ -28,10 +30,10 @@ public record AgentConfig(
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  public record Control(@JsonProperty("plane-bootstrap") PlaneBootstrap planeBootstrap) {
+  public record ControlPlane(@JsonProperty("bootstrap") Bootstrap bootstrap) {
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  public record PlaneBootstrap(String server) {
+  public record Bootstrap(String server) {
   }
 }

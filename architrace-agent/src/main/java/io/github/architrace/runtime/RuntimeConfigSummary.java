@@ -7,10 +7,7 @@ package io.github.architrace.runtime;
 import io.github.architrace.core.config.AgentConfig;
 
 public record RuntimeConfigSummary(
-    AgentConfig.Environment environment,
     String clusterId,
-    String domainId,
-    String namespace,
     String agentName,
     String controlPlaneServer) {
 }

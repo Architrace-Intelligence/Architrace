@@ -8,6 +8,9 @@ package io.github.architrace.otlp;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import io.github.architrace.graph.ControlPlanePublisher;
+import io.github.architrace.graph.GraphAggregator;
+import io.github.architrace.graph.SpanToGraphConverter;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -36,7 +39,14 @@ class OtlpTraceReceiverServerIntegrationTest {
     listAppender.start();
     logger.addAppender(listAppender);
 
-    try (OtlpTraceReceiverServer sut = new OtlpTraceReceiverServer(port)) {
+    try (OtlpTraceReceiverServer sut =
+             new OtlpTraceReceiverServer(
+                 port,
+                 new OtlpTraceServiceImpl(
+                     "test-agent",
+                     new SpanToGraphConverter(),
+                     new GraphAggregator(),
+                     new ControlPlanePublisher(() -> null)))) {
       sut.start();
 
       ManagedChannel channel =

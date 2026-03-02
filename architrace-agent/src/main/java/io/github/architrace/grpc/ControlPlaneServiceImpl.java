@@ -5,10 +5,10 @@
 package io.github.architrace.grpc;
 
 import io.github.architrace.controlplane.ControlPlaneRegistry;
-import io.github.architrace.grpc.proto.AgentEvent;
 import io.github.architrace.grpc.proto.AgentHealthRequest;
 import io.github.architrace.grpc.proto.AgentHealthResponse;
-import io.github.architrace.grpc.proto.ControlPlaneEvent;
+import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
+import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.github.architrace.grpc.proto.ControlPlaneServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.Executors;
@@ -33,12 +33,13 @@ public class ControlPlaneServiceImpl extends ControlPlaneServiceGrpc.ControlPlan
   }
 
   @Override
-  public StreamObserver<AgentEvent> connect(StreamObserver<ControlPlaneEvent> responseObserver) {
+  public StreamObserver<AgentRegisterRequestedEvent> connect(
+      StreamObserver<ControlPlaneCommand> responseObserver) {
     return new StreamObserver<>() {
       private String agentName;
 
       @Override
-      public void onNext(AgentEvent agentEvent) {
+      public void onNext(AgentRegisterRequestedEvent agentEvent) {
         if (agentEvent.hasRegister()) {
           agentName = agentEvent.getRegister().getAgentName();
           registry.register(agentName, responseObserver);
@@ -46,11 +47,12 @@ public class ControlPlaneServiceImpl extends ControlPlaneServiceGrpc.ControlPlan
           return;
         }
 
-        if (agentEvent.hasPong()) {
-          registry.pong(
-              agentEvent.getPong().getAgentName(),
-              agentEvent.getPong().getPingId(),
-              agentEvent.getPong().getSentAtEpochMs());
+        if (agentEvent.hasGraphBatch()) {
+          log.info(
+              "Received graph batch from agent='{}' nodes={} edges={}.",
+              agentEvent.getGraphBatch().getAgentName(),
+              agentEvent.getGraphBatch().getNodesCount(),
+              agentEvent.getGraphBatch().getEdgesCount());
         }
       }
 
@@ -62,6 +64,7 @@ public class ControlPlaneServiceImpl extends ControlPlaneServiceGrpc.ControlPlan
 
       @Override
       public void onCompleted() {
+        registry.touch(agentName);
         registry.unregister(agentName);
         responseObserver.onCompleted();
         log.info("Agent '{}' disconnected.", agentName);

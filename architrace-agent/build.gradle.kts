@@ -36,6 +36,10 @@ tasks.withType<JavaCompile> {
     ))
 }
 
+tasks.withType<JavaExec> {
+    jvmArgs("--enable-preview")
+}
+
 tasks.named<ShadowJar>("shadowJar") {
     archiveClassifier.set("all")
     mergeServiceFiles()

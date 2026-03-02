@@ -4,19 +4,18 @@
  */
 package io.github.architrace.grpc;
 
-
-import io.github.architrace.grpc.proto.AgentEvent;
-import io.github.architrace.grpc.proto.ControlPlaneEvent;
-import io.github.architrace.grpc.proto.ControlPlanePing;
-import io.github.architrace.testsupport.GrpcEventDataFactory;
-import io.grpc.stub.StreamObserver;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import io.github.architrace.grpc.proto.AgentRegister;
+import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
+import io.github.architrace.grpc.proto.ConfigUpdate;
+import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.inbound.ControlMessageHandler;
+import io.github.architrace.inbound.InboundDispatcher;
+import io.github.architrace.outbound.OutboundDispatcher;
+import io.github.architrace.outbound.OverflowStrategy;
+import io.github.architrace.session.ControlPlaneSession;
 import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
@@ -26,122 +25,94 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AgentControlPlaneClientTest {
 
-  private static final String TEST_ENDPOINT = "127.0.0.1:65530";
-  private static final String TEST_AGENT = "agent-a";
-  private static final long INBOUND_PING_ID = 9L;
-  private static final long INBOUND_SENT_AT_EPOCH_MS = 10L;
-  private static final int EXPECTED_SINGLE_EVENT = 1;
-  private static final String EXPECTED_CONFIG_VERSION = "42";
-
   @Test
-  void awaitShouldThrowWhenStreamFailureIsSet() throws Exception {
-    try (ControlPlaneClient sut = new ControlPlaneClient(TEST_ENDPOINT, TEST_AGENT, (v, e) -> {
-    })) {
-      setAtomicReferenceValue(sut, "streamFailure", new RuntimeException("boom"));
-      CountDownLatch latch = (CountDownLatch) getFieldValue(sut, "shutdownSignal");
-      latch.countDown();
+  void onNextShouldDispatchInboundAndProduceOutboundEvent() throws Exception {
+    AtomicReference<ControlPlaneCommand> handled = new AtomicReference<>();
+    ControlMessageHandler handler = new ControlMessageHandler() {
+      @Override
+      public boolean supports(ControlPlaneCommand command) {
+        return command.hasConfigUpdate();
+      }
 
-      assertThatThrownBy(sut::await)
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessageContaining("Control-plane stream failed.");
-    }
-  }
+      @Override
+      public void handle(ControlPlaneCommand command, ControlPlaneSession session) {
+        handled.set(command);
+        session.send(
+            AgentRegisterRequestedEvent.newBuilder()
+                .setRegister(AgentRegister.newBuilder().setAgentName("agent-a").build())
+                .build());
+      }
+    };
 
-  @Test
-  void closeShouldBeSafeWhenClientWasNotStarted() {
-    ControlPlaneClient sut = new ControlPlaneClient(TEST_ENDPOINT, TEST_AGENT, (v, e) -> {
-    });
-    assertThatCode(sut::close).doesNotThrowAnyException();
-  }
+    ControlPlaneSession session =
+        new ControlPlaneSession(
+            new InboundDispatcher(List.of(handler)),
+            new OutboundDispatcher(4, OverflowStrategy.BLOCK),
+            () -> {
+            },
+            throwable -> {
+            });
+    CompletableFuture<Void> streamClosed = new CompletableFuture<>();
+    ControlPlaneStreamObserver observer = new ControlPlaneStreamObserver(session, streamClosed);
 
-  @Test
-  void inboundObserverShouldApplyConfigAndSendPong() throws Exception {
-    AtomicReference<String> versionRef = new AtomicReference<>();
-    AtomicReference<Map<String, String>> entriesRef = new AtomicReference<>();
-    try (ControlPlaneClient sut =
-        new ControlPlaneClient(TEST_ENDPOINT, TEST_AGENT, (version, entries) -> {
-          versionRef.set(version);
-          entriesRef.set(entries);
-        })) {
-      RecordingAgentObserver requestObserver = new RecordingAgentObserver();
-      setAtomicReferenceValue(sut, "requestObserver", requestObserver);
+    ControlPlaneCommand command =
+        ControlPlaneCommand.newBuilder()
+            .setConfigUpdate(
+                ConfigUpdate.newBuilder()
+                    .setVersion("42")
+                    .putConfig("k", "v")
+                    .build())
+            .build();
 
-      Object inboundObserver = newInboundObserver(sut);
-      Method onNext = inboundObserver.getClass().getMethod("onNext", ControlPlaneEvent.class);
+    observer.onNext(command);
 
-      onNext.invoke(
-          inboundObserver,
-          ControlPlaneEvent.newBuilder()
-              .setPing(
-                  ControlPlanePing.newBuilder()
-                      .setPingId(INBOUND_PING_ID)
-                      .setSentAtEpochMs(INBOUND_SENT_AT_EPOCH_MS)
-                      .build())
-              .build());
-      onNext.invoke(
-          inboundObserver,
-          ControlPlaneEvent.newBuilder()
-              .setConfigUpdate(GrpcEventDataFactory.createConfigUpdateFromResource("testdata/grpc/config-update.json"))
-              .build());
-
-      assertThat(requestObserver.values).hasSize(EXPECTED_SINGLE_EVENT);
-      assertThat(requestObserver.values.get(0).hasPong()).isTrue();
-      assertThat(requestObserver.values.get(0).getPong().getPingId()).isEqualTo(INBOUND_PING_ID);
-      assertThat(requestObserver.values.get(0).getPong().getAgentName()).isEqualTo(TEST_AGENT);
-      assertThat(versionRef.get()).isEqualTo(EXPECTED_CONFIG_VERSION);
-      assertThat(entriesRef.get()).containsEntry("k", "v");
-    }
+    assertThat(handled.get()).isEqualTo(command);
+    AgentRegisterRequestedEvent outbound = session.takeOutbound();
+    assertThat(outbound.hasRegister()).isTrue();
+    assertThat(outbound.getRegister().getAgentName()).isEqualTo("agent-a");
+    assertThat(streamClosed).isNotCompleted();
   }
 
   @Test
-  void inboundObserverOnCompletedShouldReleaseAwait() throws Exception {
-    try (ControlPlaneClient sut = new ControlPlaneClient(TEST_ENDPOINT, TEST_AGENT, (v, e) -> {
-    })) {
-      Object inboundObserver = newInboundObserver(sut);
-      Method onCompleted = inboundObserver.getClass().getMethod("onCompleted");
-      onCompleted.invoke(inboundObserver);
+  void onCompletedShouldCompleteSessionAndStreamFuture() {
+    AtomicBoolean completed = new AtomicBoolean(false);
+    ControlPlaneSession session =
+        new ControlPlaneSession(
+            new InboundDispatcher(List.of()),
+            new OutboundDispatcher(1, OverflowStrategy.BLOCK),
+            () -> completed.set(true),
+            throwable -> {
+            });
+    CompletableFuture<Void> streamClosed = new CompletableFuture<>();
+    ControlPlaneStreamObserver observer = new ControlPlaneStreamObserver(session, streamClosed);
 
-      assertThatCode(sut::await).doesNotThrowAnyException();
-    }
+    observer.onCompleted();
+
+    assertThat(completed.get()).isTrue();
+    assertThat(streamClosed).isCompleted();
+    assertThatCode(streamClosed::join).doesNotThrowAnyException();
   }
 
-  private static Object newInboundObserver(ControlPlaneClient client) throws Exception {
-    Class<?> inboundType =
-        Class.forName("io.github.architrace.grpc.ControlPlaneClient$ControlPlaneInboundObserver");
-    Constructor<?> constructor = inboundType.getDeclaredConstructor(ControlPlaneClient.class);
-    constructor.setAccessible(true);
-    return constructor.newInstance(client);
-  }
+  @Test
+  void onErrorShouldPropagateToSessionAndStreamFuture() {
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    ControlPlaneSession session =
+        new ControlPlaneSession(
+            new InboundDispatcher(List.of()),
+            new OutboundDispatcher(1, OverflowStrategy.BLOCK),
+            () -> {
+            },
+            failure::set);
+    CompletableFuture<Void> streamClosed = new CompletableFuture<>();
+    ControlPlaneStreamObserver observer = new ControlPlaneStreamObserver(session, streamClosed);
+    RuntimeException boom = new RuntimeException("boom");
 
-  private static Object getFieldValue(Object target, String name) throws Exception {
-    Field field = target.getClass().getDeclaredField(name);
-    field.setAccessible(true);
-    return field.get(target);
-  }
+    observer.onError(boom);
 
-  @SuppressWarnings("unchecked")
-  private static void setAtomicReferenceValue(Object target, String name, Object value) throws Exception {
-    Field field = target.getClass().getDeclaredField(name);
-    field.setAccessible(true);
-    ((AtomicReference<Object>) field.get(target)).set(value);
-  }
-
-  private static final class RecordingAgentObserver implements StreamObserver<AgentEvent> {
-    private final List<AgentEvent> values = new ArrayList<>();
-
-    @Override
-    public void onNext(AgentEvent value) {
-      values.add(value);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-      // No-op for tests; this observer only records outbound events.
-    }
-
-    @Override
-    public void onCompleted() {
-      // No-op for tests; completion callback is irrelevant for assertions.
-    }
+    assertThat(failure.get()).isSameAs(boom);
+    assertThat(streamClosed).isCompletedExceptionally();
+    assertThatThrownBy(streamClosed::join)
+        .hasCauseInstanceOf(RuntimeException.class)
+        .hasMessageContaining("boom");
   }
 }

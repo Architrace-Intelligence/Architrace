@@ -5,8 +5,7 @@
 package io.github.architrace.controlplane;
 
 import io.github.architrace.grpc.proto.ConfigUpdate;
-import io.github.architrace.grpc.proto.ControlPlanePing;
-import io.github.architrace.grpc.proto.ControlPlaneEvent;
+import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.grpc.stub.StreamObserver;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,30 +15,27 @@ public class ControlPlaneRegistry {
 
   private final ConcurrentHashMap<String, AgentSession> sessions = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, AtomicLong> versionSequence = new ConcurrentHashMap<>();
-  private final AtomicLong pingSequence = new AtomicLong(0);
 
-  public void register(String agentName, StreamObserver<ControlPlaneEvent> responseObserver) {
+  public void register(String agentName, StreamObserver<ControlPlaneCommand> responseObserver) {
     sessions.put(
         agentName,
         new AgentSession(
             responseObserver,
-            System.currentTimeMillis(),
-            new AtomicLong(0)));
+            System.currentTimeMillis()));
 
     sendConfig(
         ConfigUpdate.newBuilder()
             .setVersion(nextVersion(agentName))
-            .putEntries("agent.mode", "managed")
-            .putEntries("agent.bootstrap", "done")
+            .putConfig("agent.mode", "managed")
+            .putConfig("agent.bootstrap", "done")
             .build(),
         responseObserver);
   }
 
-  public void pong(String agentName, long pingId, long sentAtEpochMs) {
+  public void touch(String agentName) {
     AgentSession session = sessions.get(agentName);
     if (session != null) {
-      session.lastPongId.set(pingId);
-      session.lastSeenEpochMs = Math.max(sentAtEpochMs, System.currentTimeMillis());
+      session.lastSeenEpochMs = System.currentTimeMillis();
     }
   }
 
@@ -61,30 +57,16 @@ public class ControlPlaneRegistry {
   }
 
   public void tick() {
-    long pingId = pingSequence.incrementAndGet();
     long now = System.currentTimeMillis();
     for (Map.Entry<String, AgentSession> entry : sessions.entrySet()) {
       String agentName = entry.getKey();
       AgentSession session = entry.getValue();
-
-      session.responseObserver.onNext(
-          ControlPlaneEvent.newBuilder()
-              .setPing(
-                  ControlPlanePing.newBuilder()
-                      .setPingId(pingId)
-                      .setSentAtEpochMs(now)
-                      .build())
-              .build());
-
-      if ((pingId % 3) == 0) {
-        sendConfig(
-            ConfigUpdate.newBuilder()
-                .setVersion(nextVersion(agentName))
-                .putEntries("control.lastPingId", Long.toString(pingId))
-                .putEntries("control.updatedAtEpochMs", Long.toString(now))
-                .build(),
-            session.responseObserver);
-      }
+      sendConfig(
+          ConfigUpdate.newBuilder()
+              .setVersion(nextVersion(agentName))
+              .putConfig("control.updatedAtEpochMs", Long.toString(now))
+              .build(),
+          session.responseObserver);
     }
   }
 
@@ -93,25 +75,23 @@ public class ControlPlaneRegistry {
     return Long.toString(seq.incrementAndGet());
   }
 
-  private void sendConfig(ConfigUpdate update, StreamObserver<ControlPlaneEvent> responseObserver) {
-    responseObserver.onNext(ControlPlaneEvent.newBuilder().setConfigUpdate(update).build());
+  private void sendConfig(
+      ConfigUpdate update, StreamObserver<ControlPlaneCommand> responseObserver) {
+    responseObserver.onNext(ControlPlaneCommand.newBuilder().setConfigUpdate(update).build());
   }
 
   public record HealthState(boolean live, long lastSeenEpochMs) {
   }
 
   private static final class AgentSession {
-    private final StreamObserver<ControlPlaneEvent> responseObserver;
+    private final StreamObserver<ControlPlaneCommand> responseObserver;
     private volatile long lastSeenEpochMs;
-    private final AtomicLong lastPongId;
 
     private AgentSession(
-        StreamObserver<ControlPlaneEvent> responseObserver,
-        long lastSeenEpochMs,
-        AtomicLong lastPongId) {
+        StreamObserver<ControlPlaneCommand> responseObserver,
+        long lastSeenEpochMs) {
       this.responseObserver = responseObserver;
       this.lastSeenEpochMs = lastSeenEpochMs;
-      this.lastPongId = lastPongId;
     }
   }
 }

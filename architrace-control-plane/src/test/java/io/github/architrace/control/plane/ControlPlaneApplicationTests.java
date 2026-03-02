@@ -7,7 +7,7 @@ package io.github.architrace.control.plane;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.grpc.server.enabled=false")
 class ControlPlaneApplicationTests {
 
 	@Test

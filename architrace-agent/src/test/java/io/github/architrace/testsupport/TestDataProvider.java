@@ -48,12 +48,11 @@ public final class TestDataProvider {
 
   public static AgentConfig createAgentConfig(String endpoint, String agentName) {
     return new AgentConfig(
-        AgentConfig.Environment.DEV,
         "cluster-1",
-        "domain-1",
-        "team-a",
         new AgentConfig.Agent(agentName),
-        new AgentConfig.Control(new AgentConfig.PlaneBootstrap(endpoint)));
+        new AgentConfig.ControlPlane(new AgentConfig.Bootstrap(endpoint)),
+        4319,
+        5L);
   }
 
   public static ExportTraceServiceRequest createSingleSpanRequest(String spanName) {

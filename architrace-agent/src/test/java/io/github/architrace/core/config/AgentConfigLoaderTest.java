@@ -35,12 +35,9 @@ class AgentConfigLoaderTest {
 
     AgentConfig config = sut.load(configPath);
 
-    assertThat(config.environment()).isEqualTo(AgentConfig.Environment.DEV);
     assertThat(config.clusterId()).isEqualTo("cluster-1");
-    assertThat(config.domainId()).isEqualTo("domain-1");
-    assertThat(config.namespace()).isEqualTo("team-a");
     assertThat(config.agent().name()).isEqualTo("demo-agent");
-    assertThat(config.control().planeBootstrap().server()).isEqualTo("localhost:50051");
+    assertThat(config.controlPlane().bootstrap().server()).isEqualTo("localhost:50051");
   }
 
   @Test
@@ -66,25 +63,8 @@ class AgentConfigLoaderTest {
   }
 
   @Test
-  void loadShouldFailWhenEnvironmentIsMissing() throws Exception {
-    assertMissingField(
-        "testdata/config/missing-environment.json",
-        "Missing required config field: environment (allowed: DEV, TEST, STG, PROD)");
-  }
-
-  @Test
   void loadShouldFailWhenClusterIdIsBlank() throws Exception {
     assertMissingField("testdata/config/blank-cluster-id.json", "Missing required config field: clusterId");
-  }
-
-  @Test
-  void loadShouldFailWhenDomainIdIsMissing() throws Exception {
-    assertMissingField("testdata/config/missing-domain-id.json", "Missing required config field: domainId");
-  }
-
-  @Test
-  void loadShouldFailWhenNamespaceIsBlank() throws Exception {
-    assertMissingField("testdata/config/blank-namespace.json", "Missing required config field: namespace");
   }
 
   @Test
@@ -96,7 +76,7 @@ class AgentConfigLoaderTest {
   void loadShouldFailWhenControlPlaneServerIsMissing() throws Exception {
     assertMissingField(
         "testdata/config/missing-control-server.json",
-        "Missing required config field: control.plane-bootstrap.server");
+        "Missing required config field: control-plane.bootstrap.server");
   }
 
   private void assertMissingField(String resourcePath, String expectedMessage) throws Exception {

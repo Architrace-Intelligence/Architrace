@@ -4,5 +4,5 @@
   "domainId": "domain-1",
   "namespace": "team-a",
   "agent": { "name": "demo-agent" },
-  "control": { "plane-bootstrap": {} }
+  "control-plane": { "bootstrap": {} }
 }
