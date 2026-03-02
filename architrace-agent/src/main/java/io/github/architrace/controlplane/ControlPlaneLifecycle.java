@@ -15,6 +15,7 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.StructuredTaskScope;
@@ -81,7 +82,7 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
       scope.fork(this::grpcBlockingTask);
       scope.join();
 
-    } catch (InterruptedException e) {
+    } catch (InterruptedException _) {
       Thread.currentThread().interrupt();
     } finally {
       transportClient.close();
@@ -91,7 +92,7 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
   /**
    * Waits until stream ends.
    */
-  private Void grpcBlockingTask() throws Exception {
+  private Void grpcBlockingTask() throws InterruptedException, ExecutionException {
     streamClosed.get();
 
     return null;
@@ -102,8 +103,10 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
    */
   private Void outboundWriterTask(StreamObserver<AgentRegisterRequestedEvent> observer) throws InterruptedException {
     while (!termination.isDone()) {
-      var event = session.takeOutbound(); // blocking (virtual thread)
-      observer.onNext(event);
+      var event = session.pollOutbound(200);
+      if (event != null) {
+        observer.onNext(event);
+      }
     }
 
     return null;

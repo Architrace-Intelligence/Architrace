@@ -7,23 +7,26 @@ plugins {
 }
 
 dependencies {
+    annotationProcessor(libs.picocli.codegen)
+    compileOnly(libs.javax.annotation.api)
+
     implementation(libs.guice)
-    implementation(libs.slf4j.api)
-    implementation(libs.picocli)
     implementation(libs.jackson.databind)
     implementation(libs.jackson.dataformat.yaml)
     implementation(libs.grpc.netty.shaded)
     implementation(libs.grpc.protobuf)
-    implementation(libs.grpc.stub)
     implementation(libs.grpc.services)
+    implementation(libs.grpc.stub)
     implementation(libs.grpc.util)
-    implementation(libs.protobuf.java)
     implementation(libs.opentelemetry.proto)
-    compileOnly(libs.javax.annotation.api)
-    testImplementation(libs.logback.classic)
-    annotationProcessor(libs.picocli.codegen)
-    runtimeOnly(libs.logback.classic)
+    implementation(libs.picocli)
+    implementation(libs.protobuf.java)
+    implementation(libs.slf4j.api)
     implementation(project(":api"))
+
+    runtimeOnly(libs.logback.classic)
+
+    testImplementation(libs.logback.classic)
 }
 
 application {

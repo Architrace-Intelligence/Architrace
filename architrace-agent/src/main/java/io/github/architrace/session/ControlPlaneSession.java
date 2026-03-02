@@ -41,6 +41,10 @@ public class ControlPlaneSession {
     return outbound.take();
   }
 
+  public AgentRegisterRequestedEvent pollOutbound(long timeoutMs) throws InterruptedException {
+    return outbound.poll(timeoutMs);
+  }
+
   public void handleComplete() {
     completedCallback.run();
   }

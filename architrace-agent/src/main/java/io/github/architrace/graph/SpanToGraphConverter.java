@@ -18,7 +18,7 @@ public class SpanToGraphConverter {
     Map<String, GraphNode> nodes = new LinkedHashMap<>();
     Map<String, Long> edges = new LinkedHashMap<>();
 
-    request.getResourceSpansList().forEach(resourceSpans -> {
+    request.getResourceSpansList().forEach(resourceSpans ->
       resourceSpans.getScopeSpansList().forEach(scopeSpans -> {
         scopeSpans.getSpansList().forEach(span -> {
           String serviceName = resourceSpans.getResource().getAttributesList().stream()
@@ -39,8 +39,8 @@ public class SpanToGraphConverter {
           String edgeKey = sourceNodeId + "->" + targetNodeId;
           edges.merge(edgeKey, 1L, Long::sum);
         });
-      });
-    });
+      })
+    );
 
     GraphBatch.Builder batch =
         GraphBatch.newBuilder()
@@ -62,4 +62,3 @@ public class SpanToGraphConverter {
     return batch.build();
   }
 }
-

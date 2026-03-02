@@ -6,6 +6,7 @@ package io.github.architrace.outbound;
 
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class OutboundDispatcher {
 
@@ -28,7 +29,7 @@ public class OutboundDispatcher {
   private void put(AgentRegisterRequestedEvent msg) {
     try {
       queue.put(msg);
-    } catch (InterruptedException e) {
+    } catch (InterruptedException _) {
       Thread.currentThread().interrupt();
     }
   }
@@ -36,11 +37,17 @@ public class OutboundDispatcher {
   private void dropOldestAndPutNew(AgentRegisterRequestedEvent msg) {
     if (!queue.offer(msg)) {
       queue.poll();
-      queue.offer(msg);
+      if (!queue.offer(msg)) {
+        // Queue was filled concurrently; message is dropped by overflow policy.
+      }
     }
   }
 
   public AgentRegisterRequestedEvent take() throws InterruptedException {
     return queue.take();
+  }
+
+  public AgentRegisterRequestedEvent poll(long timeoutMs) throws InterruptedException {
+    return queue.poll(timeoutMs, TimeUnit.MILLISECONDS);
   }
 }

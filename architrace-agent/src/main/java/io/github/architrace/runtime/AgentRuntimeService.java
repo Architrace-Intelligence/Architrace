@@ -14,7 +14,6 @@ import io.github.architrace.graph.GraphAggregator;
 import io.github.architrace.graph.SpanToGraphConverter;
 import io.github.architrace.otlp.OtlpTraceReceiverServer;
 import io.github.architrace.otlp.OtlpTraceServiceImpl;
-
 import java.nio.file.Path;
 import java.util.concurrent.StructuredTaskScope;
 
@@ -23,7 +22,7 @@ public final class AgentRuntimeService {
   private final AgentConfigLoader configLoader;
   private final ControlPlaneBootstrapService bootstrapService;
 
-  private volatile ControlPlaneLifecycle activeLifecycle;
+  private ControlPlaneLifecycle activeLifecycle;
 
   @Inject
   public AgentRuntimeService(AgentConfigLoader configLoader, ControlPlaneBootstrapService bootstrapService) {
@@ -31,7 +30,7 @@ public final class AgentRuntimeService {
     this.bootstrapService = bootstrapService;
   }
 
-  public void run(Path configPath) throws Exception {
+  public void run(Path configPath) throws InterruptedException {
     var config = configLoader.load(configPath);
     try (var scope = StructuredTaskScope.open(StructuredTaskScope.Joiner.awaitAllSuccessfulOrThrow())) {
       scope.fork(() -> runReceiver(config));
@@ -40,9 +39,17 @@ public final class AgentRuntimeService {
     }
   }
 
-  private Void runReceiver(AgentConfig config) throws Exception {
+  private synchronized ControlPlaneLifecycle activeLifecycle() {
+    return activeLifecycle;
+  }
+
+  private synchronized void setActiveLifecycle(ControlPlaneLifecycle lifecycle) {
+    this.activeLifecycle = lifecycle;
+  }
+
+  private Void runReceiver(AgentConfig config) throws InterruptedException {
     var service = new OtlpTraceServiceImpl(config.agent().name(), new SpanToGraphConverter(), new GraphAggregator(),
-        new ControlPlanePublisher(() -> activeLifecycle));
+        new ControlPlanePublisher(this::activeLifecycle));
 
     var receiver = new OtlpTraceReceiverServer(config.otlpReceiverPort(), service);
 
@@ -57,31 +64,42 @@ public final class AgentRuntimeService {
     return null;
   }
 
-  private Void runControlPlaneSupervisor(AgentConfig config) throws Exception {
+  private Void runControlPlaneSupervisor(AgentConfig config) {
     while (!Thread.currentThread().isInterrupted()) {
-      ControlPlaneLifecycle lifecycle = null;
-      try {
-        lifecycle = bootstrapService.bootstrap(config);
-        activeLifecycle = lifecycle;
-        lifecycle.run();
-      } catch (Exception ignored) {
-        Thread.currentThread().interrupt();
-        break;
-      } finally {
-        activeLifecycle = null;
-        if (lifecycle != null) {
-          lifecycle.close();
-        }
-      }
-      try {
-        Thread.sleep(config.controlPlaneRetrySeconds() * 1000L);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        break;
+      if (!runControlPlaneSession(config)) {
+        return null;
       }
     }
 
     return null;
   }
 
+  private boolean runControlPlaneSession(AgentConfig config) {
+    ControlPlaneLifecycle lifecycle = null;
+    try {
+      lifecycle = bootstrapService.bootstrap(config);
+      setActiveLifecycle(lifecycle);
+      lifecycle.run();
+    } catch (RuntimeException _) {
+      Thread.currentThread().interrupt();
+      return false;
+    } finally {
+      setActiveLifecycle(null);
+      if (lifecycle != null) {
+        lifecycle.close();
+      }
+    }
+
+    return sleepBeforeRetry(config.controlPlaneRetrySeconds());
+  }
+
+  private boolean sleepBeforeRetry(Long retrySeconds) {
+    try {
+      Thread.sleep(retrySeconds * 1000L);
+      return true;
+    } catch (InterruptedException _) {
+      Thread.currentThread().interrupt();
+      return false;
+    }
+  }
 }

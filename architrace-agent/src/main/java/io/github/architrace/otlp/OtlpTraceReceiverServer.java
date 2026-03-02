@@ -43,10 +43,10 @@ public class OtlpTraceReceiverServer implements AutoCloseable {
   public void await() throws InterruptedException {
     try {
       server.awaitTermination();
-    } catch (InterruptedException e) {
+    } catch (InterruptedException _) {
       Thread.currentThread().interrupt();
       close();
-      throw e;
+      throw new InterruptedException("Interrupted while waiting for OTLP receiver termination.");
     }
   }
 
@@ -57,7 +57,7 @@ public class OtlpTraceReceiverServer implements AutoCloseable {
       if (!server.awaitTermination(3, TimeUnit.SECONDS)) {
         server.shutdownNow();
       }
-    } catch (InterruptedException e) {
+    } catch (InterruptedException _) {
       Thread.currentThread().interrupt();
       server.shutdownNow();
     }

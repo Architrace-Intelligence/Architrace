@@ -38,13 +38,5 @@ public class DryRunCommand implements Runnable {
     }
 
     log.info("Validating config has started.");
-//    log.info(
-//        "Config validation passed. environment='{}', clusterId='{}', domainId='{}', namespace='{}', agent.name='{}', control.plane-bootstrap.server='{}'",
-//        config.environment(),
-//        config.clusterId(),
-//        config.domainId(),
-//        config.namespace(),
-//        config.agentName(),
-//        config.controlPlaneServer());
   }
 }

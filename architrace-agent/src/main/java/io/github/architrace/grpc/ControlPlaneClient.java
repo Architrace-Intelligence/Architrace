@@ -34,9 +34,8 @@ public class ControlPlaneClient implements TransportClient {
     channel.shutdownNow();
     try {
       channel.awaitTermination(2, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
+    } catch (InterruptedException _) {
       Thread.currentThread().interrupt();
     }
   }
 }
-

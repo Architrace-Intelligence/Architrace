@@ -4,7 +4,6 @@
  */
 package io.github.architrace.controlplane;
 
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.architrace.grpc.proto.AgentRegister;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
@@ -14,10 +13,6 @@ import java.util.Objects;
 @Singleton
 public class RegistrationService {
 
-  @Inject
-  public RegistrationService() {
-  }
-
   public void sendRegister(String agentName, StreamObserver<AgentRegisterRequestedEvent> observer) {
     Objects.requireNonNull(observer, "observer");
     observer.onNext(
@@ -26,4 +21,3 @@ public class RegistrationService {
             .build());
   }
 }
-

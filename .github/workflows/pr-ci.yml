@@ -5,14 +5,12 @@ on:
     branches:
       - "**"
 
-permissions:
-  contents: read
-  security-events: write
-
 jobs:
   api-ci:
     name: API PR CI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,7 +22,7 @@ jobs:
           java-version: "25"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       - name: Spotless check (api)
         run: ./gradlew :api:spotlessCheck --stacktrace
@@ -62,7 +60,7 @@ jobs:
 
       - name: Set up Snyk CLI
         if: ${{ secrets.SNYK_TOKEN != '' }}
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
 
       - name: Snyk test (api)
         if: ${{ secrets.SNYK_TOKEN != '' }}
@@ -73,6 +71,8 @@ jobs:
   control-plane-ci:
     name: Control Plane PR CI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,7 +84,7 @@ jobs:
           java-version: "25"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       - name: Spotless check (control-plane)
         run: ./gradlew :control-plane:spotlessCheck --stacktrace
@@ -122,7 +122,7 @@ jobs:
 
       - name: Set up Snyk CLI
         if: ${{ secrets.SNYK_TOKEN != '' }}
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
 
       - name: Snyk test (control-plane)
         if: ${{ secrets.SNYK_TOKEN != '' }}
@@ -133,6 +133,8 @@ jobs:
   all-modules-ci:
     name: All Modules PR CI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -144,7 +146,7 @@ jobs:
           java-version: "25"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       - name: Spotless check (all modules)
         run: ./gradlew spotlessCheck --stacktrace
@@ -184,7 +186,7 @@ jobs:
 
       - name: Set up Snyk CLI
         if: ${{ secrets.SNYK_TOKEN != '' }}
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
 
       - name: Snyk test (all modules)
         if: ${{ secrets.SNYK_TOKEN != '' }}

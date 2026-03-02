@@ -19,18 +19,22 @@ repositories {
 }
 
 dependencies {
+    annotationProcessor(libs.spring.boot.configuration.processor)
+
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.grpc.services)
+    implementation(project(":api"))
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.grpc.spring.boot.starter)
+
     runtimeOnly(libs.postgresql)
-    annotationProcessor(libs.spring.boot.configuration.processor)
+
     testImplementation(libs.spring.boot.starter.actuator.test)
     testImplementation(libs.spring.boot.starter.webmvc.test)
     testImplementation(libs.spring.grpc.test)
+
     testRuntimeOnly(libs.junit.platform.launcher)
-    implementation(project(":api"))
 }
 
 dependencyManagement {
