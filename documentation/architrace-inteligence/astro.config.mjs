@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://architrace-intelligence.github.io',
-  base: '/Architrace-agent',
+  base: '/Architrace',
   integrations: [
     starlight({
       title: 'Architrace Intelligence',
