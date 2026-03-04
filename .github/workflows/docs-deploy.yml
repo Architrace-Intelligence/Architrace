@@ -30,16 +30,11 @@ jobs:
           cache: npm
           cache-dependency-path: documentation/architrace-inteligence/package-lock.json
 
-      - name: Configure GitHub Pages (auto-enable)
-        if: ${{ secrets.PAGES_DEPLOY_TOKEN != '' }}
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
-          token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
-
-      - name: Configure GitHub Pages
-        if: ${{ secrets.PAGES_DEPLOY_TOKEN == '' }}
-        uses: actions/configure-pages@v5
+          token: ${{ secrets.PAGES_DEPLOY_TOKEN || github.token }}
 
       - name: Install dependencies
         working-directory: documentation/architrace-inteligence
@@ -56,6 +51,7 @@ jobs:
 
   deploy:
     name: Deploy Docs
+    if: github.ref_name == 'main' || github.ref_name == 'master'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
