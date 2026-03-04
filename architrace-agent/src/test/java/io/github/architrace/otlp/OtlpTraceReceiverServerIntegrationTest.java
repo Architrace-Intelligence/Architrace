@@ -9,7 +9,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import io.github.architrace.graph.ControlPlanePublisher;
-import io.github.architrace.graph.GraphAggregator;
+import io.github.architrace.model.GraphAggregator;
 import io.github.architrace.graph.SpanToGraphConverter;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.ManagedChannel;

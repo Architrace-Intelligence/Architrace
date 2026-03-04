@@ -1,0 +1,41 @@
+---
+title: Architrace Intelligence
+description: Runtime architecture intelligence for distributed systems.
+template: splash
+hero:
+  tagline: Ingest OTLP traces, build service graphs, and stream topology to a control plane.
+  actions:
+    - text: Getting Started
+      link: /getting-started/
+      icon: right-arrow
+    - text: Architecture
+      link: /architecture/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What Architrace does
+
+Architrace converts runtime telemetry into architecture intelligence.
+
+1. Receives traces from OpenTelemetry collectors on OTLP gRPC.
+2. Converts spans into graph nodes and edges.
+3. Streams graph batches to a control-plane over bidirectional gRPC.
+4. Applies control-plane configuration updates to active agents.
+
+<CardGrid stagger>
+  <Card title="Fast Start" icon="rocket">
+    Build and run the stack locally with the step-by-step guide.
+  </Card>
+  <Card title="Architecture" icon="seti:graphviz">
+    Understand the runtime flow between telemetry, agent, and control-plane.
+  </Card>
+  <Card title="Operations" icon="setting">
+    Use CLI commands and YAML configuration to run agents in different environments.
+  </Card>
+  <Card title="Contracts" icon="document">
+    Reference the protobuf contract used by both agent and control-plane.
+  </Card>
+</CardGrid>

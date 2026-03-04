@@ -7,6 +7,9 @@ services:
     ports:
       - "8085:8085"
       - "9090:9090"
+      - "5005:5005"
+    environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Djdk.attach.allowAttachSelf=true
 
   agent:
     build:
@@ -15,8 +18,11 @@ services:
     container_name: agent
     ports:
       - "4319:4319"
+      - "5006:5005"
     depends_on:
       - control-plane
+    environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Djdk.attach.allowAttachSelf=true
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
