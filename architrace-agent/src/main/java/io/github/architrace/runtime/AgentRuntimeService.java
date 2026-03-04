@@ -10,7 +10,7 @@ import io.github.architrace.controlplane.ControlPlaneLifecycle;
 import io.github.architrace.core.config.AgentConfig;
 import io.github.architrace.core.config.AgentConfigLoader;
 import io.github.architrace.graph.ControlPlanePublisher;
-import io.github.architrace.graph.GraphAggregator;
+import io.github.architrace.model.GraphAggregator;
 import io.github.architrace.graph.SpanToGraphConverter;
 import io.github.architrace.otlp.OtlpTraceReceiverServer;
 import io.github.architrace.otlp.OtlpTraceServiceImpl;
@@ -48,7 +48,10 @@ public final class AgentRuntimeService {
   }
 
   private Void runReceiver(AgentConfig config) throws InterruptedException {
-    var service = new OtlpTraceServiceImpl(config.agent().name(), new SpanToGraphConverter(), new GraphAggregator(),
+    var service = new OtlpTraceServiceImpl(
+        config.agent().name(),
+        new SpanToGraphConverter(),
+        new GraphAggregator(),
         new ControlPlanePublisher(this::activeLifecycle));
 
     var receiver = new OtlpTraceReceiverServer(config.otlpReceiverPort(), service);

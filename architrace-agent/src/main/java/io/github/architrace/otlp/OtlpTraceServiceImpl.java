@@ -5,12 +5,14 @@
 package io.github.architrace.otlp;
 
 import io.github.architrace.graph.ControlPlanePublisher;
-import io.github.architrace.graph.GraphAggregator;
+import io.github.architrace.model.GraphAggregator;
 import io.github.architrace.graph.SpanToGraphConverter;
+import io.github.architrace.model.InternalSpan;
 import io.grpc.stub.StreamObserver;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse;
 import io.opentelemetry.proto.collector.trace.v1.TraceServiceGrpc;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,8 +49,8 @@ public class OtlpTraceServiceImpl extends TraceServiceGrpc.TraceServiceImplBase 
       }
     }
 
-    aggregator.add(converter.convert(request, agentName));
-    aggregator.drain().ifPresent(publisher::publish);
+    List<InternalSpan> extract = converter.extract(request);
+//    aggregator.drain().ifPresent(publisher::publish);
 
     log.info("OTLP export received on receiver: {} span(s).", spanCount);
     responseObserver.onNext(ExportTraceServiceResponse.newBuilder().build());

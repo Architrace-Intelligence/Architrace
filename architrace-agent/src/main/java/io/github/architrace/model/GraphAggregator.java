@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmitry Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
-package io.github.architrace.graph;
+package io.github.architrace.model;
 
 import io.github.architrace.grpc.proto.GraphBatch;
 import io.github.architrace.grpc.proto.GraphEdge;
@@ -54,6 +54,7 @@ public class GraphAggregator {
 
     nodes.clear();
     edgeCallCounts.clear();
+
     return Optional.of(batch.build());
   }
 }

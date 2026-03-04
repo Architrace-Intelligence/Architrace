@@ -6,7 +6,7 @@ package io.github.architrace.otlp;
 
 
 import io.github.architrace.graph.ControlPlanePublisher;
-import io.github.architrace.graph.GraphAggregator;
+import io.github.architrace.model.GraphAggregator;
 import io.github.architrace.graph.SpanToGraphConverter;
 import io.github.architrace.testsupport.TestDataProvider;
 import org.junit.jupiter.api.Test;
