@@ -13,6 +13,7 @@ import io.github.architrace.core.config.AgentConfigLoader;
 import io.github.architrace.grpc.TransportClient;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.service.runtime.AgentRuntimeService;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
 import java.lang.reflect.InvocationTargetException;

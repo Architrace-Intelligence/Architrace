@@ -1,4 +1,5 @@
-from flask import Flask
+﻿from flask import Flask
+import os
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
@@ -8,9 +9,17 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExport
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
 service_name = "service-c"
+span_metadata = {
+    "environment": os.getenv("ENVIRONMENT", "test"),
+    "domainId": os.getenv("DOMAIN_ID", "architrace"),
+    "serviceName": service_name,
+    "cluster": os.getenv("CLUSTER", "otel-test-cluster"),
+    "namespace": os.getenv("NAMESPACE", "otel-test-app"),
+}
 
 resource = Resource(attributes={
-    "service.name": service_name
+    "service.name": service_name,
+    **span_metadata,
 })
 
 trace.set_tracer_provider(TracerProvider(resource=resource))
@@ -29,6 +38,10 @@ FlaskInstrumentor().instrument_app(app)
 
 @app.route("/")
 def hello():
+    current_span = trace.get_current_span()
+    for key, value in span_metadata.items():
+        current_span.set_attribute(key, value)
+
     return "C"
 
 if __name__ == "__main__":

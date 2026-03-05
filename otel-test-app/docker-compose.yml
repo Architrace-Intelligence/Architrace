@@ -1,28 +1,28 @@
 services:
-  control-plane:
-    build:
-      context: ..
-      dockerfile: otel-test-app/Dockerfile.control-plane
-    container_name: control-plane
-    ports:
-      - "8085:8085"
-      - "9090:9090"
-      - "5005:5005"
-    environment:
-      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Djdk.attach.allowAttachSelf=true
+#  control-plane:
+#    build:
+#      context: ..
+#      dockerfile: otel-test-app/Dockerfile.control-plane
+#    container_name: control-plane
+#    ports:
+#      - "8085:8085"
+#      - "9090:9090"
+#      - "5005:5005"
+#    environment:
+#      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Djdk.attach.allowAttachSelf=true
 
-  agent:
-    build:
-      context: ..
-      dockerfile: otel-test-app/Dockerfile.agent
-    container_name: agent
-    ports:
-      - "4319:4319"
-      - "5006:5005"
-    depends_on:
-      - control-plane
-    environment:
-      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Djdk.attach.allowAttachSelf=true
+#  agent:
+#    build:
+#      context: ..
+#      dockerfile: otel-test-app/Dockerfile.agent
+#    container_name: agent
+#    ports:
+#      - "4319:4319"
+#      - "5006:5005"
+#    depends_on:
+#      - control-plane
+#    environment:
+#      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Djdk.attach.allowAttachSelf=true
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
@@ -32,8 +32,8 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
-    depends_on:
-      - agent
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   service-a:
     build: .

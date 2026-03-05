@@ -6,6 +6,7 @@ package io.github.architrace.grpc;
 
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.otlp.GraphSnapshot;
 import io.grpc.stub.StreamObserver;
 
 public interface TransportClient extends AutoCloseable {
@@ -15,5 +16,7 @@ public interface TransportClient extends AutoCloseable {
 
   @Override
   void close();
+
+  void send(GraphSnapshot snapshot);
 }
 

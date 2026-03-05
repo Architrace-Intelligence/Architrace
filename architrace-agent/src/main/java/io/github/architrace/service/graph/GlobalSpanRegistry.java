@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmitry Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
-package io.github.architrace.graph;
+package io.github.architrace.service.graph;
 
 import io.github.architrace.model.InternalSpan;
 import io.github.architrace.model.TraceSpanKey;
@@ -36,5 +36,9 @@ public class GlobalSpanRegistry {
     var parentKey = new TraceSpanKey(span.traceId(), span.parentSpanId());
 
     return spanIndex.get(parentKey);
+  }
+
+  public ConcurrentMap<TraceSpanKey, InternalSpan> getSpanIndex() {
+    return spanIndex;
   }
 }

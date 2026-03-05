@@ -119,4 +119,8 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
 
     return null;
   }
+
+  public TransportClient getTransportClient() {
+    return transportClient;
+  }
 }

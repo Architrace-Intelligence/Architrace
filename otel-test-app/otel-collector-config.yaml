@@ -8,7 +8,7 @@ receivers:
 
 exporters:
   otlp_grpc/agent:
-    endpoint: agent:4319
+    endpoint: host.docker.internal:4319
     tls:
       insecure: true
 
