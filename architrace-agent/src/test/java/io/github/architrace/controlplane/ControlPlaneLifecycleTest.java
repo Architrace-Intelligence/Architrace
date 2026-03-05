@@ -8,6 +8,7 @@ import io.github.architrace.grpc.TransportClient;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.github.architrace.grpc.proto.GraphBatch;
+import io.github.architrace.otlp.GraphSnapshot;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +103,11 @@ class ControlPlaneLifecycleTest {
     @Override
     public void close() {
       closed.set(true);
+    }
+
+    @Override
+    public void send(GraphSnapshot snapshot) {
+
     }
   }
 }

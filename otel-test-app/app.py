@@ -1,4 +1,4 @@
-from flask import Flask
+﻿from flask import Flask
 import requests
 import os
 
@@ -11,9 +11,17 @@ from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 service_name = "service-a"
+span_metadata = {
+    "environment": os.getenv("ENVIRONMENT", "test"),
+    "domainId": os.getenv("DOMAIN_ID", "architrace"),
+    "serviceName": service_name,
+    "cluster": os.getenv("CLUSTER", "otel-test-cluster"),
+    "namespace": os.getenv("NAMESPACE", "otel-test-app"),
+}
 
 resource = Resource(attributes={
-    "service.name": service_name
+    "service.name": service_name,
+    **span_metadata,
 })
 
 trace.set_tracer_provider(TracerProvider(resource=resource))
@@ -33,8 +41,12 @@ RequestsInstrumentor().instrument()
 
 @app.route("/")
 def call_b():
+    current_span = trace.get_current_span()
+    for key, value in span_metadata.items():
+        current_span.set_attribute(key, value)
+
     response = requests.get("http://service-b:8081/")
-    return f"A → {response.text}"
+    return f"A -> {response.text}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

@@ -16,9 +16,38 @@ public record InternalSpan(
     String clusterId,
     String namespace,
 
-    SpanKind kind
+    SpanKind kind,
+
+    String httpHost,
+    String httpMethod,
+
+    String dbSystem,
+    String dbName,
+
+    String messagingSystem,
+    String messagingDestination
 ) {
   public LogicalServiceId logicalServiceId() {
     return new LogicalServiceId(environment, domainId, serviceName);
+  }
+
+  public boolean isDbSystem(){
+    return dbSystem != null;
+  }
+
+  public boolean isMessaging(){
+    return messagingDestination != null;
+  }
+
+  public boolean isExternalService(){
+    return httpHost != null && kind == SpanKind.CLIENT;
+  }
+
+  public SpanType spanType() {
+    return switch (kind) {
+      case CLIENT, SERVER -> SpanType.SYNC;
+      case PRODUCER, CONSUMER -> SpanType.ASYNC;
+      default -> SpanType.INTERNAL;
+    };
   }
 }

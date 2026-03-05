@@ -17,4 +17,5 @@ public record LogicalServiceId(
   public String toString() {
     return asString();
   }
+
 }

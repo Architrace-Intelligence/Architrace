@@ -6,7 +6,7 @@ package io.github.architrace.cli;
 
 
 import io.github.architrace.core.config.AgentConfigLoader;
-import io.github.architrace.runtime.AgentRuntimeService;
+import io.github.architrace.service.runtime.AgentRuntimeService;
 import java.io.File;
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;

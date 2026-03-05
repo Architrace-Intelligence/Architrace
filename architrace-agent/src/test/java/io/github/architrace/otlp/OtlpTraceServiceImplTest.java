@@ -5,9 +5,7 @@
 package io.github.architrace.otlp;
 
 
-import io.github.architrace.graph.ControlPlanePublisher;
-import io.github.architrace.model.GraphAggregator;
-import io.github.architrace.graph.SpanToGraphConverter;
+import io.github.architrace.service.graph.SpanExtractor;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse;
@@ -24,12 +22,7 @@ class OtlpTraceServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    sut =
-        new OtlpTraceServiceImpl(
-            "test-agent",
-            new SpanToGraphConverter(),
-            new GraphAggregator(),
-            new ControlPlanePublisher(() -> null));
+//    sut = new OtlpTraceServiceImpl(new SpanExtractor());
   }
 
   @Test

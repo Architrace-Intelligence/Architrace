@@ -5,7 +5,7 @@
 package io.github.architrace.cli;
 
 import com.google.inject.Inject;
-import io.github.architrace.runtime.AgentRuntimeService;
+import io.github.architrace.service.runtime.AgentRuntimeService;
 import java.io.File;
 import java.nio.file.Path;
 import org.slf4j.Logger;

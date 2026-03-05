@@ -70,3 +70,23 @@ flowchart LR
 
 3. Health RPC returns unimplemented/default behavior
    - `getAgentHealth` is currently not fully implemented in `AgentService`.
+
+
+           OTLP gRPC
+               │
+               ▼
+      SpanToGraphConverter
+               │
+               ▼
+       SpanProcessorPipeline
+      ┌─────────┼─────────┐
+      ▼         ▼         ▼
+    NodeProcessor SyncDep   AsyncDep
+      │         │         │
+      ▼         ▼         ▼
+    NodeRegistry  EdgeMap   EdgeMap
+    └─────────┬─────────┘
+              ▼
+       GraphSnapshotService
+              ▼
+       ControlPlanePublisher
