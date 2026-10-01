@@ -36,3 +36,16 @@ Agent receives trace exports on port `4319` and forwards graph events to control
 ./gradlew :control-plane:test
 ./gradlew :api:test
 ```
+
+## 6. Change dependencies
+
+Dependency versions are declared in `gradle/libs.versions.toml` and locked per module in
+`gradle.lockfile` (Gradle dependency locking). After adding, removing or bumping a dependency,
+rewrite the lock state and commit the lockfiles together with the change:
+
+```bash
+./gradlew dependencies :api:dependencies :agent:dependencies :control-plane:dependencies --write-locks
+```
+
+Without `--write-locks` the build fails when a resolved version differs from the lockfile, so
+transitive upgrades never slip in unnoticed. Dependabot updates the lockfiles in its PRs.

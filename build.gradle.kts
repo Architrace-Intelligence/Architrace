@@ -20,6 +20,10 @@ allprojects {
     repositories {
         mavenCentral()
     }
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
 }
 
 fun Project.coverageMinimum(counter: String): java.math.BigDecimal =
