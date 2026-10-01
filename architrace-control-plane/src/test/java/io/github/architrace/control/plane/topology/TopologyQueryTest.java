@@ -12,6 +12,7 @@ import static io.github.architrace.control.plane.topology.TestTopology.service;
 import static io.github.architrace.control.plane.topology.TestTopology.snapshot;
 import static io.github.architrace.control.plane.topology.TestTopology.topic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
@@ -77,6 +78,90 @@ class TopologyQueryTest {
         .containsExactlyInAnyOrder("2.8.0", "2.8.1");
     assertThat(graph.edges()).hasSize(2);
     assertThat(registry.get("architrace.topology.query").timer().count()).isEqualTo(1);
+  }
+
+  @Test
+  void currentGraphOfAScopeWithoutAgentsIsNotFound() {
+    register("a", SCOPE, NOW);
+
+    assertThatExceptionOfType(ScopeNotFoundException.class)
+        .isThrownBy(() -> query.currentGraph(DEV, NOW))
+        .withMessageContaining("webshop/DEV/k8s-dev");
+  }
+
+  @Test
+  void servicesViewTheCurrentGraphThroughItsServiceNodes() {
+    Agent a = register("a", SCOPE, NOW);
+    TopologyNode orders = service("orders", "2.8.1", "orders");
+    TopologyNode db = database("orders");
+    snapshots.save(
+        snapshot(
+            a.id(),
+            NOW.minusSeconds(60),
+            List.of(orders, db),
+            List.of(edge(orders, db, EdgeKind.SYNC, 100))));
+
+    List<NodeView> services = query.services(SCOPE, NOW);
+
+    assertThat(services)
+        .singleElement()
+        .satisfies(
+            view -> {
+              assertThat(view.node()).isEqualTo(orders);
+              assertThat(view.inbound()).isEmpty();
+              assertThat(view.outbound()).extracting(Dependency::node).containsExactly(db);
+            });
+    assertThat(registry.get("architrace.topology.query").timer().count()).isEqualTo(1);
+  }
+
+  @Test
+  void snapshotsPageTheHistoryOfAKnownScopeNewestFirst() {
+    Agent a = register("a", SCOPE, NOW);
+    Agent b = register("b", SCOPE, NOW);
+    Agent elsewhere = register("c", DEV, NOW);
+    SnapshotId oldest =
+        snapshots.save(
+            snapshot(
+                a.id(),
+                NOW.minusSeconds(180),
+                List.of(service("orders", "1.0", "orders")),
+                List.of()));
+    SnapshotId middle =
+        snapshots.save(snapshot(b.id(), NOW.minusSeconds(120), List.of(), List.of()));
+    SnapshotId newest =
+        snapshots.save(snapshot(a.id(), NOW.minusSeconds(60), List.of(), List.of()));
+    snapshots.save(snapshot(elsewhere.id(), DEV, NOW.minusSeconds(60), List.of(), List.of()));
+
+    Page<SnapshotSummary> firstPage =
+        query.snapshots(SnapshotFilter.all(SCOPE), new PageRequest(0, 2));
+    Page<SnapshotSummary> secondPage =
+        query.snapshots(SnapshotFilter.all(SCOPE), new PageRequest(1, 2));
+    Page<SnapshotSummary> bounded =
+        query.snapshots(
+            new SnapshotFilter(
+                SCOPE, Optional.of(NOW.minusSeconds(150)), Optional.of(NOW.minusSeconds(90))),
+            new PageRequest(0, 50));
+
+    assertThat(firstPage.items()).extracting(SnapshotSummary::id).containsExactly(newest, middle);
+    assertThat(firstPage.totalItems()).isEqualTo(3);
+    assertThat(firstPage.totalPages()).isEqualTo(2);
+    assertThat(secondPage.items()).extracting(SnapshotSummary::id).containsExactly(oldest);
+    assertThat(secondPage.items().get(0).nodeCount()).isEqualTo(1);
+    assertThat(bounded.items()).extracting(SnapshotSummary::id).containsExactly(middle);
+    assertThatExceptionOfType(ScopeNotFoundException.class)
+        .isThrownBy(() -> query.snapshots(SnapshotFilter.all(ACCOUNTING), new PageRequest(0, 10)));
+  }
+
+  @Test
+  void snapshotIsFoundByIdOrReportedMissing() {
+    Agent a = register("a", SCOPE, NOW);
+    Snapshot stored = snapshot(a.id(), NOW, List.of(service("orders", "1.0", "orders")), List.of());
+    SnapshotId id = snapshots.save(stored);
+
+    assertThat(query.snapshot(id)).isEqualTo(stored);
+    assertThatExceptionOfType(SnapshotNotFoundException.class)
+        .isThrownBy(() -> query.snapshot(new SnapshotId(99)))
+        .withMessageContaining("99");
   }
 
   @Test

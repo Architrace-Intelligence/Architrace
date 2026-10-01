@@ -5,6 +5,7 @@
 package io.github.architrace.control.plane.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
@@ -126,5 +127,77 @@ class TopologyModelTest {
         .isThrownBy(() -> new ScopeSummary(null, 0, 0, 0, 0, 0, Optional.empty()));
     assertThatNullPointerException()
         .isThrownBy(() -> new ScopeSummary(new Scope("p", "PROD", "c"), 0, 0, 0, 0, 0, null));
+  }
+
+  @Test
+  void pageRequestValidatesItsBounds() {
+    assertThatExceptionOfType(InvalidQueryException.class)
+        .isThrownBy(() -> new PageRequest(-1, 10))
+        .withMessageContaining("page");
+    assertThatExceptionOfType(InvalidQueryException.class)
+        .isThrownBy(() -> new PageRequest(0, 0))
+        .withMessageContaining("size");
+    assertThatExceptionOfType(InvalidQueryException.class)
+        .isThrownBy(() -> new PageRequest(0, PageRequest.MAX_SIZE + 1));
+    assertThat(new PageRequest(3, 20).offset()).isEqualTo(60);
+  }
+
+  @Test
+  void snapshotFilterRejectsAnInvertedRangeAndMatchesWindowEndsInclusively() {
+    Scope scope = new Scope("p", "PROD", "c");
+    assertThatExceptionOfType(InvalidQueryException.class)
+        .isThrownBy(() -> new SnapshotFilter(scope, Optional.of(T0), Optional.of(T0.minusSeconds(1))))
+        .withMessageContaining("from");
+    assertThatNullPointerException()
+        .isThrownBy(() -> new SnapshotFilter(scope, null, Optional.empty()));
+
+    SnapshotFilter bounded =
+        new SnapshotFilter(scope, Optional.of(T0), Optional.of(T0.plusSeconds(60)));
+    SnapshotFilter from = new SnapshotFilter(scope, Optional.of(T0), Optional.empty());
+    SnapshotFilter to = new SnapshotFilter(scope, Optional.empty(), Optional.of(T0));
+
+    assertThat(bounded.includes(T0)).isTrue();
+    assertThat(bounded.includes(T0.plusSeconds(60))).isTrue();
+    assertThat(bounded.includes(T0.minusSeconds(1))).isFalse();
+    assertThat(bounded.includes(T0.plusSeconds(61))).isFalse();
+    assertThat(from.includes(T0.minusSeconds(1))).isFalse();
+    assertThat(from.includes(T0.plusSeconds(3600))).isTrue();
+    assertThat(to.includes(T0.plusSeconds(1))).isFalse();
+    assertThat(SnapshotFilter.all(scope).includes(Instant.EPOCH)).isTrue();
+  }
+
+  @Test
+  void pageCountsItsPagesAndCopiesItsItems() {
+    List<String> items = new ArrayList<>(List.of("a"));
+    Page<String> page = new Page<>(items, new PageRequest(0, 2), 5);
+    items.clear();
+
+    assertThat(page.items()).containsExactly("a");
+    assertThat(page.totalPages()).isEqualTo(3);
+    assertThat(new Page<>(List.of(), new PageRequest(0, 2), 0).totalPages()).isZero();
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> new Page<>(List.of(), new PageRequest(0, 2), -1));
+    assertThatNullPointerException().isThrownBy(() -> new Page<>(List.of(), null, 0));
+  }
+
+  @Test
+  void viewsAndSummariesRejectNulls() {
+    TopologyNode node = new TopologyNode("service:a", NodeType.SERVICE, "a", NodeAttributes.none());
+    TopologyEdge edge = new TopologyEdge("a", "b", EdgeKind.SYNC, new EdgeMetrics(0, 0, 0, 0, 0, 0));
+    assertThatNullPointerException().isThrownBy(() -> new NodeView(null, List.of(), List.of()));
+    assertThatNullPointerException().isThrownBy(() -> new Dependency(null, edge));
+    assertThatNullPointerException().isThrownBy(() -> new Dependency(node, null));
+    assertThatNullPointerException()
+        .isThrownBy(
+            () ->
+                new SnapshotSummary(
+                    null,
+                    new AgentId(1),
+                    new Scope("p", "PROD", "c"),
+                    new TimeWindow(T0, T0.plusSeconds(60)),
+                    T0,
+                    0,
+                    0));
+    assertThat(new NodeView(node, List.of(), List.of()).inbound()).isEmpty();
   }
 }

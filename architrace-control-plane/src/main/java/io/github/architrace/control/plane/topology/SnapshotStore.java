@@ -16,5 +16,7 @@ public interface SnapshotStore {
 
   List<Snapshot> latestPerAgent(Scope scope, Instant at);
 
+  Page<SnapshotSummary> list(SnapshotFilter filter, PageRequest page);
+
   int deleteOlderThan(Instant cutoff, int limit);
 }

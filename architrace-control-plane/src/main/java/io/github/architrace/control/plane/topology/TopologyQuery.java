@@ -45,8 +45,22 @@ public class TopologyQuery {
   }
 
   public TopologyGraph currentGraph(Scope scope, Instant at) {
+    requireKnown(scope);
     return metrics.recordGraphQuery(
         () -> GraphMerger.merge(scope, at, snapshots.latestPerAgent(scope, at)));
+  }
+
+  public List<NodeView> services(Scope scope, Instant at) {
+    return NodeViews.of(currentGraph(scope, at), NodeType.SERVICE);
+  }
+
+  public Page<SnapshotSummary> snapshots(SnapshotFilter filter, PageRequest page) {
+    requireKnown(filter.scope());
+    return snapshots.list(filter, page);
+  }
+
+  public Snapshot snapshot(SnapshotId id) {
+    return snapshots.find(id).orElseThrow(() -> new SnapshotNotFoundException(id));
   }
 
   public List<ScopeSummary> scopes() {
@@ -67,6 +81,12 @@ public class TopologyQuery {
         .sorted(AGENT_ORDER)
         .map(agent -> new AgentStatus(agent, liveness.isLive(agent, now)))
         .toList();
+  }
+
+  private void requireKnown(Scope scope) {
+    if (agents.all().stream().noneMatch(agent -> agent.scope().equals(scope))) {
+      throw new ScopeNotFoundException(scope);
+    }
   }
 
   private ScopeSummary summarise(Scope scope, List<Agent> scopeAgents, Instant now) {

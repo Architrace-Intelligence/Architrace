@@ -10,6 +10,8 @@ import io.github.architrace.control.plane.topology.EdgeMetrics;
 import io.github.architrace.control.plane.topology.NodeType;
 import io.github.architrace.control.plane.topology.Scope;
 import io.github.architrace.control.plane.topology.Snapshot;
+import io.github.architrace.control.plane.topology.SnapshotId;
+import io.github.architrace.control.plane.topology.SnapshotSummary;
 import io.github.architrace.control.plane.topology.TimeWindow;
 import io.github.architrace.control.plane.topology.TopologyEdge;
 import io.github.architrace.control.plane.topology.TopologyNode;
@@ -67,6 +69,17 @@ final class SnapshotRows {
         row.receivedAt(),
         nodes,
         edges);
+  }
+
+  SnapshotSummary toSummary(SnapshotSummaryRow row) {
+    return new SnapshotSummary(
+        new SnapshotId(row.id()),
+        new AgentId(row.agentId()),
+        new Scope(row.project(), row.environment(), row.cluster()),
+        new TimeWindow(row.windowStart(), row.windowEnd()),
+        row.receivedAt(),
+        row.nodeCount(),
+        row.edgeCount());
   }
 
   private SnapshotNodeRow toRow(TopologyNode node) {

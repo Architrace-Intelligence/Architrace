@@ -29,6 +29,45 @@ interface SnapshotRepository extends CrudRepository<SnapshotRow, Long> {
       @Param("cluster") String cluster,
       @Param("at") Instant at);
 
+  @Query(
+      """
+      select id, agent_id, project, environment, cluster, window_start, window_end,
+             received_at, node_count, edge_count
+      from snapshot
+      where project = :project
+        and environment = :environment
+        and cluster = :cluster
+        and (cast(:from as timestamptz) is null or window_end >= :from)
+        and (cast(:to as timestamptz) is null or window_end <= :to)
+      order by window_end desc, id desc
+      limit :limit offset :offset
+      """)
+  List<SnapshotSummaryRow> findSummaries(
+      @Param("project") String project,
+      @Param("environment") String environment,
+      @Param("cluster") String cluster,
+      @Param("from") Instant from,
+      @Param("to") Instant to,
+      @Param("limit") int limit,
+      @Param("offset") long offset);
+
+  @Query(
+      """
+      select count(*)
+      from snapshot
+      where project = :project
+        and environment = :environment
+        and cluster = :cluster
+        and (cast(:from as timestamptz) is null or window_end >= :from)
+        and (cast(:to as timestamptz) is null or window_end <= :to)
+      """)
+  long countSummaries(
+      @Param("project") String project,
+      @Param("environment") String environment,
+      @Param("cluster") String cluster,
+      @Param("from") Instant from,
+      @Param("to") Instant to);
+
   @Modifying
   @Query(
       """

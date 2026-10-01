@@ -54,6 +54,20 @@ public final class InMemorySnapshotStore implements SnapshotStore {
   }
 
   @Override
+  public Page<SnapshotSummary> list(SnapshotFilter filter, PageRequest page) {
+    List<SnapshotSummary> matching =
+        snapshots.entrySet().stream()
+            .filter(e -> e.getValue().scope().equals(filter.scope()))
+            .filter(e -> filter.includes(e.getValue().window().end()))
+            .sorted(BY_WINDOW_END_THEN_ID.reversed())
+            .map(e -> summary(e.getKey(), e.getValue()))
+            .toList();
+    List<SnapshotSummary> items =
+        matching.stream().skip(page.offset()).limit(page.size()).toList();
+    return new Page<>(items, page, matching.size());
+  }
+
+  @Override
   public int deleteOlderThan(Instant cutoff, int limit) {
     List<Long> expired =
         snapshots.entrySet().stream()
@@ -68,5 +82,16 @@ public final class InMemorySnapshotStore implements SnapshotStore {
 
   public List<Snapshot> all() {
     return List.copyOf(snapshots.values());
+  }
+
+  private static SnapshotSummary summary(long id, Snapshot snapshot) {
+    return new SnapshotSummary(
+        new SnapshotId(id),
+        snapshot.agentId(),
+        snapshot.scope(),
+        snapshot.window(),
+        snapshot.receivedAt(),
+        snapshot.nodes().size(),
+        snapshot.edges().size());
   }
 }

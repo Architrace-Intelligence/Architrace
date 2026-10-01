@@ -50,7 +50,7 @@ Build runnable agent fat jar:
 - **OTLP Ingestion** - Receives traces on OTLP gRPC (`:4319`)
 - **Graph Transformation** - Converts spans into nodes/edges and graph batches
 - **Control Plane Stream** - Bidirectional gRPC session between agent and control-plane
-- **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract, with Swagger UI at `/swagger-ui`
+- **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract: scopes, agents, the graph and services of a scope at a point in time, snapshot history; Swagger UI at `/swagger-ui`
 - **Structured Concurrency** - Runtime built on Java 25 concurrency primitives
 - **Modular Monorepo** - Separate modules for runtime agent, control-plane, and shared API contracts
 

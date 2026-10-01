@@ -4,10 +4,14 @@
  */
 package io.github.architrace.control.plane.topology.persistence;
 
+import io.github.architrace.control.plane.topology.Page;
+import io.github.architrace.control.plane.topology.PageRequest;
 import io.github.architrace.control.plane.topology.Scope;
 import io.github.architrace.control.plane.topology.Snapshot;
+import io.github.architrace.control.plane.topology.SnapshotFilter;
 import io.github.architrace.control.plane.topology.SnapshotId;
 import io.github.architrace.control.plane.topology.SnapshotStore;
+import io.github.architrace.control.plane.topology.SnapshotSummary;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +49,31 @@ class JdbcSnapshotStore implements SnapshotStore {
         .stream()
         .map(rows::toSnapshot)
         .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<SnapshotSummary> list(SnapshotFilter filter, PageRequest page) {
+    Scope scope = filter.scope();
+    Instant from = filter.from().orElse(null);
+    Instant to = filter.to().orElse(null);
+    List<SnapshotSummary> items =
+        repository
+            .findSummaries(
+                scope.project(),
+                scope.environment(),
+                scope.cluster(),
+                from,
+                to,
+                page.size(),
+                page.offset())
+            .stream()
+            .map(rows::toSummary)
+            .toList();
+    long total =
+        repository.countSummaries(
+            scope.project(), scope.environment(), scope.cluster(), from, to);
+    return new Page<>(items, page, total);
   }
 
   @Override
