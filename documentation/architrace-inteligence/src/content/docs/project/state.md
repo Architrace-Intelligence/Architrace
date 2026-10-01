@@ -21,16 +21,16 @@ Last updated: **2026-10-01**
 
 ## Decisions
 
-Agreed and recorded (Requirements §7, ADR 0001–0003): PostgreSQL + Liquibase, CodeRabbit,
-maintainer-authored PRs with a zero-approval ruleset, sequential `ARCHI-<n>`, copyright holder.
+Agreed and recorded (Requirements §7, ADR 0001–0004): PostgreSQL + Liquibase, CodeRabbit,
+maintainer-authored PRs with a zero-approval ruleset, React + TypeScript UI, sequential
+`ARCHI-<n>`, copyright holder.
 
-Still open before design starts: **MVP scope** (Requirements §6, question 1) and **UI stack**
-(question 2). Spring Boot repository pinning is decided in the control plane design.
+Still open before design starts: **MVP scope** (Requirements §6, question 1; M0–M7 proposed).
+Spring Boot repository pinning is decided in the control plane design.
 
 ## Next step
 
-1. Get `ARCHI-22-record-decisions` merged. Agree the MVP scope and the UI stack, record
-   them in Requirements §8.
+1. Get `ARCHI-22-record-decisions` merged. Agree the MVP scope, record it in Requirements §8.
 2. Open the design stage: architecture page, first ADRs (storage, UI stack, module layout,
    versioning), feature pages for M0–M7, feature order.
 3. First implementation feature is M0 (engineering platform): repository hygiene, single PR

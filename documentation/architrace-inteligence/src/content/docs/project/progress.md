@@ -33,7 +33,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | CI: security scanning (Snyk, OWASP, CodeQL, …)    | todo  | needs agreement (requirements §5.5)         |
 | CD: main pipeline, release, images                | todo  | needs agreement (requirements §5.2)         |
 | Branch ruleset on `main`                          | todo  | shape agreed in ADR 0003; applied in M0     |
-| ADR folder and first ADRs                         | review | ADR 0001–0003, PR ARCHI-22                 |
+| ADR folder and first ADRs                         | review | ADR 0001–0004, PR #22                      |
 | Architecture document                             | todo  | first version in design stage               |
 | Repository hygiene (templates, stale files)       | todo  | requirements §4.6                           |
 
@@ -52,3 +52,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-01 | Project analysed, requirements and process documents drafted |
 | 2026-10-01 | Automation token issued and verified; documentation moved to the site |
 | 2026-10-01 | Decisions recorded: storage, AI reviewer, review identity, ticket numbering, copyright |
+| 2026-10-01 | UI stack decided: React + TypeScript (ADR 0004) |

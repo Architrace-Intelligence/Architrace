@@ -127,7 +127,9 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   gRPC. Entry point `io.github.architrace.MainApp`, commands `run`, `dry-run`, `version`.
 - Control plane (`architrace-control-plane`): Spring Boot 4 + Spring gRPC. Accepts agent
   streams, answers health, pushes config updates. HTTP `8085`, gRPC `9090`. Persistence:
-  PostgreSQL with Liquibase (ADR 0001).
+  PostgreSQL with Liquibase (ADR 0001). Serves the UI bundle (ADR 0004).
+- UI (planned module): React + TypeScript single-page application, Vite, generated OpenAPI
+  client, bundled into the control plane jar (ADR 0004).
 - API (`architrace-api`): protobuf contract `architrace-agent.proto`
   (`architrace.controlplane.v1`), generated Java in `io.github.architrace.grpc.proto`.
 - Demo stack: `otel-test-app/` (Python Flask services + OTel Collector + docker compose).

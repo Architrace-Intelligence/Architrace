@@ -12,6 +12,7 @@ produces a new record that supersedes the old one.
 | 0001 | [PostgreSQL with Liquibase for the control plane store](./0001-postgresql-liquibase/) | accepted | 2026-10-01 |
 | 0002 | [CodeRabbit as the independent AI reviewer](./0002-coderabbit-ai-review/) | accepted | 2026-10-01 |
 | 0003 | [Maintainer-authored pull requests and the merge gate](./0003-review-identity-and-merge-gate/) | accepted | 2026-10-01 |
+| 0004 | [React and TypeScript single-page UI served by the control plane](./0004-react-typescript-ui/) | accepted | 2026-10-01 |
 
 ## Template
 

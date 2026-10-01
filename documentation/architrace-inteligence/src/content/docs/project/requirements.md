@@ -299,7 +299,7 @@ Answers are recorded in §7 once given; the agreed scope goes to §8.
 
 1. Agree the "in scope" list, or move items (for example, M6 out, or C12 in).
 2. UI stack preference: React + TypeScript SPA served by the control plane (recommended for an
-   interactive graph), or server-side rendering kept inside Spring Boot.
+   interactive graph), or server-side rendering kept inside Spring Boot. **Decided: React + TypeScript.**
 3. Storage: PostgreSQL agreed? Migration tool: Flyway (recommended) or Liquibase. **Decided: PostgreSQL + Liquibase.**
 4. AI reviewer choice (§5.4) and review identity option ([GitHub setup §4](../github-access/#4-the-review-identity-problem)). **Decided: CodeRabbit; option A.**
 5. Ticket numbering: where do `ARCHI-<n>` numbers come from, and the next free number. **Decided: sequential.**
@@ -313,14 +313,15 @@ Recorded as the maintainer answers the open questions in §6.
 
 | # | Question | Decision | Date | Record |
 |---|----------|----------|------|--------|
+| 2 | UI stack | React + TypeScript single-page application bundled into the control plane artifact | 2026-10-01 | [ADR 0004](../adr/0004-react-typescript-ui/) |
 | 3 | Storage and migrations | PostgreSQL with Liquibase | 2026-10-01 | [ADR 0001](../adr/0001-postgresql-liquibase/) |
 | 4 | AI reviewer | CodeRabbit GitHub App, gate through required conversation resolution | 2026-10-01 | [ADR 0002](../adr/0002-coderabbit-ai-review/) |
 | 5 | Review identity | Option A: maintainer-authored PRs, zero required approvals, merge is the approval | 2026-10-01 | [ADR 0003](../adr/0003-review-identity-and-merge-gate/) |
 | 6 | Ticket numbering | `ARCHI-<n>` is sequential; the next number is one above the highest used in branches and PR titles | 2026-10-01 | `AGENTS.md` |
 | 7a | Copyright holder | License header in the maintainer's name, spelled `Dmytro Hryshchenko`; existing headers are fixed in the repository hygiene feature | 2026-10-01 | `AGENTS.md` |
 
-Still open: **1** MVP scope, **2** UI stack, **7b** Spring Boot milestone / snapshot
-repositories (to be decided in the control plane design).
+Still open: **1** MVP scope, **7b** Spring Boot milestone / snapshot repositories (to be
+decided in the control plane design).
 
 ## 8. Agreed MVP
 
