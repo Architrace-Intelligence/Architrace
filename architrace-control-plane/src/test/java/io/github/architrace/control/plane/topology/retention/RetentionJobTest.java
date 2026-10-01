@@ -56,7 +56,7 @@ class RetentionJobTest {
   void propertiesMustBePositive() {
     assertThatThrownBy(() -> new RetentionProperties(Duration.ZERO, 1))
         .isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> new RetentionProperties(Duration.ofDays(1), 0))
+    assertThatThrownBy(() -> new RetentionProperties(PERIOD, 0))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
