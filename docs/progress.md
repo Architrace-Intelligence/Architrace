@@ -1,0 +1,48 @@
+# Progress
+
+Single place to see where the project is. Updated whenever a stage or a feature changes state.
+
+Legend: `todo` · `in progress` · `review` · `done` · `blocked`
+
+## Stages
+
+| # | Stage                                   | State       | Notes                                                  |
+|---|-----------------------------------------|-------------|--------------------------------------------------------|
+| 0 | Project analysis and requirements       | review      | `docs/requirements.md` opened for maintainer review    |
+| 1 | MVP scope agreement                     | in progress | Candidate scope proposed in requirements §6            |
+| 2 | Design (architecture, ADRs, features)   | todo        | Starts after stage 1 is agreed                         |
+| 3 | Implementation (feature by feature)     | todo        |                                                        |
+| 4 | Testing, hardening, release 1.0         | todo        |                                                        |
+
+## Process foundation
+
+| Item                                              | State | PR / note                                   |
+|---------------------------------------------------|-------|---------------------------------------------|
+| AGENTS.md                                         | review | foundation PR                              |
+| Requirements document                             | review | foundation PR                              |
+| Progress document                                 | review | foundation PR                              |
+| GitHub access and setup checklist                 | review | foundation PR, `docs/github-access.md`     |
+| Pull request template                             | review | foundation PR                              |
+| Commit convention and automated versioning        | todo  | needs agreement (requirements §5.3)         |
+| CI: single PR pipeline with quality gates         | todo  | needs agreement (requirements §5.2)         |
+| CI: AI code review step                           | todo  | tool choice pending (requirements §5.4)     |
+| CI: security scanning (Snyk, OWASP, CodeQL, …)    | todo  | needs agreement (requirements §5.5)         |
+| CD: main pipeline, release, images                | todo  | needs agreement (requirements §5.2)         |
+| Branch ruleset on `main`                          | todo  | see `docs/github-access.md`                 |
+| ADR folder and first ADRs                         | todo  | after design decisions are agreed           |
+| Architecture document                             | todo  | first version in design stage               |
+| Repository hygiene (templates, stale files)       | todo  | requirements §4.6                           |
+
+## Features
+
+Filled in once the MVP scope is agreed. One row per feature, linked to `docs/features/<name>.md`.
+
+| Feature | State | Design | PR | Notes |
+|---------|-------|--------|----|-------|
+|         |       |        |    |       |
+
+## History
+
+| Date       | Event                                                        |
+|------------|--------------------------------------------------------------|
+| 2026-10-01 | Project analysed, requirements and process documents drafted |
