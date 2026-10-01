@@ -26,7 +26,8 @@ public final class TestTopology {
   }
 
   public static TopologyNode database(String name) {
-    return new TopologyNode("db:postgresql/" + name, NodeType.DATABASE, name, NodeAttributes.none());
+    return new TopologyNode(
+        "db:postgresql/" + name, NodeType.DATABASE, name, NodeAttributes.none());
   }
 
   public static TopologyNode topic(String name) {
@@ -35,7 +36,8 @@ public final class TestTopology {
 
   public static TopologyEdge edge(
       TopologyNode source, TopologyNode target, EdgeKind kind, long calls) {
-    return new TopologyEdge(source.id(), target.id(), kind, new EdgeMetrics(calls, 0, 5, 10, 20, 50));
+    return new TopologyEdge(
+        source.id(), target.id(), kind, new EdgeMetrics(calls, 0, 5, 10, 20, 50));
   }
 
   public static Snapshot snapshot(

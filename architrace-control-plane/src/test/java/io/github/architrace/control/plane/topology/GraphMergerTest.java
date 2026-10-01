@@ -46,9 +46,11 @@ class GraphMergerTest {
     TopologyNode db = database("orders");
     TopologyNode events = topic("order-events");
     TopologyEdge callsA =
-        new TopologyEdge(ordersA.id(), db.id(), EdgeKind.SYNC, new EdgeMetrics(100, 1, 5, 10, 20, 50));
+        new TopologyEdge(
+            ordersA.id(), db.id(), EdgeKind.SYNC, new EdgeMetrics(100, 1, 5, 10, 20, 50));
     TopologyEdge callsB =
-        new TopologyEdge(ordersB.id(), db.id(), EdgeKind.SYNC, new EdgeMetrics(50, 2, 7, 8, 30, 40));
+        new TopologyEdge(
+            ordersB.id(), db.id(), EdgeKind.SYNC, new EdgeMetrics(50, 2, 7, 8, 30, 40));
     TopologyEdge publishes = edge(ordersB, events, EdgeKind.PUBLISH, 10);
 
     TopologyGraph graph =
@@ -68,7 +70,8 @@ class GraphMergerTest {
     assertThat(orders.versions()).containsExactlyInAnyOrder("2.8.0", "2.8.1");
     assertThat(orders.deployments())
         .containsExactlyInAnyOrder(
-            new Deployment("k8s-prod-eu1", "orders"), new Deployment("k8s-prod-eu1", "orders-canary"));
+            new Deployment("k8s-prod-eu1", "orders"),
+            new Deployment("k8s-prod-eu1", "orders-canary"));
     assertThat(orders.labels())
         .containsOnly(entry("team", "checkout"), entry("tier", "gold"), entry("owner", "bob"));
     assertThat(graph.edges())

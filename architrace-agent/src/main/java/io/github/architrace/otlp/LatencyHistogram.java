@@ -38,7 +38,8 @@ public class LatencyHistogram {
     long[] cumulative = Arrays.stream(counts).mapToLong(LongAdder::sum).toArray();
     Arrays.parallelPrefix(cumulative, Long::sum);
     long target = (long) (cumulative[cumulative.length - 1] * p);
-    OptionalInt bucket = IntStream.range(0, cumulative.length).filter(i -> cumulative[i] >= target).findFirst();
+    OptionalInt bucket =
+        IntStream.range(0, cumulative.length).filter(i -> cumulative[i] >= target).findFirst();
     return bucket.isPresent() ? BUCKETS[Math.min(bucket.getAsInt(), BUCKETS.length - 1)] : 0;
   }
 

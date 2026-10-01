@@ -24,7 +24,10 @@ public class RetentionJob {
   private final Clock clock;
 
   public RetentionJob(
-      SnapshotStore snapshots, RetentionProperties properties, TopologyMetrics metrics, Clock clock) {
+      SnapshotStore snapshots,
+      RetentionProperties properties,
+      TopologyMetrics metrics,
+      Clock clock) {
     this.snapshots = snapshots;
     this.properties = properties;
     this.metrics = metrics;

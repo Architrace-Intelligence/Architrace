@@ -58,7 +58,10 @@ class TopologyQueryTest {
             List.of(edge(ordersA, db, EdgeKind.SYNC, 100))));
     snapshots.save(
         snapshot(
-            b.id(), at, List.of(ordersB, events), List.of(edge(ordersB, events, EdgeKind.PUBLISH, 10))));
+            b.id(),
+            at,
+            List.of(ordersB, events),
+            List.of(edge(ordersB, events, EdgeKind.PUBLISH, 10))));
     snapshots.save(
         snapshot(b.id(), at.plusSeconds(60), List.of(service("future", "1.0", "ns")), List.of()));
     snapshots.save(
@@ -70,7 +73,8 @@ class TopologyQueryTest {
     assertThat(graph.nodes())
         .extracting(TopologyNode::id)
         .containsExactly("db:postgresql/orders", "service:orders", "topic:kafka/order-events");
-    assertThat(graph.nodes().get(1).attributes().versions()).containsExactlyInAnyOrder("2.8.0", "2.8.1");
+    assertThat(graph.nodes().get(1).attributes().versions())
+        .containsExactlyInAnyOrder("2.8.0", "2.8.1");
     assertThat(graph.edges()).hasSize(2);
     assertThat(registry.get("architrace.topology.query").timer().count()).isEqualTo(1);
   }
@@ -85,7 +89,8 @@ class TopologyQueryTest {
         snapshot(
             a.id(),
             NOW.minusSeconds(60),
-            List.of(service("orders", "2.8.1", "orders"), database("orders"), topic("order-events")),
+            List.of(
+                service("orders", "2.8.1", "orders"), database("orders"), topic("order-events")),
             List.of()));
     snapshots.save(
         snapshot(

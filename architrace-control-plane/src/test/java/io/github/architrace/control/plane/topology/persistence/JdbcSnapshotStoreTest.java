@@ -122,7 +122,12 @@ class JdbcSnapshotStoreTest extends JdbcStoreTest {
     snapshots.save(emptySnapshot(b, at, at.plusSeconds(60)));
     snapshots.save(
         new Snapshot(
-            elsewhere.id(), dev, new TimeWindow(at.minusSeconds(60), at), at, List.of(), List.of()));
+            elsewhere.id(),
+            dev,
+            new TimeWindow(at.minusSeconds(60), at),
+            at,
+            List.of(),
+            List.of()));
 
     List<Snapshot> latest = snapshots.latestPerAgent(SCOPE, at);
 
@@ -133,8 +138,10 @@ class JdbcSnapshotStoreTest extends JdbcStoreTest {
   void deleteOlderThanRemovesExpiredSnapshotsWithTheirRowsInBatches() {
     Agent agent = agents.register(new AgentRegistration("retention", "0.4.0", SCOPE), NOW);
     Instant cutoff = NOW.minusSeconds(3600);
-    SnapshotId oldest = snapshots.save(snapshotWithNode(agent, cutoff.minusSeconds(120), "service:old-1"));
-    SnapshotId older = snapshots.save(snapshotWithNode(agent, cutoff.minusSeconds(60), "service:old-2"));
+    SnapshotId oldest =
+        snapshots.save(snapshotWithNode(agent, cutoff.minusSeconds(120), "service:old-1"));
+    SnapshotId older =
+        snapshots.save(snapshotWithNode(agent, cutoff.minusSeconds(60), "service:old-2"));
     SnapshotId boundary = snapshots.save(emptySnapshot(agent, cutoff.minusSeconds(60), cutoff));
     SnapshotId recent = snapshots.save(emptySnapshot(agent, NOW.minusSeconds(60), NOW));
 

@@ -87,7 +87,8 @@ class TopologyIntegrationTest {
     assertThat(graph.nodes())
         .extracting(TopologyNode::id)
         .containsExactly("db:postgresql/orders", "service:orders", "topic:kafka/order-events");
-    assertThat(graph.nodes().get(1).attributes().versions()).containsExactlyInAnyOrder("2.8.0", "2.8.1");
+    assertThat(graph.nodes().get(1).attributes().versions())
+        .containsExactlyInAnyOrder("2.8.0", "2.8.1");
     assertThat(graph.edges()).hasSize(2);
     assertThat(query.scopes())
         .filteredOn(summary -> summary.scope().equals(SCOPE))

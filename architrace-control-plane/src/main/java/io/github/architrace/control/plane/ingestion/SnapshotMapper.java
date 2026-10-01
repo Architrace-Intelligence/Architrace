@@ -108,18 +108,27 @@ public final class SnapshotMapper {
         .ifPresent(
             edge -> {
               throw new InvalidSnapshotException(
-                  "edge " + edge.sourceId() + " -> " + edge.targetId() + " references an unknown node");
+                  "edge "
+                      + edge.sourceId()
+                      + " -> "
+                      + edge.targetId()
+                      + " references an unknown node");
             });
-    firstDuplicate(edges.stream().map(edge -> edge.sourceId() + " -> " + edge.targetId() + " " + edge.kind()))
+    firstDuplicate(edges.stream().map(SnapshotMapper::edgeKey))
         .ifPresent(
             key -> {
               throw new InvalidSnapshotException("duplicate edge " + key);
             });
   }
 
+  private static String edgeKey(TopologyEdge edge) {
+    return edge.sourceId() + " -> " + edge.targetId() + " " + edge.kind();
+  }
+
   private static <T> Optional<T> firstDuplicate(Stream<T> values) {
     return values
-        .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()))
+        .collect(
+            Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()))
         .entrySet()
         .stream()
         .filter(entry -> entry.getValue() > 1)
