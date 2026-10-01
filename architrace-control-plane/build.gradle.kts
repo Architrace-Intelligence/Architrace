@@ -2,9 +2,14 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.openapi.generator)
 }
 
 description = "Architrace control plane"
+
+val queryApiDocument =
+    rootProject.file("architrace-api/src/main/resources/openapi/architrace-query-api.yaml")
+val generatedQueryApi = layout.buildDirectory.dir("generated/openapi")
 
 configurations {
     compileOnly {
@@ -23,7 +28,8 @@ dependencies {
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.grpc.services)
     implementation(project(":api"))
-    implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    implementation(libs.swagger.ui)
+    implementation(libs.webjars.locator.lite)
     implementation(libs.spring.grpc.spring.boot.starter)
     implementation(libs.spring.boot.starter.data.jdbc)
     implementation(libs.spring.boot.starter.liquibase)
@@ -69,4 +75,47 @@ protobuf {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+openApiValidate {
+    inputSpec.set(queryApiDocument.path)
+}
+
+openApiGenerate {
+    generatorName.set("spring")
+    inputSpec.set(queryApiDocument.path)
+    outputDir.set(generatedQueryApi.get().asFile.path)
+    apiPackage.set("io.github.architrace.control.plane.api")
+    modelPackage.set("io.github.architrace.control.plane.api.model")
+    modelNameSuffix.set("Dto")
+    globalProperties.set(mapOf("apis" to "", "models" to ""))
+    configOptions.set(
+        mapOf(
+            "interfaceOnly" to "true",
+            "skipDefaultInterface" to "true",
+            "useTags" to "true",
+            "useSpringBoot3" to "true",
+            "useResponseEntity" to "false",
+            "useBeanValidation" to "false",
+            "openApiNullable" to "false",
+            "documentationProvider" to "none",
+            "annotationLibrary" to "none",
+            "dateLibrary" to "java8",
+            "hideGenerationTimestamp" to "true",
+        )
+    )
+}
+
+sourceSets {
+    main {
+        java.srcDir(generatedQueryApi.map { it.dir("src/main/java") })
+    }
+}
+
+tasks.compileJava {
+    dependsOn(tasks.openApiGenerate)
+}
+
+tasks.named("check") {
+    dependsOn(tasks.openApiValidate)
 }

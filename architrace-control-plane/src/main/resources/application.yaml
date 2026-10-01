@@ -10,6 +10,10 @@ spring:
     username: ${ARCHITRACE_DB_USERNAME:architrace}
     password: ${ARCHITRACE_DB_PASSWORD:architrace}
 
+  mvc:
+    problemdetails:
+      enabled: true
+
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 

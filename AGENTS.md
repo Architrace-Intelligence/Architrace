@@ -138,6 +138,10 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   client, bundled into the control plane jar (ADR 0004).
 - API (`architrace-api`): protobuf contract `architrace-agent.proto`
   (`architrace.controlplane.v1`), generated Java in `io.github.architrace.grpc.proto`.
+- Query API: OpenAPI 3.1 document `architrace-api/src/main/resources/openapi/architrace-query-api.yaml`;
+  the control plane build generates Spring interfaces and `Dto` models into
+  `io.github.architrace.control.plane.api` (`openApiGenerate`, never committed). Swagger UI is
+  the `swagger-ui` webjar behind `/swagger-ui`; there is no runtime-generated document.
 - Demo stack: `otel-test-app/` (Python Flask services + OTel Collector + docker compose).
 - Documentation site: Astro Starlight in `documentation/architrace-inteligence`, published
   to GitHub Pages from `main`.

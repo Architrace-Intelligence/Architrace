@@ -110,6 +110,21 @@ class TopologyQueryTest {
     assertThat(scopes.get(1)).isEqualTo(new ScopeSummary(DEV, 1, 1, 0, 0, 0, Optional.empty()));
   }
 
+  @Test
+  void agentsAreOrderedByScopeAndNameWithTheirLiveness() {
+    Agent silent = register("b", SCOPE, NOW.minus(Duration.ofMinutes(5)));
+    Agent fresh = register("a", SCOPE, NOW);
+    Agent dev = register("c", DEV, NOW);
+
+    List<AgentStatus> statuses = query.agents();
+
+    assertThat(statuses)
+        .containsExactly(
+            new AgentStatus(dev, true),
+            new AgentStatus(fresh, true),
+            new AgentStatus(silent, false));
+  }
+
   private Agent register(String name, Scope scope, Instant lastSeen) {
     return agents.register(new AgentRegistration(name, "0.4.0", scope), lastSeen);
   }

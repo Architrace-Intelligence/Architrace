@@ -21,9 +21,10 @@ assertj = "3.27.4"
 spring-boot = "4.0.3"
 spring-dependency-management = "1.1.7"
 spring-grpc = "1.0.2"
-springdoc = "3.0.1"
+swagger-ui = "5.32.15"
 swagger = "2.2.21"
 jakarta-validation = "3.1.1"
+openapi-generator = "7.14.0"
 
 [libraries]
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
@@ -67,7 +68,8 @@ spring-boot-testcontainers = { group = "org.springframework.boot", name = "sprin
 testcontainers-postgresql = { group = "org.testcontainers", name = "testcontainers-postgresql" }
 spring-grpc-spring-boot-starter = { group = "org.springframework.grpc", name = "spring-grpc-spring-boot-starter" }
 spring-grpc-test = { group = "org.springframework.grpc", name = "spring-grpc-test" }
-springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+swagger-ui = { group = "org.webjars", name = "swagger-ui", version.ref = "swagger-ui" }
+webjars-locator-lite = { group = "org.webjars", name = "webjars-locator-lite" }
 postgresql = { group = "org.postgresql", name = "postgresql" }
 spring-grpc-bom = { group = "org.springframework.grpc", name = "spring-grpc-dependencies", version.ref = "spring-grpc" }
 
@@ -79,3 +81,4 @@ graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf-gradle-plugin" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }

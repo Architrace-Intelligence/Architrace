@@ -22,6 +22,9 @@ public class TopologyQuery {
           .thenComparing(Scope::environment)
           .thenComparing(Scope::cluster);
 
+  private static final Comparator<Agent> AGENT_ORDER =
+      Comparator.comparing(Agent::scope, SCOPE_ORDER).thenComparing(Agent::name);
+
   private final AgentStore agents;
   private final SnapshotStore snapshots;
   private final AgentLiveness liveness;
@@ -55,6 +58,14 @@ public class TopologyQuery {
                     Agent::scope, () -> new TreeMap<>(SCOPE_ORDER), Collectors.toList()));
     return byScope.entrySet().stream()
         .map(entry -> summarise(entry.getKey(), entry.getValue(), now))
+        .toList();
+  }
+
+  public List<AgentStatus> agents() {
+    Instant now = clock.instant();
+    return agents.all().stream()
+        .sorted(AGENT_ORDER)
+        .map(agent -> new AgentStatus(agent, liveness.isLive(agent, now)))
         .toList();
   }
 

@@ -1,0 +1,189 @@
+openapi: 3.1.0
+info:
+  title: Architrace Query API
+  version: v1
+  description: |
+    Read-only API of the Architrace control plane. It serves the UI and scripts with the
+    scopes the agents report and the agents themselves; later versions add the topology graph
+    of a scope at a point in time, services, snapshots, drift and findings.
+
+    Every error is returned as RFC 9457 problem details with the media type
+    `application/problem+json`.
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: /api/v1
+tags:
+  - name: scopes
+    description: Scopes (project, environment, cluster) with at least one registered agent
+  - name: agents
+    description: Agents registered with the control plane
+paths:
+  /scopes:
+    get:
+      tags: [scopes]
+      operationId: listScopes
+      summary: List every scope with a registered agent
+      description: |
+        One summary per scope, ordered by project, environment and cluster. The counts come
+        from the current graph of the scope: the latest snapshot of every agent, merged.
+      responses:
+        "200":
+          description: Scope summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScopeSummary"
+              examples:
+                webshop:
+                  value:
+                    - scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                      agents: 2
+                      liveAgents: 2
+                      services: 14
+                      dataStreams: 3
+                      namespaces: 4
+                      lastSnapshotAt: "2026-10-01T12:00:00Z"
+                    - scope: { project: webshop, environment: DEV, cluster: k8s-dev }
+                      agents: 1
+                      liveAgents: 0
+                      services: 0
+                      dataStreams: 0
+                      namespaces: 0
+        default:
+          $ref: "#/components/responses/Problem"
+  /agents:
+    get:
+      tags: [agents]
+      operationId: listAgents
+      summary: List registered agents with their liveness
+      description: |
+        Every agent that has ever registered, ordered by scope and name. An agent is live
+        while fewer than three heartbeat intervals have passed since it was last seen.
+      responses:
+        "200":
+          description: Agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Agent"
+              examples:
+                webshop:
+                  value:
+                    - id: 1
+                      name: prod-eu1-a
+                      version: 0.4.0
+                      scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                      firstSeenAt: "2026-09-30T08:15:00Z"
+                      lastSeenAt: "2026-10-01T12:00:10Z"
+                      live: true
+        default:
+          $ref: "#/components/responses/Problem"
+components:
+  responses:
+    Problem:
+      description: Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    Scope:
+      type: object
+      description: The project, environment and cluster an agent reports under.
+      required: [project, environment, cluster]
+      properties:
+        project:
+          type: string
+          description: Project the agent reports under (`default` when the agent sets none)
+        environment:
+          type: string
+          description: Environment the agent observes, for example `DEV`, `STAGE`, `PROD`
+        cluster:
+          type: string
+          description: Kubernetes cluster the agent runs in
+    ScopeSummary:
+      type: object
+      description: One row of the Projects list.
+      required: [scope, agents, liveAgents, services, dataStreams, namespaces]
+      properties:
+        scope:
+          $ref: "#/components/schemas/Scope"
+        agents:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Agents registered for the scope
+        liveAgents:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Agents seen within the last three heartbeat intervals
+        services:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Service nodes in the current graph
+        dataStreams:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Topic and queue nodes in the current graph
+        namespaces:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Distinct namespaces of the deployments in the current graph
+        lastSnapshotAt:
+          type: string
+          format: date-time
+          description: End of the newest snapshot window; absent until the first snapshot arrives
+    Agent:
+      type: object
+      description: An agent registration as the control plane sees it.
+      required: [id, name, version, scope, firstSeenAt, lastSeenAt, live]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          description: Agent name from its configuration
+        version:
+          type: string
+          description: Agent build version, `dev` for a development build
+        scope:
+          $ref: "#/components/schemas/Scope"
+        firstSeenAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+          description: Last registration, heartbeat or snapshot
+        live:
+          type: boolean
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      properties:
+        type:
+          type: string
+          format: uri
+          description: Problem type; `about:blank` when the status code says it all
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+          description: Request path that produced the problem

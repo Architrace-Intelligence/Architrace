@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.protobuf) apply false
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependency.management) apply false
+    alias(libs.plugins.openapi.generator) apply false
 }
 
 allprojects {
@@ -69,6 +70,7 @@ subprojects {
                     fileTree(it) {
                         exclude("**/io/github/architrace/grpc/proto/**")
                         exclude("**/ControlPlaneApplication*")
+                        exclude("**/io/github/architrace/control/plane/api/**")
                     }
                 }
             )
@@ -87,6 +89,7 @@ subprojects {
                     fileTree(it) {
                         exclude("**/io/github/architrace/grpc/proto/**")
                         exclude("**/ControlPlaneApplication*")
+                        exclude("**/io/github/architrace/control/plane/api/**")
                     }
                 }
             )
@@ -139,7 +142,11 @@ sonar {
         property("sonar.projectKey", "Architrace-Intelligence_Architrace-agent")
         property("sonar.organization", "architrace-intelligence")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.exclusions", "**/io/github/architrace/grpc/proto/**")
+        property(
+            "sonar.coverage.exclusions",
+            "**/io/github/architrace/grpc/proto/**,**/io/github/architrace/control/plane/api/**"
+        )
+        property("sonar.exclusions", "**/build/generated/**")
     }
 }
 
