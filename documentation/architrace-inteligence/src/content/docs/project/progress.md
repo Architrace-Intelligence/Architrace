@@ -47,7 +47,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | todo | agreed | | |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | todo | agreed | | |
 | [M3 Query API](../features/m3-query-api/) | todo | agreed | | |
-| [M4 Service map UI](../features/m4-service-map/) | todo | agreed · [UI design](../features/ui-design/) in review | ARCHI-25 | prototypes in Claude Design |
+| [M4 Service map UI](../features/m4-service-map/) | todo | agreed · [UI design](../features/ui-design/) in review | ARCHI-25 | prototypes and initial-release frames in Claude Design |
 | [M5 Drift](../features/m5-drift/) | todo | agreed · UI design in review | | |
 | [M6 Architecture rules](../features/m6-architecture-rules/) | todo | agreed · UI design in review | | |
 | [M7 Packaging and demo](../features/m7-packaging-demo/) | todo | agreed | | compose stack needed from M2 |
@@ -66,3 +66,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-01 | M0 PR 1: repository hygiene, build green, community files, labels created |
 | 2026-10-01 | M0 PR 1 merged (#26): main builds green again |
 | 2026-10-01 | UI design: interactive prototypes of the MVP screens, foundations and agent-first principles (ARCHI-25) |
+| 2026-10-01 | Initial UI release narrowed to Projects list and Service map; five static frames added to the design (ARCHI-25) |

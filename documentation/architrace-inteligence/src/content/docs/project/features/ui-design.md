@@ -32,6 +32,30 @@ agent can take the wheel later without a redesign.
 | Foundations | `Foundations.dc.html` | colour tokens in both themes, type, spacing, node and edge encoding, components |
 | Agent-first | `Agent-first.dc.html` | the four principles and the honest boundaries of the MVP |
 
+## Initial release
+
+On 2026-10-01 the maintainer narrowed the first UI release to two screens: a **Projects** list
+that filters by project, environment and Kubernetes cluster, and the **Service map** of the
+chosen scope with every service and its data streams. The other prototype screens (Overview,
+Drift, Findings, Agents) remain the design for later releases.
+
+The initial release is designed as static frames on one canvas, `MVP-frames.dc.html` in the
+same Claude Design project ([open](https://claude.ai/design/p/a93f3239-c308-4f32-b561-051ac09fbe06?file=MVP-frames.dc.html));
+the source is [`design/ui-frames/`](https://github.com/Architrace-Intelligence/Architrace/tree/main/design/ui-frames).
+
+| Frame | Shows |
+|-------|-------|
+| 1 · Projects | one row per scope (project × environment × cluster) grouped by project: namespaces, services, data streams, agents, findings by severity, last snapshot; filter chips for environment, cluster, region, agents and findings; group by project, environment or cluster |
+| 2 · Projects, filtered | environment = PROD, grouped by cluster, the cluster facet open with per-value counts; the URL carries the filter |
+| 3 · Service map | the scope opened from a row (breadcrumb project / environment / cluster), node-type chips with counts, the Lens control (All, Data streams); the context rail summarises the scope and lists its data streams with producers and consumers |
+| 4 · Service selected | neighbours stay lit, metric pills on the touching edges; the rail shows version, namespace, inbound and outbound dependencies, the streams the service publishes and consumes, and its findings |
+| 5 · Data stream selected | the Data streams lens recedes sync calls; the rail shows broker, producers, consumers, fan-out and a timeline insight (a consumer added yesterday) |
+
+A scope is project × environment × cluster; the map can also open for all clusters of an
+environment. A project is a configured grouping of services above the environment (see the
+open points). Data streams are topics and queues with their producers and consumers (C10);
+they are first-class nodes on the map and a section of every service panel.
+
 ## Direction
 
 "Calm control room": dark by default for long sessions beside terminals and dashboards, with a
@@ -143,6 +167,10 @@ modes; they are not measurements.
 
 ## Open points
 
+- The Projects list introduces *project* as a grouping above the environment. The MVP model
+  (ADR 0007) carries environment, domain, cluster and namespace but no project; the frames
+  assume a configured source (a resource attribute such as `service.namespace`, or an agent
+  setting). Decide the source before M3 fixes the Query API.
 - The aesthetic direction was chosen without a brief: dark-first, cool accent, Plex and
   JetBrains Mono. Confirm or redirect before implementation starts.
 - Environment drift compares versions only. Deployments (cluster, namespace) differ between
