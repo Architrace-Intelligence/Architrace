@@ -44,6 +44,6 @@ class LatencyHistogramTest {
   }
 
   private static void recordTimes(LatencyHistogram histogram, long latency, int times) {
-    IntStream.range(0, times).forEach(i -> histogram.recordTimes(latency));
+    IntStream.range(0, times).forEach(i -> histogram.record(latency));
   }
 }
