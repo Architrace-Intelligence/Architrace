@@ -20,12 +20,18 @@ Last updated: **2026-10-01**
   "Architrace UI", the [UI design](../features/ui-design/) page, sources under `design/`.
   The visual direction (dark-first "calm control room") was chosen without a brief and still
   needs the maintainer's confirmation or redirection.
-- M2 is complete once ARCHI-29 merges: PostgreSQL schema and Spring Data JDBC stores
-  (ARCHI-26, #31), ingestion over the extended gRPC contract with liveness and metrics
-  (ARCHI-28, #33), and `TopologyQuery` (current graph per scope at time T, `ScopeSummary` per
-  scope), `RetentionJob` and Actuator health and metrics (ARCHI-29, in review). Every module
-  carries a `gradle.lockfile` (ARCHI-27, #32); a dependency change must rewrite it with
-  `--write-locks`. The agent coverage ratchet is 52 / 31 / 50 % until M1 restores 85 %.
+- M2 is complete (#31, #33, #35): PostgreSQL schema and stores, ingestion over the extended
+  gRPC contract, `TopologyQuery` (current graph per scope at time T, `ScopeSummary` per scope,
+  `AgentStatus`), `RetentionJob`, Actuator health and metrics. Every module carries a
+  `gradle.lockfile` (ARCHI-27, #32); a dependency change must rewrite it with `--write-locks`.
+  The agent coverage ratchet is 52 / 31 / 50 % until M1 restores 85 %.
+- M3 PR 1 (ARCHI-30) is in review: the OpenAPI 3.1 contract in `architrace-api`, server
+  interfaces generated in the control plane build (openapi-generator `spring`,
+  `interfaceOnly`, `Dto` models; no record support in the generator), `GET /api/v1/scopes`,
+  `GET /api/v1/agents`, the document at `/api/v1/openapi.yaml`, Swagger UI (webjar, no
+  springdoc) at `/swagger-ui`, RFC 9457 problem details.
+- Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
+  rule in `AGENTS.md` §4).
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
 
 ## Decisions
@@ -46,16 +52,19 @@ only).
 
 ## Next step
 
-M2 PR 3 (ARCHI-29) is open for review. Merge it first (one PR at a time), then rebase and
+M3 PR 1 (ARCHI-30) is open for review. Merge it first (one PR at a time), then rebase and
 update this page.
 
 Vertical slices towards the two screens, one PR each, in this order:
 
-1. ARCHI-30: OpenAPI document and generator, scopes and agents endpoints on top of
-   `TopologyQuery.scopes()` and `AgentStore`, problem details (M3 PR 1); ARCHI-31: graph and
-   services endpoints on top of `TopologyQuery.currentGraph` (M3 PR 2).
-2. ARCHI-32: `architrace-ui` scaffold served from the control plane jar (M4 PR 1);
-   ARCHI-33: Projects list page; ARCHI-34: Service map page; ARCHI-35: lenses, URL state, polish.
+1. ARCHI-31: graph, services and snapshots endpoints under
+   `/scopes/{project}/{environment}/{cluster}/…` on top of `TopologyQuery.currentGraph`, the
+   first domain exception (`ScopeNotFound`) with a `ProblemDetailsAdvice`, pagination for
+   snapshots (M3 PR 2). ARCHI-32: API reference examples and architecture page (M3 PR 3) can
+   fold into PR 2 if small.
+2. ARCHI-33: `architrace-ui` scaffold served from the control plane jar, TypeScript client
+   generated from the contract (M4 PR 1); ARCHI-34: Projects list page; ARCHI-35: Service map
+   page; ARCHI-36: lenses, URL state, polish.
 3. M1 (agent pipeline) follows so the demo stack feeds real data; until then a fixture loader
    seeds snapshots for development.
 

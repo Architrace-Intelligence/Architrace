@@ -40,8 +40,9 @@ flowchart LR
   PostgreSQL (agents, snapshots, nodes, edges; Liquibase), answers with acknowledgements and
   tracks liveness through heartbeats. `TopologyQuery` answers the current graph of a scope at
   a point in time (latest snapshot per agent, merged) and a per-scope summary for the Projects
-  list; a scheduled job removes snapshots older than the retention period. Health and metrics
-  are on Actuator. No HTTP query API yet (M3), no UI.
+  list; a scheduled job removes snapshots older than the retention period. The Query API under
+  `/api/v1` lists scopes and agents; the control plane serves its OpenAPI document and Swagger
+  UI. Health and metrics are on Actuator. No UI yet (M4).
 - Details and defects: [Requirements §3](../project/requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 
 ## Target architecture (MVP)
@@ -117,10 +118,10 @@ Packages are organised by feature, each with the same inner shape:
 |---------|--------------------------------|---------------------|----------|
 | `agents` | `Agent`, `AgentHealth` | registry, liveness | gRPC, repository |
 | `ingestion` | `IncomingSnapshot` | validation, mapping to topology | gRPC |
-| `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent` | store, current graph, retention | Spring Data JDBC (`topology.persistence`), REST |
+| `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent` | store, current graph, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`) |
 | `drift` | `TopologyDiff` | environment diff, timeline diff | REST |
 | `rules` | `ArchitectureRule`, `Finding` | engine, scheduling after ingest | repository, REST |
-| `web` | | | SPA serving, problem details |
+| `web` | | | OpenAPI document, Swagger UI, problem details, SPA serving (M4) |
 
 Design detail: [M2](../project/features/m2-control-plane-storage/), [M3](../project/features/m3-query-api/),
 [M5](../project/features/m5-drift/), [M6](../project/features/m6-architecture-rules/).
@@ -144,10 +145,13 @@ Full rules: [ADR 0007](../project/adr/0007-topology-model/).
 ### Contracts
 
 - **Agent ↔ control plane**: protobuf `architrace.controlplane.v1` in `architrace-api`.
-  Bidirectional stream: agent sends `Register`, `GraphBatch`, `Heartbeat`; control plane sends
-  `ConfigUpdate`, `Ack`.
-- **Query API**: OpenAPI 3.1 document in `architrace-api`, served under `/api/v1`. Server
-  interfaces and the TypeScript client are generated from it ([ADR 0008](../project/adr/0008-contract-first-apis/)).
+  Bidirectional stream: agent sends `AgentRegister`, `GraphSnapshot`, `Heartbeat`; control
+  plane sends `ConfigUpdate`, `SnapshotAck`, `SnapshotRejected`
+  ([gRPC contract](../reference/grpc-contract/)).
+- **Query API**: OpenAPI 3.1 document `architrace-api/src/main/resources/openapi/architrace-query-api.yaml`,
+  served under `/api/v1` together with Swagger UI. The control plane build generates the server
+  interfaces from it, the UI build the TypeScript client
+  ([ADR 0008](../project/adr/0008-contract-first-apis/), [Query API](../reference/query-api/)).
 
 ### Cross-cutting
 

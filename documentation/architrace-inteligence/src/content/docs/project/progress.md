@@ -46,7 +46,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | ARCHI-24 | PR 1 of 5 (hygiene) merged as #26 |
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | todo | agreed | | |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
-| [M3 Query API](../features/m3-query-api/) | todo | agreed | | |
+| [M3 Query API](../features/m3-query-api/) | in progress | agreed | ARCHI-30 | PR 1 of 3: document, generator, scopes and agents endpoints, problem details |
 | [M4 Service map UI](../features/m4-service-map/) | todo | agreed · [UI design](../features/ui-design/) in review | ARCHI-25 | prototypes and initial-release frames in Claude Design |
 | [M5 Drift](../features/m5-drift/) | todo | agreed · UI design in review | | |
 | [M6 Architecture rules](../features/m6-architecture-rules/) | todo | agreed · UI design in review | | |
@@ -71,3 +71,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-01 | Gradle dependency locking for every module, fixes the SonarCloud finding on build files (ARCHI-27) |
 | 2026-10-01 | M2 PR 2: contract extended with scope and snapshots, ingestion, agent registry and liveness (ARCHI-28) |
 | 2026-10-01 | M2 PR 3: current graph per scope at a point in time, scope summaries for the Projects list, retention job, Actuator metrics and health (ARCHI-29) |
+| 2026-10-01 | M3 PR 1: OpenAPI 3.1 contract, generated server interfaces, `GET /scopes` and `GET /agents`, Swagger UI, problem details (ARCHI-30) |

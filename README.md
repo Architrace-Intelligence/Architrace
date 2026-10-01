@@ -50,6 +50,7 @@ Build runnable agent fat jar:
 - **OTLP Ingestion** - Receives traces on OTLP gRPC (`:4319`)
 - **Graph Transformation** - Converts spans into nodes/edges and graph batches
 - **Control Plane Stream** - Bidirectional gRPC session between agent and control-plane
+- **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract, with Swagger UI at `/swagger-ui`
 - **Structured Concurrency** - Runtime built on Java 25 concurrency primitives
 - **Modular Monorepo** - Separate modules for runtime agent, control-plane, and shared API contracts
 
@@ -59,7 +60,7 @@ Build runnable agent fat jar:
 
 - **[`architrace-agent`](./architrace-agent)** - Runtime agent CLI, OTLP receiver, graph pipeline
 - **[`architrace-control-plane`](./architrace-control-plane)** - Spring Boot service (HTTP + gRPC)
-- **[`architrace-api`](./architrace-api)** - Shared protobuf contracts and generated classes
+- **[`architrace-api`](./architrace-api)** - Shared protobuf and OpenAPI contracts and generated classes
 - **[`otel-test-app`](./otel-test-app)** - End-to-end demo stack (Python services + collector + Architrace)
 
 ---
