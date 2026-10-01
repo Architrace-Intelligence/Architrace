@@ -34,7 +34,8 @@ flowchart LR
 - The agent receives OTLP traces, builds nodes and edges in memory and keeps edge metrics
   that are never populated. The batch sent to the control plane carries no data.
 - The control plane answers registrations with a fixed config update and discards batches.
-  No persistence, no HTTP API, no UI.
+  It owns a PostgreSQL schema (agents, snapshots, nodes, edges; Liquibase) and stores behind
+  it, but nothing writes to them yet. No HTTP API, no UI.
 - Details and defects: [Requirements §3](../project/requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 
 ## Target architecture (MVP)
@@ -110,7 +111,7 @@ Packages are organised by feature, each with the same inner shape:
 |---------|--------------------------------|---------------------|----------|
 | `agents` | `Agent`, `AgentHealth` | registry, liveness | gRPC, repository |
 | `ingestion` | `IncomingSnapshot` | validation, mapping to topology | gRPC |
-| `topology` | `TopologyGraph`, `Node`, `Edge`, `Snapshot` | store, current graph, retention | repository, REST |
+| `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent` | store, current graph, retention | Spring Data JDBC (`topology.persistence`), REST |
 | `drift` | `TopologyDiff` | environment diff, timeline diff | REST |
 | `rules` | `ArchitectureRule`, `Finding` | engine, scheduling after ingest | repository, REST |
 | `web` | | | SPA serving, problem details |
@@ -122,6 +123,7 @@ Design detail: [M2](../project/features/m2-control-plane-storage/), [M3](../proj
 
 | Concept | Identity | Notes |
 |---------|----------|-------|
+| Scope | project × environment × cluster | reported by the agent at registration; every snapshot belongs to one scope |
 | Environment | name (`DEV`, `STAGE`, `PROD`, …) | from `deployment.environment.name` or the agent default |
 | Service | `(domain, name)` | environment-independent key used for drift; `domain` from `service.namespace` |
 | Service deployment | service + environment | versions seen, clusters, namespaces |

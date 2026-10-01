@@ -1,0 +1,247 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0001-agent
+      author: dmytro.hryshchenko
+      changes:
+        - createTable:
+            tableName: agent
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: agent_version
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: environment
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cluster
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_seen_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_seen_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: agent
+            columnNames: name, project, environment, cluster
+            constraintName: uq_agent_identity
+  - changeSet:
+      id: 0002-snapshot
+      author: dmytro.hryshchenko
+      changes:
+        - createTable:
+            tableName: snapshot
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: agent_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    referencedTableName: agent
+                    referencedColumnNames: id
+                    foreignKeyName: fk_snapshot_agent
+              - column:
+                  name: project
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: environment
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cluster
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: window_start
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: window_end
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: received_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: node_count
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: edge_count
+                  type: integer
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: snapshot
+            indexName: ix_snapshot_scope_window_end
+            columns:
+              - column:
+                  name: project
+              - column:
+                  name: environment
+              - column:
+                  name: cluster
+              - column:
+                  name: window_end
+        - createIndex:
+            tableName: snapshot
+            indexName: ix_snapshot_agent_window_end
+            columns:
+              - column:
+                  name: agent_id
+              - column:
+                  name: window_end
+  - changeSet:
+      id: 0003-snapshot-node
+      author: dmytro.hryshchenko
+      changes:
+        - createTable:
+            tableName: snapshot_node
+            columns:
+              - column:
+                  name: snapshot_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: node_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attributes
+                  type: jsonb
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: snapshot_node
+            columnNames: snapshot_id, node_id
+            constraintName: pk_snapshot_node
+        - addForeignKeyConstraint:
+            baseTableName: snapshot_node
+            baseColumnNames: snapshot_id
+            referencedTableName: snapshot
+            referencedColumnNames: id
+            constraintName: fk_snapshot_node_snapshot
+            onDelete: CASCADE
+  - changeSet:
+      id: 0004-snapshot-edge
+      author: dmytro.hryshchenko
+      changes:
+        - createTable:
+            tableName: snapshot_edge
+            columns:
+              - column:
+                  name: snapshot_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: source_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: kind
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: calls
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: errors
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: latency_p50_ms
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: latency_p95_ms
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: latency_p99_ms
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: latency_max_ms
+                  type: bigint
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: snapshot_edge
+            columnNames: snapshot_id, source_id, target_id, kind
+            constraintName: pk_snapshot_edge
+        - addForeignKeyConstraint:
+            baseTableName: snapshot_edge
+            baseColumnNames: snapshot_id
+            referencedTableName: snapshot
+            referencedColumnNames: id
+            constraintName: fk_snapshot_edge_snapshot
+            onDelete: CASCADE

@@ -5,6 +5,14 @@ spring:
   application:
     name: control-plane
 
+  datasource:
+    url: ${ARCHITRACE_DB_URL:jdbc:postgresql://localhost:5432/architrace}
+    username: ${ARCHITRACE_DB_USERNAME:architrace}
+    password: ${ARCHITRACE_DB_PASSWORD:architrace}
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
   grpc:
     server:
       transport: netty
