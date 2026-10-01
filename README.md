@@ -12,7 +12,7 @@
   ![Gradle](https://img.shields.io/badge/Gradle-9.3.1-02303A?logo=gradle)
   ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 
-  [Quick Start](#-quick-start) | [Docker Demo](#-docker-demo) | [Contributing](#-contributing)
+  [Documentation](https://architrace-intelligence.github.io/Architrace/) | [Quick Start](#quick-start) | [Docker Demo](#docker-demo) | [Contributing](#contributing)
 </div>
 
 ---
@@ -131,22 +131,20 @@ Generate protobuf classes:
 
 ## CI
 
-PR workflow: [`/.github/workflows/pr-ci.yml`](./.github/workflows/pr-ci.yml)
-
-Pipeline includes:
-
-- Spotless check
-- Compile
-- Unit/integration tests
-- Jacoco coverage
-- Sonar (if `SONAR_TOKEN` is configured)
-- Snyk (if `SNYK_TOKEN` is configured)
+Pull requests run [`PR Checks`](./.github/workflows/agent.yml): Spotless, compilation, tests with
+JaCoCo coverage, SonarCloud analysis and a jar build. Merges to `main` run
+[`Merge CI/CD`](./.github/workflows/ci-cd.yml), which adds Snyk monitoring and publishes release
+artifacts on `v*` tags. Both pipelines are being replaced by the gated flow described in the
+[M0 design](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/).
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Open an issue or submit a pull request with a clear scope and test coverage for behavior changes.
+Every change goes through a pull request with automated checks and review. Read
+[CONTRIBUTING.md](./CONTRIBUTING.md) and the
+[documentation site](https://architrace-intelligence.github.io/Architrace/) for the process,
+the agreed requirements and the current state of the work.
 
 ---
 
