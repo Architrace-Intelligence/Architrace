@@ -1,0 +1,78 @@
+@@HEAD:Architrace · Start here@@
+<div class="app" data-screen-label="Start here" data-theme="{{theme}}" style="min-height: 100vh; padding: 40px 32px 64px">
+<div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px">
+  <header style="display: flex; flex-direction: column; gap: 10px; max-width: 760px">
+    <div style="display: flex; align-items: center; gap: 10px; color: var(--accent)">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 26px; height: 26px"><circle cx="5" cy="12" r="2.2"></circle><circle cx="12" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="12" cy="19" r="2.2"></circle><path d="M7 11l3.5-4.5M14 6.5l3.5 4.5M17 13.5L13.5 18M10.5 18L7 13.5"></path></svg>
+      <span style="font-weight: 600; font-size: 15px; letter-spacing: .02em">Architrace</span>
+    </div>
+    <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; text-wrap: pretty">MVP user interface design</h1>
+    <p class="muted" style="margin: 0; font-size: 15px; text-wrap: pretty">Interactive screens for the web UI served by the control plane: service map, drift, findings, agents and the overview, plus the foundations they share and the agent-first principles behind them. Every screen is a working prototype on demo data: click nodes, switch environments, open the Ask bar, change the theme.</p>
+    <div style="display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap"><a class="btn btn-primary" href="Service-map.dc.html">Open the service map</a><button class="btn" onClick="{{toggleTheme}}">Switch theme</button></div>
+  </header>
+
+  <section style="display: flex; flex-direction: column; gap: 12px">
+    <div class="section-h"><h2>Screens</h2><span class="faint" style="font-size: 13px">one file per screen · linked through the left rail</span></div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 14px">
+      <a class="card" href="Overview.dc.html" style="padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none">
+        <span class="panel-kicker">Home</span><b style="font-size: 16px; font-weight: 600">Overview</b>
+        <span class="muted" style="font-size: 13px">Three environments at a glance: counts, agent health, findings by severity, how each differs from PROD, and what changed recently.</span>
+      </a>
+      <a class="card" href="Service-map.dc.html" style="padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none">
+        <span class="panel-kicker">M4</span><b style="font-size: 16px; font-weight: 600">Service map</b>
+        <span class="muted" style="font-size: 13px">The real architecture per environment: services, data stores, topics and external calls, with filters, search, a time selector and a context rail for nodes and dependencies.</span>
+      </a>
+      <a class="card" href="Drift.dc.html" style="padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none">
+        <span class="panel-kicker">M5</span><b style="font-size: 16px; font-weight: 600">Drift</b>
+        <span class="muted" style="font-size: 13px">Two environments or two points in time of one environment, as a grouped list and as map overlays, with the consequences each difference has for the rules.</span>
+      </a>
+      <a class="card" href="Findings.dc.html" style="padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none">
+        <span class="panel-kicker">M6</span><b style="font-size: 16px; font-weight: 600">Findings</b>
+        <span class="muted" style="font-size: 13px">Six deterministic rules, their thresholds and their findings with evidence; passing rules are shown too, so silence is never ambiguous.</span>
+      </a>
+      <a class="card" href="Agents.dc.html" style="padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none">
+        <span class="panel-kicker">M3</span><b style="font-size: 16px; font-weight: 600">Agents</b>
+        <span class="muted" style="font-size: 13px">Registered agents with liveness, throughput, drops and the configuration they run with; what a stale agent means for the graph.</span>
+      </a>
+      <a class="card" href="Foundations.dc.html" style="padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none">
+        <span class="panel-kicker">System</span><b style="font-size: 16px; font-weight: 600">Foundations</b>
+        <span class="muted" style="font-size: 13px">Colour tokens in both themes, type scale, node and edge encoding, badges, components and the layout grid, ready to become the React component library.</span>
+      </a>
+      <a class="card" href="Agent-first.dc.html" style="padding: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none">
+        <span class="panel-kicker">Principles</span><b style="font-size: 16px; font-weight: 600">Agent-first, before the agent</b>
+        <span class="muted" style="font-size: 13px">Why the Ask bar, the context rail, URL state and evidence-first cards are there in an MVP that ships without AI.</span>
+      </a>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 14px">
+    <div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span class="panel-kicker">Direction</span>
+      <b style="font-size: 15px; font-weight: 600">Calm control room</b>
+      <span class="muted" style="font-size: 13px; text-wrap: pretty">Dark by default for long sessions next to terminals and dashboards, with a full light theme. One cool accent for interaction, four hues reserved for node types, red and amber reserved for severity and drift. IBM Plex Sans for text, JetBrains Mono for identifiers and numbers. Dense where data lives, generous where decisions are made.</span>
+    </div>
+    <div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span class="panel-kicker">Demo data</span>
+      <b style="font-size: 15px; font-weight: 600">A small shop landscape</b>
+      <span class="muted" style="font-size: 13px; text-wrap: pretty">Eight services across five domains, four data stores, two Kafka topics, two external hosts; three environments and six agents. PROD carries a cycle and a shared database; DEV is one release ahead with a change that would create a second shared database. Figures are fixtures, shaped to exercise every rule and both drift modes.</span>
+    </div>
+    <div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span class="panel-kicker">Implementation notes</span>
+      <b style="font-size: 15px; font-weight: 600">Maps to M4, M5, M6</b>
+      <span class="muted" style="font-size: 13px; text-wrap: pretty">Shell: rail 84 px, top bar 56 px, context rail 360 px, collapsing below 1180 px and 860 px. Map nodes are React Flow custom nodes; edges carry kind, calls and error rate; layout is ELK layered left to right. Colours, spacing and radii are the CSS custom properties listed on the Foundations page.</span>
+    </div>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Appearance"}}'>
+class Component extends DCLogic {
+  state = { theme: null };
+  renderVals() {
+    const theme = this.state.theme ?? this.props.theme ?? 'dark';
+    return { theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

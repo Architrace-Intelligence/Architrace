@@ -1,0 +1,133 @@
+@@HEAD:Architrace · Agent-first principles@@
+<div class="app" data-screen-label="Agent-first principles" data-theme="{{theme}}" style="min-height: 100vh; padding: 40px 32px 64px">
+<div style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px">
+  <header style="display: flex; flex-direction: column; gap: 10px; max-width: 820px">
+    <span class="panel-kicker">Design principles · MVP</span>
+    <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; text-wrap: pretty">Agent-first, before the agent</h1>
+    <p class="muted" style="margin: 0; font-size: 15px; text-wrap: pretty">The MVP ships without any AI. Its shape is still chosen so that an AI agent can take the wheel later without a redesign: one place to ask, one place to answer, stable addresses for everything and evidence under every claim.</p>
+    <div style="display: flex; gap: 8px; margin-top: 4px"><button class="btn btn-sm" onClick="{{toggleTheme}}">Switch theme</button><a class="btn btn-sm" href="Start-here.dc.html">Back to start</a></div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(560px, 100%), 1fr)); gap: 20px">
+    <article class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="panel-kicker">1 · One bar, two eras</span>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">The Ask bar is the front door on every screen</h2>
+        <p class="muted" style="margin: 0; font-size: 13.5px; text-wrap: pretty">Today it understands commands and names. Later it accepts questions. The field, the result list and the links do not move; only what the list can contain grows.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="badge b-ok" style="align-self: flex-start">MVP · deterministic</span>
+          <div style="position: relative">
+            <div class="ask-input" style="display: flex; align-items: center; color: var(--ink); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft)">compare dev</div>
+            <div class="palette" style="position: static; margin-top: 6px; box-shadow: none">
+              <div class="pal-section">Actions</div>
+              <a class="pal-item" href="Drift.dc.html"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><span>Compare DEV with PROD</span><span class="pal-hint mono">environment drift</span></a>
+              <a class="pal-item" href="Drift.dc.html"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><span>Compare DEV with STAGE</span><span class="pal-hint mono">environment drift</span></a>
+              <div class="pal-section">Nodes in PROD</div>
+              <a class="pal-item" href="Service-map.dc.html"><span class="node-icon t-svc" style="width: 24px; height: 24px; border-radius: 6px"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v4.5H4zM4 13h16v4.5H4zM7.5 8.75h.01M7.5 15.25h.01"></path></svg></span><span>api-gateway</span><span class="pal-hint mono">service:edge/api-gateway</span></a>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="badge b-changed" style="align-self: flex-start">Later · with an insights provider</span>
+          <div style="position: relative">
+            <div class="ask-input" style="display: flex; align-items: center; color: var(--ink); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft)">why is PROD different from DEV?</div>
+            <div class="palette" style="position: static; margin-top: 6px; box-shadow: none; gap: 8px; padding: 12px">
+              <div class="insight" style="border: 0; padding: 0; background: transparent">
+                <div class="insight-title"><span class="badge b-kind">answer</span><span>PROD has one service DEV lacks and runs older builds of two others</span></div>
+                <div class="insight-body">reporting-service exists only in PROD and reads postgresql/orders directly, which raises the shared-database rule. DEV runs search-service 2.3.0 and payments-service 4.2.0-rc.1; PROD runs 2.2.1 and 4.1.2.</div>
+                <ul class="evidence"><li>diff/environments?left=DEV&amp;right=PROD · 1 added · 2 changed · 3 edges</li><li>findings/PROD · SharedDatabase · postgresql/orders</li></ul>
+                <div class="insight-actions"><a class="btn btn-sm" href="Drift.dc.html">Open the diff</a><a class="btn btn-sm" href="Findings.dc.html">Open the finding</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="panel-kicker">2 · The context rail is the agent's seat</span>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">One card shape for rules today and narrative tomorrow</h2>
+        <p class="muted" style="margin: 0; font-size: 13.5px; text-wrap: pretty">The right-hand rail reacts to what is selected: an environment, a node, a dependency, a comparison. Every card has the same four slots. Rules, diffs and the snapshot series fill them now; an LLM writes into the same slots later and nothing else changes.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 14px; align-items: start">
+        <div class="insight">
+          <div class="insight-title"><span class="badge sev-high">high</span><span>postgresql/orders is used by 2 services</span></div>
+          <div class="insight-body">orders-service owns the schema; reporting-service reads it directly. A schema change in one breaks the other without any contract in between.</div>
+          <ul class="evidence"><li>orders-service → postgresql/orders · sync · 24.0k calls</li><li>reporting-service → postgresql/orders · sync · 420 calls · first seen yesterday 18:05</li></ul>
+          <div class="insight-actions"><a class="btn btn-sm" href="Service-map.dc.html">Show on map</a><a class="btn btn-sm" href="Findings.dc.html">Open finding</a></div>
+        </div>
+        <ol style="margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 14px; font-size: 12.5px; color: var(--ink-2)">
+          <li><b style="color: var(--ink); font-weight: 600">Source</b><br>who says it: a rule, a diff, later a provider</li>
+          <li><b style="color: var(--ink); font-weight: 600">Claim</b><br>one sentence, no adjectives</li>
+          <li><b style="color: var(--ink); font-weight: 600">Evidence</b><br>the rows the claim rests on</li>
+          <li><b style="color: var(--ink); font-weight: 600">Actions</b><br>deep links, never free text</li>
+        </ol>
+      </div>
+    </article>
+
+    <article class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="panel-kicker">3 · Everything is addressable</span>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">Every view is a URL and every URL is an API call</h2>
+        <p class="muted" style="margin: 0; font-size: 13.5px; text-wrap: pretty">Environment, filters, time and selection live in the URL; node ids never contain the environment. An agent, a script or a colleague can point at exactly what you see, and the JSON button shows the Query API request behind the screen.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <code class="mono" style="font-size: 12.5px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--ink-2); word-break: break-all"><span style="color: var(--ink-3)">UI</span>&nbsp; /env/PROD/map?at=live&amp;domain=orders&amp;node=service:orders/orders-service</code>
+        <code class="mono" style="font-size: 12.5px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--ink-2); word-break: break-all"><span style="color: var(--ink-3)">API</span> GET /api/v1/environments/PROD/services/service:orders%2Forders-service</code>
+        <code class="mono" style="font-size: 12.5px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--ink-2); word-break: break-all"><span style="color: var(--ink-3)">UI</span>&nbsp; /drift?left=DEV&amp;right=PROD&amp;view=map</code>
+        <code class="mono" style="font-size: 12.5px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--ink-2); word-break: break-all"><span style="color: var(--ink-3)">API</span> GET /api/v1/diff/environments?left=DEV&amp;right=PROD</code>
+      </div>
+    </article>
+
+    <article class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="panel-kicker">4 · Evidence before verdict</span>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">No claim without the rows behind it</h2>
+        <p class="muted" style="margin: 0; font-size: 13.5px; text-wrap: pretty">Findings show the path, the calls and the window. Drift shows which side has what. Metrics are never part of drift, and traffic volume is never an argument. An agent that later speaks for the product cites these rows instead of asserting.</p>
+      </div>
+      <div class="group">
+        <div class="diff-row" style="grid-template-columns: 28px 1fr">
+          <span class="glyph b-changed">Δ</span>
+          <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-weight: 600">search-service</b><span class="muted" style="font-size: 12.5px">v2.3.0 in DEV → v2.2.1 in PROD</span></span>
+        </div>
+        <div class="diff-row" style="grid-template-columns: 28px 1fr">
+          <span class="glyph b-removed">−</span>
+          <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-weight: 600">search-service → postgresql / catalog</b><span class="muted" style="font-size: 12.5px">sync · only in DEV · makes postgresql/catalog shared where it lands</span></span>
+        </div>
+        <div class="diff-row" style="grid-template-columns: 28px 1fr">
+          <span class="glyph b-added">+</span>
+          <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-weight: 600">reporting-service</b><span class="muted" style="font-size: 12.5px">exists only in PROD · v0.9.3 · 2 dependencies</span></span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span class="panel-kicker">Honest boundaries</span>
+      <h2 style="margin: 0; font-size: 18px; font-weight: 600">What the MVP does not pretend to do</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px">
+      <div class="note" style="flex-direction: column; gap: 4px; align-items: stretch"><b style="color: var(--ink); font-weight: 600">No natural-language input</b><span>The Ask bar matches commands and names. It says so in its footer instead of failing silently.</span><span class="mono faint" style="font-size: 11.5px">C12 · post-MVP</span></div>
+      <div class="note" style="flex-direction: column; gap: 4px; align-items: stretch"><b style="color: var(--ink); font-weight: 600">No narrative insights</b><span>Every card is labelled “deterministic”. The provider slot in settings reads “not configured”.</span><span class="mono faint" style="font-size: 11.5px">C12 · post-MVP</span></div>
+      <div class="note" style="flex-direction: column; gap: 4px; align-items: stretch"><b style="color: var(--ink); font-weight: 600">No remote agent configuration</b><span>The agents page shows what each agent runs with; changing it happens in the agent's own config.</span><span class="mono faint" style="font-size: 11.5px">C15 · post-MVP</span></div>
+      <div class="note" style="flex-direction: column; gap: 4px; align-items: stretch"><b style="color: var(--ink); font-weight: 600">No declared architecture</b><span>Only the observed graph. Comparing against an intended model comes with the import capability.</span><span class="mono faint" style="font-size: 11.5px">C13 · post-MVP</span></div>
+    </div>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Appearance"}}'>
+class Component extends DCLogic {
+  state = { theme: null };
+  renderVals() {
+    const theme = this.state.theme ?? this.props.theme ?? 'dark';
+    return { theme, toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) };
+  }
+}
+</script>
+</body>
+</html>

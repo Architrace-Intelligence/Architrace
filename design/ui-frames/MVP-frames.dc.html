@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architrace · MVP frames</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+*{box-sizing:border-box}
+a{color:#38BDF8;text-decoration:none}a:hover{text-decoration:underline}
+.frame{position:absolute;width:1440px;height:900px}
+.frame-label{position:absolute;left:0;top:-46px;display:inline-flex;align-items:center;gap:10px;height:34px;padding:0 12px;border-radius:8px;background:#131A26;border:1px solid #2D3A50;color:#E8ECF3;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px;font-weight:600;white-space:nowrap;cursor:grab;user-select:none}
+.frame-num{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:500;color:#38BDF8}
+.frame-note{font-weight:400;color:#AEB8C8}
+.screen{width:1440px;height:900px;overflow:hidden;border-radius:10px;box-shadow:0 24px 64px rgba(0,0,0,.5);position:relative}
+.canvas-title{position:absolute;left:40px;top:32px;width:1440px;display:flex;flex-direction:column;gap:6px;padding:16px 20px;border-radius:12px;background:#131A26;border:1px solid #2D3A50;color:#E8ECF3;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px;line-height:1.5}
+.canvas-title h1{margin:0;font-size:18px;font-weight:600}
+.canvas-title p{margin:0;color:#AEB8C8;max-width:1100px}
+.canvas-title .mono{color:#AEB8C8}
+[data-theme="dark"]{--bg:#0B0F17;--bg-2:#0E131C;--surface:#131A26;--surface-2:#1A2232;--line:#222D3E;--line-2:#2D3A50;--ink:#E8ECF3;--ink-2:#AEB8C8;--ink-3:#8491A6;--accent:#38BDF8;--accent-ink:#082F49;--accent-soft:rgba(56,189,248,.14);--svc:#8B9CFF;--db:#F2B33D;--topic:#F28AC1;--ext:#9AA7B8;--sev-high:#FF6B6B;--sev-med:#F5A524;--sev-low:#7FA3C8;--ok:#3DD68C;--added:#3DD68C;--changed:#F5A524;--shadow:0 12px 32px rgba(0,0,0,.45);--grid:#1B2535}
+.app{font-family:var(--sans);font-size:14px;line-height:1.45;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;--sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;display:grid;grid-template-columns:84px 1fr;grid-template-rows:56px 1fr;height:900px}
+.app :where(button){font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;line-height:inherit}
+.app :where(input,select){font:inherit;color:inherit}
+.app svg{display:block}
+.ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ico-s{width:14px;height:14px}
+.mono{font-family:var(--mono)}
+.muted{color:var(--ink-2)}.faint{color:var(--ink-3)}
+.rail{grid-row:1/3;background:var(--bg-2);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:10px 0 12px;gap:4px}
+.rail-logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--accent);margin-bottom:10px}
+.rail-item{width:68px;height:60px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink-2);font-size:12px;font-weight:500;text-decoration:none}
+.rail-item[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.rail-spacer{flex:1}
+.topbar{display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--bg-2);min-width:0;height:56px}
+.title{margin:0;font-size:16px;font-weight:600;white-space:nowrap}
+.crumbs{display:flex;align-items:center;gap:6px;flex:none}
+.crumb-sep{color:var(--ink-3);font-family:var(--mono)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;flex:none}
+.seg button{height:30px;padding:0 12px;border-radius:6px;color:var(--ink-2);display:inline-flex;align-items:center;gap:7px;font-weight:500;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-2)}
+.seg-label{font-size:12px;color:var(--ink-3);padding:0 4px 0 10px;display:inline-flex;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block}
+.ask{flex:1;max-width:640px;margin:0 auto;position:relative;min-width:200px}
+.ask-ico{position:absolute;left:12px;top:10px;color:var(--ink-3);pointer-events:none}
+.ask-input{width:100%;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 92px 0 38px;color:var(--ink);outline:none}
+.ask-input::placeholder{color:var(--ink-3)}
+.ask-kbd{position:absolute;right:10px;top:9px;display:flex;gap:4px;pointer-events:none}
+.kbd{font-family:var(--mono);font-size:11px;line-height:18px;border:1px solid var(--line-2);border-radius:5px;padding:0 6px;color:var(--ink-3);background:var(--bg)}
+.btn{height:34px;padding:0 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);display:inline-flex;align-items:center;gap:8px;color:var(--ink);font-weight:500;font-size:13px;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn-sm{height:28px;padding:0 10px;font-size:12px}
+.icon-btn{width:34px;padding:0;justify-content:center}
+.chip{height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);background:var(--surface);font-weight:500;white-space:nowrap}
+.chip-on{border-color:var(--accent);background:var(--accent-soft)}
+.chip-x{color:var(--ink-3);margin-left:2px}
+.chip-select{height:30px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);padding:0 32px 0 12px;font-size:13px;font-weight:500;appearance:none;-webkit-appearance:none;color:var(--ink)}
+.select-wrap{position:relative;display:inline-flex}
+.select-wrap .ico{position:absolute;right:10px;top:7px;width:16px;height:16px;pointer-events:none;color:var(--ink-3)}
+.badge{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
+.sev-high{background:color-mix(in srgb,var(--sev-high) 16%,transparent);color:var(--sev-high)}
+.sev-medium{background:color-mix(in srgb,var(--sev-med) 16%,transparent);color:var(--sev-med)}
+.sev-low{background:color-mix(in srgb,var(--sev-low) 18%,transparent);color:var(--sev-low)}
+.b-kind{background:var(--surface-2);color:var(--ink-2);font-family:var(--mono);font-weight:500}
+.b-ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.b-stale{background:color-mix(in srgb,var(--sev-med) 16%,transparent);color:var(--sev-med)}
+.b-added{background:color-mix(in srgb,var(--added) 16%,transparent);color:var(--added)}
+.b-changed{background:color-mix(in srgb,var(--changed) 16%,transparent);color:var(--changed)}
+.page{min-width:0;overflow:hidden;padding:20px 28px 28px;display:flex;flex-direction:column;gap:14px}
+.page>*{flex:none}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.toolbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.count-line{font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:10px}
+.group{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.group-h{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.group-h h3{margin:0;font-size:14px;font-weight:600}
+.group-meta{margin-left:auto;font-size:12px;color:var(--ink-3);font-family:var(--mono);white-space:nowrap}
+.row,.row-head{display:grid;gap:12px;align-items:center;padding:0 16px;font-size:13px}
+.by-project{grid-template-columns:96px minmax(200px,1fr) 110px 90px 110px 150px 170px 120px 28px}
+.by-cluster{grid-template-columns:minmax(200px,1fr) 96px 110px 90px 110px 150px 170px 120px 28px}
+.row-head{height:30px;color:var(--ink-3);font-size:12px;border-bottom:1px solid var(--line);background:var(--bg-2)}
+.row{height:46px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.row:last-child{border-bottom:0}
+.row-hover{background:var(--surface-2)}
+.cell-2{display:flex;flex-direction:column;gap:1px;min-width:0;line-height:1.25}
+.cell-2 b{font-weight:600;font-family:var(--mono);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-2 span{font-size:12px;color:var(--ink-3)}
+.num{font-family:var(--mono);font-size:13px}
+.agents{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.findings{display:inline-flex;gap:4px}
+.row-arrow{color:var(--ink-3);display:grid;place-items:center}
+.popover{position:absolute;top:38px;left:0;z-index:21;background:var(--surface);border:1px solid var(--line-2);border-radius:12px;box-shadow:var(--shadow);padding:8px;display:flex;flex-direction:column;gap:2px;width:300px}
+.pop-find{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid var(--line-2);border-radius:8px;background:var(--bg);color:var(--ink-3);font-size:13px;margin-bottom:4px}
+.pop-item{display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;text-align:left;width:100%;font-size:13px}
+.pop-item[aria-pressed="true"]{background:var(--accent-soft)}
+.pop-count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line-2);flex:none;display:grid;place-items:center;color:var(--accent-ink)}
+.cb-on{background:var(--accent);border-color:var(--accent)}
+.pop-foot{border-top:1px solid var(--line);margin-top:4px;padding:8px 4px 2px;display:flex;gap:6px;justify-content:flex-end}
+.panel{width:360px;flex:none;border-left:1px solid var(--line);background:var(--bg-2);display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.panel-head{padding:16px 16px 12px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
+.panel-kicker{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.panel-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 12px}
+.tab{height:38px;padding:0 10px;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.tab-count{font-size:11px;font-family:var(--mono);color:var(--ink-3)}
+.kv{display:grid;grid-template-columns:116px 1fr;gap:10px 12px;font-size:13px;margin:0}
+.kv dt{color:var(--ink-3);margin:0}.kv dd{margin:0;color:var(--ink)}
+.stack{display:flex;flex-direction:column;gap:8px}
+.insight{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.insight-title{display:flex;align-items:flex-start;gap:8px;font-weight:600;font-size:13px}
+.insight-body{font-size:13px;color:var(--ink-2)}
+.insight-actions{display:flex;gap:6px;flex-wrap:wrap}
+.dep{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;width:100%;text-align:left}
+.dep-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.dep-metrics{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:auto;white-space:nowrap}
+.stream{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.stream-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stream-text b{font-weight:600}
+.stream-text span{font-size:12px;color:var(--ink-3)}
+.map{position:relative;flex:1;overflow:hidden;background-color:var(--bg);background-image:radial-gradient(var(--grid) 1px,transparent 1px);background-size:24px 24px;min-width:0}
+.filterbar{position:absolute;left:16px;top:14px;display:flex;gap:8px;align-items:center;z-index:2;flex-wrap:wrap;max-width:calc(100% - 32px)}
+.world{position:absolute;left:6px;top:72px;width:984px;height:720px}
+.edge-svg{position:absolute;left:0;top:0;width:984px;height:720px;overflow:visible;pointer-events:none}
+.node{position:absolute;width:192px;height:56px;border-radius:10px;background:var(--surface);border:1px solid var(--line-2);display:flex;align-items:center;gap:10px;padding:0 10px 0 8px;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.node[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),var(--shadow)}
+.node-icon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.node-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.t-svc{color:var(--svc);background:color-mix(in srgb,var(--svc) 16%,transparent)}
+.t-db{color:var(--db);background:color-mix(in srgb,var(--db) 16%,transparent)}
+.t-topic{color:var(--topic);background:color-mix(in srgb,var(--topic) 16%,transparent)}
+.t-ext{color:var(--ext);background:color-mix(in srgb,var(--ext) 16%,transparent)}
+.node-text{display:flex;flex-direction:column;min-width:0;gap:1px;flex:1}
+.node-name{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.node-sub{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.node-badge{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.edge-pill{position:absolute;transform:translate(-50%,-50%);height:22px;padding:0 8px;border-radius:999px;background:var(--bg-2);border:1px solid var(--accent);color:var(--ink);font-family:var(--mono);font-size:11.5px;line-height:1;white-space:nowrap;display:inline-flex;align-items:center;z-index:3}
+.legend{position:absolute;left:16px;bottom:16px;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:flex;gap:6px 18px;font-size:12px;color:var(--ink-2);z-index:2;flex-wrap:wrap;max-width:560px}
+.legend-col{display:contents}
+.legend-row{display:flex;align-items:center;gap:7px}
+.line-sample{width:26px;height:0;border-top:2px solid var(--ink-3)}
+.minimap{position:absolute;right:16px;bottom:16px;width:188px;height:150px;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;z-index:2}
+.mini-node{position:absolute;border-radius:2px}
+.zoom{position:absolute;right:16px;bottom:178px;display:flex;flex-direction:column;gap:2px;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:2px;z-index:2}
+.zoom button{width:30px;height:30px;border-radius:6px;display:grid;place-items:center;color:var(--ink-2)}
+.note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--surface-2);font-size:12.5px;color:var(--ink-2)}
+</style>
+</helmet>
+
+<div class="canvas-title">
+  <h1>Architrace · MVP frames</h1>
+  <p>Initial release of the web UI: a <b>Projects</b> list that filters by project, environment and Kubernetes cluster, and a <b>Service map</b> for the chosen scope that shows every service, data store and data stream. Frames are 1440 × 900, dark theme, static. Flow: 1 → 2 (filter) → open a row → 3 → select a service → 4 → select a data stream → 5.</p>
+  <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">scope = project × environment × cluster · data stream = topic or queue with its producers and consumers</span>
+</div>
+
+<div class="frame" style="left: 40px; top: 160px">
+  <div class="frame-label" data-drags-parent="1"><span class="frame-num">1</span>Projects<span class="frame-note">grouped by project, no filter · a row opens the map for that scope</span></div>
+  <div class="screen">
+<div class="app" data-theme="dark" data-screen-label="1 · Projects">
+<nav class="rail" aria-label="Primary">
+  <a class="rail-logo" href="#" aria-label="Architrace"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><circle cx="5" cy="12" r="2.2"></circle><circle cx="12" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="12" cy="19" r="2.2"></circle><path d="M7 11l3.5-4.5M14 6.5l3.5 4.5M17 13.5L13.5 18M10.5 18L7 13.5"></path></svg></a>
+  <a class="rail-item" href="#" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path></svg><span>Projects</span></a>
+  <a class="rail-item" href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg><span>Map</span></a>
+  <span class="rail-spacer"></span>
+  <button class="rail-item" aria-label="Switch light and dark theme"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg><span>Theme</span></button>
+</nav>
+<header class="topbar">
+  <h1 class="title">Projects</h1>
+  <div class="ask">
+    <svg class="ico ask-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <input class="ask-input" type="text" placeholder="Filter by project, environment, cluster or namespace…" value="">
+    <span class="ask-kbd" aria-hidden="true"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span class="dot" style="background: var(--ok)"></span>Live</button>
+    <button class="btn icon-btn" aria-label="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+  </div>
+</header>
+<main class="page">
+  <div class="toolbar">
+    <button class="chip">Environment<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="chip">Cluster<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="chip">Region<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="chip">Agents<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="chip">Findings<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <div class="toolbar-right">
+      <div class="seg" role="group" aria-label="Group by"><span class="seg-label">Group by</span><button aria-pressed="true">Project</button><button aria-pressed="false">Environment</button><button aria-pressed="false">Cluster</button></div>
+    </div>
+  </div>
+  <div class="count-line"><span>10 scopes · 3 projects · 3 environments · 5 clusters · 6 agents, 1 stale</span></div>
+
+  <section class="group" aria-label="webshop">
+    <div class="group-h"><h3>webshop</h3><span class="faint">edge · orders · payments · catalog · platform · identity</span><span class="group-meta">3 environments · 4 clusters · 25 services</span></div>
+    <div class="row-head by-project"><span>Environment</span><span>Cluster</span><span>Namespaces</span><span>Services</span><span>Data streams</span><span>Agents</span><span>Findings</span><span>Last snapshot</span><span></span></div>
+    <a class="row by-project row-hover" href="#"><span><span class="badge b-kind">PROD</span></span><span class="cell-2"><b>k8s-prod-eu1</b><span>eu-west-1</span></span><span class="num">6</span><span class="num">8</span><span class="num">2</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>2 live</span><span class="findings"><span class="badge sev-high">2</span><span class="badge sev-medium">1</span><span class="badge sev-low">2</span></span><span class="num faint">42 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">PROD</span></span><span class="cell-2"><b>k8s-prod-eu2</b><span>eu-central-1</span></span><span class="num">2</span><span class="num">3</span><span class="num">1</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-low">1</span></span><span class="num faint">51 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">STAGE</span></span><span class="cell-2"><b>k8s-stage-eu1</b><span>eu-west-1</span></span><span class="num">6</span><span class="num">7</span><span class="num">2</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-high">1</span><span class="badge sev-medium">1</span><span class="badge sev-low">2</span></span><span class="num faint">12 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">DEV</span></span><span class="cell-2"><b>k8s-dev-eu1</b><span>eu-west-1</span></span><span class="num">6</span><span class="num">7</span><span class="num">2</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-high">2</span><span class="badge sev-medium">1</span><span class="badge sev-low">2</span></span><span class="num faint">55 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">DEV</span></span><span class="cell-2"><b>k8s-dev-ci</b><span>eu-west-1</span></span><span class="num faint">0</span><span class="num faint">0</span><span class="num faint">0</span><span class="agents"><span class="badge b-stale">stale · 2 h</span></span><span class="findings faint">—</span><span class="num faint">2 h ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+  </section>
+
+  <section class="group" aria-label="billing">
+    <div class="group-h"><h3>billing</h3><span class="faint">invoicing · ledger</span><span class="group-meta">3 environments · 3 clusters · 12 services</span></div>
+    <div class="row-head by-project"><span>Environment</span><span>Cluster</span><span>Namespaces</span><span>Services</span><span>Data streams</span><span>Agents</span><span>Findings</span><span>Last snapshot</span><span></span></div>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">PROD</span></span><span class="cell-2"><b>k8s-prod-eu1</b><span>eu-west-1</span></span><span class="num">2</span><span class="num">4</span><span class="num">3</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-medium">1</span></span><span class="num faint">40 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">STAGE</span></span><span class="cell-2"><b>k8s-stage-eu1</b><span>eu-west-1</span></span><span class="num">2</span><span class="num">4</span><span class="num">3</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-medium">1</span></span><span class="num faint">15 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">DEV</span></span><span class="cell-2"><b>k8s-dev-eu1</b><span>eu-west-1</span></span><span class="num">2</span><span class="num">4</span><span class="num">3</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings faint">—</span><span class="num faint">58 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+  </section>
+
+  <section class="group" aria-label="data-platform">
+    <div class="group-h"><h3>data-platform</h3><span class="faint">ingest · analytics</span><span class="group-meta">2 environments · 2 clusters · 6 services</span></div>
+    <div class="row-head by-project"><span>Environment</span><span>Cluster</span><span>Namespaces</span><span>Services</span><span>Data streams</span><span>Agents</span><span>Findings</span><span>Last snapshot</span><span></span></div>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">PROD</span></span><span class="cell-2"><b>k8s-prod-eu2</b><span>eu-central-1</span></span><span class="num">2</span><span class="num">3</span><span class="num">5</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-low">1</span></span><span class="num faint">49 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-project" href="#"><span><span class="badge b-kind">DEV</span></span><span class="cell-2"><b>k8s-dev-eu1</b><span>eu-west-1</span></span><span class="num">2</span><span class="num">3</span><span class="num">5</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings faint">—</span><span class="num faint">57 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+  </section>
+</main>
+</div>
+  </div>
+</div>
+
+<div class="frame" style="left: 1600px; top: 160px">
+  <div class="frame-label" data-drags-parent="1"><span class="frame-num">2</span>Projects, filtered<span class="frame-note">environment = PROD, grouped by cluster, cluster facet open · the URL carries the filter</span></div>
+  <div class="screen">
+<div class="app" data-theme="dark" data-screen-label="2 · Projects filtered">
+<nav class="rail" aria-label="Primary">
+  <a class="rail-logo" href="#" aria-label="Architrace"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><circle cx="5" cy="12" r="2.2"></circle><circle cx="12" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="12" cy="19" r="2.2"></circle><path d="M7 11l3.5-4.5M14 6.5l3.5 4.5M17 13.5L13.5 18M10.5 18L7 13.5"></path></svg></a>
+  <a class="rail-item" href="#" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path></svg><span>Projects</span></a>
+  <a class="rail-item" href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg><span>Map</span></a>
+  <span class="rail-spacer"></span>
+  <button class="rail-item" aria-label="Switch light and dark theme"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg><span>Theme</span></button>
+</nav>
+<header class="topbar">
+  <h1 class="title">Projects</h1>
+  <div class="ask">
+    <svg class="ico ask-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <input class="ask-input" type="text" placeholder="Filter by project, environment, cluster or namespace…" value="">
+    <span class="ask-kbd" aria-hidden="true"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span class="dot" style="background: var(--ok)"></span>Live</button>
+    <button class="btn icon-btn" aria-label="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+  </div>
+</header>
+<main class="page">
+  <div class="toolbar">
+    <button class="chip chip-on">Environment<span class="faint">·</span><span class="mono">PROD</span><svg class="ico ico-s chip-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+    <span style="position: relative; display: inline-flex">
+      <button class="chip" aria-expanded="true">Cluster<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 15l-6-6-6 6"></path></svg></button>
+      <div class="popover" role="dialog" aria-label="Filter by cluster">
+        <div class="pop-find"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><span>Find cluster</span></div>
+        <button class="pop-item"><span class="cb"></span><span class="mono">k8s-prod-eu1</span><span class="pop-count">2</span></button>
+        <button class="pop-item"><span class="cb"></span><span class="mono">k8s-prod-eu2</span><span class="pop-count">2</span></button>
+        <button class="pop-item faint"><span class="cb"></span><span class="mono">k8s-stage-eu1</span><span class="pop-count">0</span></button>
+        <button class="pop-item faint"><span class="cb"></span><span class="mono">k8s-dev-eu1</span><span class="pop-count">0</span></button>
+        <button class="pop-item faint"><span class="cb"></span><span class="mono">k8s-dev-ci</span><span class="badge b-stale" style="margin-left: 6px">stale</span><span class="pop-count">0</span></button>
+        <div class="pop-foot"><button class="btn btn-ghost btn-sm">Clear</button><button class="btn btn-primary btn-sm">Apply</button></div>
+      </div>
+    </span>
+    <button class="chip">Region<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="chip">Agents<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="chip">Findings<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="btn btn-ghost btn-sm">Clear all</button>
+    <div class="toolbar-right">
+      <div class="seg" role="group" aria-label="Group by"><span class="seg-label">Group by</span><button aria-pressed="false">Project</button><button aria-pressed="false">Environment</button><button aria-pressed="true">Cluster</button></div>
+    </div>
+  </div>
+  <div class="count-line"><span>4 of 10 scopes · environment PROD · 2 clusters · 3 agents live</span></div>
+
+  <section class="group" aria-label="k8s-prod-eu1">
+    <div class="group-h"><h3 class="mono">k8s-prod-eu1</h3><span class="faint">eu-west-1 · agents prod-eu1-a, prod-eu1-b</span><span class="group-meta">2 projects · 12 services · 5 data streams</span></div>
+    <div class="row-head by-cluster"><span>Project</span><span>Environment</span><span>Namespaces</span><span>Services</span><span>Data streams</span><span>Agents</span><span>Findings</span><span>Last snapshot</span><span></span></div>
+    <a class="row by-cluster" href="#"><span class="cell-2"><b style="font-family: var(--sans); font-size: 13px">webshop</b><span>edge · orders · payments · catalog · platform · identity</span></span><span><span class="badge b-kind">PROD</span></span><span class="num">6</span><span class="num">8</span><span class="num">2</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>2 live</span><span class="findings"><span class="badge sev-high">2</span><span class="badge sev-medium">1</span><span class="badge sev-low">2</span></span><span class="num faint">42 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-cluster" href="#"><span class="cell-2"><b style="font-family: var(--sans); font-size: 13px">billing</b><span>invoicing · ledger</span></span><span><span class="badge b-kind">PROD</span></span><span class="num">2</span><span class="num">4</span><span class="num">3</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>2 live</span><span class="findings"><span class="badge sev-medium">1</span></span><span class="num faint">40 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+  </section>
+
+  <section class="group" aria-label="k8s-prod-eu2">
+    <div class="group-h"><h3 class="mono">k8s-prod-eu2</h3><span class="faint">eu-central-1 · agent prod-eu2</span><span class="group-meta">2 projects · 6 services · 6 data streams</span></div>
+    <div class="row-head by-cluster"><span>Project</span><span>Environment</span><span>Namespaces</span><span>Services</span><span>Data streams</span><span>Agents</span><span>Findings</span><span>Last snapshot</span><span></span></div>
+    <a class="row by-cluster" href="#"><span class="cell-2"><b style="font-family: var(--sans); font-size: 13px">webshop</b><span>catalog · platform</span></span><span><span class="badge b-kind">PROD</span></span><span class="num">2</span><span class="num">3</span><span class="num">1</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-low">1</span></span><span class="num faint">51 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    <a class="row by-cluster" href="#"><span class="cell-2"><b style="font-family: var(--sans); font-size: 13px">data-platform</b><span>ingest · analytics</span></span><span><span class="badge b-kind">PROD</span></span><span class="num">2</span><span class="num">3</span><span class="num">5</span><span class="agents"><span class="dot" style="background: var(--ok)"></span>1 live</span><span class="findings"><span class="badge sev-low">1</span></span><span class="num faint">49 s ago</span><span class="row-arrow"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+  </section>
+</main>
+</div>
+  </div>
+</div>
+
+<div class="frame" style="left: 40px; top: 1220px">
+  <div class="frame-label" data-drags-parent="1"><span class="frame-num">3</span>Service map<span class="frame-note">scope webshop / PROD / k8s-prod-eu1 opened from a row · every service, data store, data stream and external</span></div>
+  <div class="screen">
+<div class="app" data-theme="dark" data-screen-label="3 · Service map">
+<nav class="rail" aria-label="Primary">
+  <a class="rail-logo" href="#" aria-label="Architrace"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><circle cx="5" cy="12" r="2.2"></circle><circle cx="12" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="12" cy="19" r="2.2"></circle><path d="M7 11l3.5-4.5M14 6.5l3.5 4.5M17 13.5L13.5 18M10.5 18L7 13.5"></path></svg></a>
+  <a class="rail-item" href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path></svg><span>Projects</span></a>
+  <a class="rail-item" href="#" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg><span>Map</span></a>
+  <span class="rail-spacer"></span>
+  <button class="rail-item" aria-label="Switch light and dark theme"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg><span>Theme</span></button>
+</nav>
+<header class="topbar">
+  <h1 class="title">Service map</h1>
+  <nav class="crumbs" aria-label="Scope">
+    <button class="btn">webshop<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="crumb-sep">/</span>
+    <button class="btn">PROD<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="crumb-sep">/</span>
+    <button class="btn"><span class="mono">k8s-prod-eu1</span><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+  </nav>
+  <div class="ask">
+    <svg class="ico ask-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <input class="ask-input" type="text" placeholder="Find a service, data store or data stream…" value="">
+    <span class="ask-kbd" aria-hidden="true"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span class="dot" style="background: var(--ok)"></span>Live<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Open this view as JSON"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg></button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section class="map" aria-label="Service map canvas">
+    <div class="filterbar">
+      <span class="select-wrap"><select class="chip-select"><option>All namespaces</option></select><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--svc)"></span>Services<span class="faint mono" style="font-size: 12px">8</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--db)"></span>Data stores<span class="faint mono" style="font-size: 12px">4</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--topic)"></span>Data streams<span class="faint mono" style="font-size: 12px">2</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--ext)"></span>External<span class="faint mono" style="font-size: 12px">2</span></button>
+      <div class="seg" role="group" aria-label="Lens"><span class="seg-label">Lens</span><button aria-pressed="true">All</button><button aria-pressed="false">Data streams</button></div>
+    </div>
+    <div class="world">
+      <sc-for list="{{mapA.edges}}" as="e" hint-placeholder-count="6">
+        <svg class="edge-svg" viewBox="0 0 984 720" preserveAspectRatio="xMinYMin meet" aria-hidden="true">
+          <defs><marker id="{{e.mid}}" orient="auto" markerWidth="5" markerHeight="5" refX="3.6" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" style="fill: {{e.stroke}}" stroke="none"></path></marker></defs>
+          <path d="{{e.d}}" fill="none" stroke-linecap="round" style="stroke: {{e.stroke}}; stroke-width: {{e.w}}px; stroke-dasharray: {{e.dash}}; opacity: {{e.op}}" marker-end="{{e.marker}}"></path>
+        </svg>
+      </sc-for>
+      <sc-for list="{{mapA.nodes}}" as="n" hint-placeholder-count="8">
+        <div class="node" aria-pressed="{{n.selected}}" style="left: {{n.x}}px; top: {{n.y}}px; opacity: {{n.op}}">
+          <span class="node-icon {{n.tcls}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span>
+          <span class="node-text"><span class="node-name">{{n.name}}</span><span class="node-sub mono">{{n.sub}}</span></span>
+          <sc-if value="{{n.hasFindings}}" hint-placeholder-val="{{false}}"><span class="node-badge {{n.badgeCls}}">{{n.findings}}</span></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <div class="legend-col">
+        <div class="legend-row"><span class="dot" style="background: var(--svc)"></span>Service</div>
+        <div class="legend-row"><span class="dot" style="background: var(--db)"></span>Data store</div>
+        <div class="legend-row"><span class="dot" style="background: var(--topic)"></span>Data stream</div>
+        <div class="legend-row"><span class="dot" style="background: var(--ext)"></span>External</div>
+      </div>
+      <div class="legend-col">
+        <div class="legend-row"><span class="line-sample"></span>sync call</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-style: dashed"></span>publish / consume</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-color: var(--sev-med)"></span>errors ≥ 1 %</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-color: var(--sev-high)"></span>errors ≥ 3 %</div>
+      </div>
+    </div>
+    <div class="zoom" aria-label="Zoom">
+      <button aria-label="Zoom in"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+      <button aria-label="Zoom out"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+      <button aria-label="Fit to view"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button>
+    </div>
+    <div class="minimap" aria-hidden="true">
+      <sc-for list="{{mapA.mini}}" as="m" hint-placeholder-count="8"><span class="mini-node" style="left: {{m.x}}px; top: {{m.y}}px; width: {{m.w}}px; height: {{m.h}}px; background: {{m.c}}; opacity: {{m.op}}"></span></sc-for>
+    </div>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <div class="panel-head">
+      <span class="panel-kicker">Scope · PROD</span>
+      <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+        <b style="font-size: 16px; font-weight: 600">webshop</b>
+        <span class="mono faint" style="font-size: 12px">k8s-prod-eu1 · eu-west-1</span>
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <span class="badge b-ok">2 agents live</span>
+        <span class="badge sev-high">2 high</span>
+        <span class="badge sev-medium">1 medium</span>
+        <span class="badge sev-low">2 low</span>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true">Overview</button>
+      <button class="tab" role="tab" aria-selected="false">Streams <span class="tab-count">2</span></button>
+      <button class="tab" role="tab" aria-selected="false">Findings <span class="tab-count">5</span></button>
+      <button class="tab" role="tab" aria-selected="false">Agents <span class="tab-count">2</span></button>
+    </div>
+    <div class="panel-body">
+      <dl class="kv">
+        <dt>Services</dt><dd>8 <span class="faint">in 6 namespaces</span></dd>
+        <dt>Data stores</dt><dd>4 <span class="faint">· 2 external hosts</span></dd>
+        <dt>Data streams</dt><dd>2 <span class="faint">· 1 producer each</span></dd>
+        <dt>Dependencies</dt><dd>20 <span class="faint">· 16 sync, 4 stream</span></dd>
+        <dt>Last snapshot</dt><dd>42 s ago <span class="faint">(window 60 s)</span></dd>
+      </dl>
+      <div class="stack">
+        <span class="panel-kicker">Data streams</span>
+        <div class="stream"><span class="node-icon t-topic" style="width: 26px; height: 26px; border-radius: 7px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16M5 19h.01"></path></svg></span><span class="stream-text"><b>order-events</b><span>orders-service → notification-service, reporting-service</span></span><span class="dep-metrics">8.7k</span></div>
+        <div class="stream"><span class="node-icon t-topic" style="width: 26px; height: 26px; border-radius: 7px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16M5 19h.01"></path></svg></span><span class="stream-text"><b>payment-events</b><span>payments-service → notification-service</span></span><span class="dep-metrics">2.0k</span></div>
+      </div>
+      <div class="stack">
+        <span class="panel-kicker">Insights · deterministic</span>
+        <div class="insight">
+          <div class="insight-title"><span class="badge sev-high">high</span><span>orders-service and inventory-service call each other</span></div>
+          <div class="insight-body">A cycle over sync edges: 8.9k and 1.2k calls per window.</div>
+          <div class="insight-actions"><a class="btn btn-sm" href="#">Show on map</a></div>
+        </div>
+        <div class="insight">
+          <div class="insight-title"><span class="badge sev-high">high</span><span>postgresql/orders is used by 2 services</span></div>
+          <div class="insight-body">reporting-service reads it directly since yesterday 18:05, next to its owner orders-service.</div>
+          <div class="insight-actions"><a class="btn btn-sm" href="#">Show on map</a></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+</div>
+  </div>
+</div>
+
+<div class="frame" style="left: 1600px; top: 1220px">
+  <div class="frame-label" data-drags-parent="1"><span class="frame-num">4</span>Service map, service selected<span class="frame-note">orders-service: neighbours stay lit, metrics on its edges, dependencies and data streams in the rail</span></div>
+  <div class="screen">
+<div class="app" data-theme="dark" data-screen-label="4 · Service selected">
+<nav class="rail" aria-label="Primary">
+  <a class="rail-logo" href="#" aria-label="Architrace"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><circle cx="5" cy="12" r="2.2"></circle><circle cx="12" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="12" cy="19" r="2.2"></circle><path d="M7 11l3.5-4.5M14 6.5l3.5 4.5M17 13.5L13.5 18M10.5 18L7 13.5"></path></svg></a>
+  <a class="rail-item" href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path></svg><span>Projects</span></a>
+  <a class="rail-item" href="#" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg><span>Map</span></a>
+  <span class="rail-spacer"></span>
+  <button class="rail-item" aria-label="Switch light and dark theme"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg><span>Theme</span></button>
+</nav>
+<header class="topbar">
+  <h1 class="title">Service map</h1>
+  <nav class="crumbs" aria-label="Scope">
+    <button class="btn">webshop<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="crumb-sep">/</span>
+    <button class="btn">PROD<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="crumb-sep">/</span>
+    <button class="btn"><span class="mono">k8s-prod-eu1</span><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+  </nav>
+  <div class="ask">
+    <svg class="ico ask-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <input class="ask-input" type="text" placeholder="Find a service, data store or data stream…" value="">
+    <span class="ask-kbd" aria-hidden="true"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span class="dot" style="background: var(--ok)"></span>Live<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Open this view as JSON"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg></button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section class="map" aria-label="Service map canvas">
+    <div class="filterbar">
+      <span class="select-wrap"><select class="chip-select"><option>All namespaces</option></select><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--svc)"></span>Services<span class="faint mono" style="font-size: 12px">8</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--db)"></span>Data stores<span class="faint mono" style="font-size: 12px">4</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--topic)"></span>Data streams<span class="faint mono" style="font-size: 12px">2</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--ext)"></span>External<span class="faint mono" style="font-size: 12px">2</span></button>
+      <div class="seg" role="group" aria-label="Lens"><span class="seg-label">Lens</span><button aria-pressed="true">All</button><button aria-pressed="false">Data streams</button></div>
+    </div>
+    <div class="world">
+      <sc-for list="{{mapB.edges}}" as="e" hint-placeholder-count="6">
+        <svg class="edge-svg" viewBox="0 0 984 720" preserveAspectRatio="xMinYMin meet" aria-hidden="true">
+          <defs><marker id="{{e.mid}}" orient="auto" markerWidth="5" markerHeight="5" refX="3.6" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" style="fill: {{e.stroke}}" stroke="none"></path></marker></defs>
+          <path d="{{e.d}}" fill="none" stroke-linecap="round" style="stroke: {{e.stroke}}; stroke-width: {{e.w}}px; stroke-dasharray: {{e.dash}}; opacity: {{e.op}}" marker-end="{{e.marker}}"></path>
+        </svg>
+      </sc-for>
+      <sc-for list="{{mapB.nodes}}" as="n" hint-placeholder-count="8">
+        <div class="node" aria-pressed="{{n.selected}}" style="left: {{n.x}}px; top: {{n.y}}px; opacity: {{n.op}}">
+          <span class="node-icon {{n.tcls}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span>
+          <span class="node-text"><span class="node-name">{{n.name}}</span><span class="node-sub mono">{{n.sub}}</span></span>
+          <sc-if value="{{n.hasFindings}}" hint-placeholder-val="{{false}}"><span class="node-badge {{n.badgeCls}}">{{n.findings}}</span></sc-if>
+        </div>
+      </sc-for>
+      <sc-for list="{{mapB.pills}}" as="p" hint-placeholder-count="2">
+        <span class="edge-pill" style="left: {{p.x}}px; top: {{p.y}}px">{{p.label}}</span>
+      </sc-for>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <div class="legend-col">
+        <div class="legend-row"><span class="dot" style="background: var(--svc)"></span>Service</div>
+        <div class="legend-row"><span class="dot" style="background: var(--db)"></span>Data store</div>
+        <div class="legend-row"><span class="dot" style="background: var(--topic)"></span>Data stream</div>
+        <div class="legend-row"><span class="dot" style="background: var(--ext)"></span>External</div>
+      </div>
+      <div class="legend-col">
+        <div class="legend-row"><span class="line-sample"></span>sync call</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-style: dashed"></span>publish / consume</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-color: var(--accent)"></span>touches the selection</div>
+        <div class="legend-row"><span class="edge-pill" style="position: static; transform: none">calls · errors</span></div>
+      </div>
+    </div>
+    <div class="zoom" aria-label="Zoom">
+      <button aria-label="Zoom in"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+      <button aria-label="Zoom out"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+      <button aria-label="Fit to view"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button>
+    </div>
+    <div class="minimap" aria-hidden="true">
+      <sc-for list="{{mapB.mini}}" as="m" hint-placeholder-count="8"><span class="mini-node" style="left: {{m.x}}px; top: {{m.y}}px; width: {{m.w}}px; height: {{m.h}}px; background: {{m.c}}; opacity: {{m.op}}"></span></sc-for>
+    </div>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <div class="panel-head">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span class="panel-kicker">Service · PROD</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left: auto" aria-label="Close details"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span class="node-icon t-svc" style="width: 36px; height: 36px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M4 6.5h16v4.5H4zM4 13h16v4.5H4zM7.5 8.75h.01M7.5 15.25h.01"></path></svg></span>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <b style="font-size: 16px; font-weight: 600">orders-service</b>
+          <span class="mono faint" style="font-size: 12px">service:orders/orders-service</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <span class="badge b-kind">namespace orders</span>
+        <span class="badge b-kind">v2.8.1</span>
+        <span class="badge sev-high">2 findings</span>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true">Overview</button>
+      <button class="tab" role="tab" aria-selected="false">Dependencies <span class="tab-count">4</span></button>
+      <button class="tab" role="tab" aria-selected="false">Findings <span class="tab-count">2</span></button>
+    </div>
+    <div class="panel-body">
+      <dl class="kv">
+        <dt>Version</dt><dd><span class="mono">2.8.1</span> <span class="faint">· 3 replicas · since 14:10</span></dd>
+        <dt>Namespace</dt><dd class="mono">orders</dd>
+        <dt>Last seen</dt><dd>42 s ago <span class="faint">(window 60 s)</span></dd>
+        <dt>Inbound</dt><dd>2 dependencies · 13.6k calls</dd>
+        <dt>Outbound</dt><dd>3 dependencies · 41.6k calls</dd>
+      </dl>
+      <div class="stack">
+        <span class="panel-kicker">Data streams</span>
+        <div class="stream"><span class="badge b-kind">publish</span><span class="stream-text"><b>order-events</b><span>kafka · 2 consumers</span></span><span class="dep-metrics">8.7k · p95 5 ms</span></div>
+        <span class="faint" style="font-size: 13px">Consumes nothing in this window.</span>
+      </div>
+      <div class="stack">
+        <span class="panel-kicker">Dependencies · 2 in, 2 out</span>
+        <div class="dep"><span class="badge b-kind">in</span><span class="dep-name">api-gateway</span><span class="dep-metrics">12.4k · 0.3 %</span></div>
+        <div class="dep"><span class="badge b-kind">in</span><span class="dep-name">inventory-service</span><span class="dep-metrics">1.2k · 0.0 %</span></div>
+        <div class="dep"><span class="badge b-kind">out</span><span class="dep-name">inventory-service</span><span class="dep-metrics">8.9k · 0.2 %</span></div>
+        <div class="dep"><span class="badge b-kind">out</span><span class="dep-name">postgresql/orders</span><span class="dep-metrics">24.0k · 0.0 %</span></div>
+      </div>
+      <div class="stack">
+        <span class="panel-kicker">Insights · deterministic</span>
+        <div class="insight">
+          <div class="insight-title"><span class="badge sev-high">high</span><span>Calls inventory-service, which calls back</span></div>
+          <div class="insight-body">Cyclic dependency over sync edges; an event on order-events would break it.</div>
+          <div class="insight-actions"><a class="btn btn-sm" href="#">Open in findings</a></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+</div>
+  </div>
+</div>
+
+<div class="frame" style="left: 3160px; top: 1220px">
+  <div class="frame-label" data-drags-parent="1"><span class="frame-num">5</span>Service map, data stream selected<span class="frame-note">lens Data streams: sync edges recede, order-events with its producer and consumers</span></div>
+  <div class="screen">
+<div class="app" data-theme="dark" data-screen-label="5 · Data stream selected">
+<nav class="rail" aria-label="Primary">
+  <a class="rail-logo" href="#" aria-label="Architrace"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><circle cx="5" cy="12" r="2.2"></circle><circle cx="12" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="12" cy="19" r="2.2"></circle><path d="M7 11l3.5-4.5M14 6.5l3.5 4.5M17 13.5L13.5 18M10.5 18L7 13.5"></path></svg></a>
+  <a class="rail-item" href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path></svg><span>Projects</span></a>
+  <a class="rail-item" href="#" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg><span>Map</span></a>
+  <span class="rail-spacer"></span>
+  <button class="rail-item" aria-label="Switch light and dark theme"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg><span>Theme</span></button>
+</nav>
+<header class="topbar">
+  <h1 class="title">Service map</h1>
+  <nav class="crumbs" aria-label="Scope">
+    <button class="btn">webshop<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="crumb-sep">/</span>
+    <button class="btn">PROD<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="crumb-sep">/</span>
+    <button class="btn"><span class="mono">k8s-prod-eu1</span><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+  </nav>
+  <div class="ask">
+    <svg class="ico ask-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <input class="ask-input" type="text" placeholder="Find a service, data store or data stream…" value="">
+    <span class="ask-kbd" aria-hidden="true"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span class="dot" style="background: var(--ok)"></span>Live<svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Open this view as JSON"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg></button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section class="map" aria-label="Service map canvas">
+    <div class="filterbar">
+      <span class="select-wrap"><select class="chip-select"><option>All namespaces</option></select><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--svc)"></span>Services<span class="faint mono" style="font-size: 12px">8</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--db)"></span>Data stores<span class="faint mono" style="font-size: 12px">4</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--topic)"></span>Data streams<span class="faint mono" style="font-size: 12px">2</span></button>
+      <button class="chip" aria-pressed="true"><span class="dot" style="background: var(--ext)"></span>External<span class="faint mono" style="font-size: 12px">2</span></button>
+      <div class="seg" role="group" aria-label="Lens"><span class="seg-label">Lens</span><button aria-pressed="false">All</button><button aria-pressed="true">Data streams</button></div>
+    </div>
+    <div class="world">
+      <sc-for list="{{mapC.edges}}" as="e" hint-placeholder-count="6">
+        <svg class="edge-svg" viewBox="0 0 984 720" preserveAspectRatio="xMinYMin meet" aria-hidden="true">
+          <defs><marker id="{{e.mid}}" orient="auto" markerWidth="5" markerHeight="5" refX="3.6" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" style="fill: {{e.stroke}}" stroke="none"></path></marker></defs>
+          <path d="{{e.d}}" fill="none" stroke-linecap="round" style="stroke: {{e.stroke}}; stroke-width: {{e.w}}px; stroke-dasharray: {{e.dash}}; opacity: {{e.op}}" marker-end="{{e.marker}}"></path>
+        </svg>
+      </sc-for>
+      <sc-for list="{{mapC.nodes}}" as="n" hint-placeholder-count="8">
+        <div class="node" aria-pressed="{{n.selected}}" style="left: {{n.x}}px; top: {{n.y}}px; opacity: {{n.op}}">
+          <span class="node-icon {{n.tcls}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span>
+          <span class="node-text"><span class="node-name">{{n.name}}</span><span class="node-sub mono">{{n.sub}}</span></span>
+          <sc-if value="{{n.hasFindings}}" hint-placeholder-val="{{false}}"><span class="node-badge {{n.badgeCls}}">{{n.findings}}</span></sc-if>
+        </div>
+      </sc-for>
+      <sc-for list="{{mapC.pills}}" as="p" hint-placeholder-count="2">
+        <span class="edge-pill" style="left: {{p.x}}px; top: {{p.y}}px">{{p.label}}</span>
+      </sc-for>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <div class="legend-col">
+        <div class="legend-row"><span class="dot" style="background: var(--svc)"></span>Service</div>
+        <div class="legend-row"><span class="dot" style="background: var(--db)"></span>Data store</div>
+        <div class="legend-row"><span class="dot" style="background: var(--topic)"></span>Data stream</div>
+        <div class="legend-row"><span class="dot" style="background: var(--ext)"></span>External</div>
+      </div>
+      <div class="legend-col">
+        <div class="legend-row"><span class="line-sample" style="border-top-style: dashed"></span>publish / consume</div>
+        <div class="legend-row"><span class="line-sample" style="opacity: .35"></span>sync call (receded by the lens)</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-color: var(--accent)"></span>touches the selection</div>
+        <div class="legend-row"><span class="edge-pill" style="position: static; transform: none">messages · errors</span></div>
+      </div>
+    </div>
+    <div class="zoom" aria-label="Zoom">
+      <button aria-label="Zoom in"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+      <button aria-label="Zoom out"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+      <button aria-label="Fit to view"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button>
+    </div>
+    <div class="minimap" aria-hidden="true">
+      <sc-for list="{{mapC.mini}}" as="m" hint-placeholder-count="8"><span class="mini-node" style="left: {{m.x}}px; top: {{m.y}}px; width: {{m.w}}px; height: {{m.h}}px; background: {{m.c}}; opacity: {{m.op}}"></span></sc-for>
+    </div>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <div class="panel-head">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span class="panel-kicker">Data stream · PROD</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left: auto" aria-label="Close details"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span class="node-icon t-topic" style="width: 36px; height: 36px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16M5 19h.01"></path></svg></span>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <b style="font-size: 16px; font-weight: 600">order-events</b>
+          <span class="mono faint" style="font-size: 12px">topic:kafka/order-events</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <span class="badge b-kind">kafka</span>
+        <span class="badge b-kind">namespace orders</span>
+        <span class="badge b-added">consumer added yesterday</span>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true">Overview</button>
+      <button class="tab" role="tab" aria-selected="false">Producers <span class="tab-count">1</span></button>
+      <button class="tab" role="tab" aria-selected="false">Consumers <span class="tab-count">2</span></button>
+      <button class="tab" role="tab" aria-selected="false">History</button>
+    </div>
+    <div class="panel-body">
+      <dl class="kv">
+        <dt>Broker</dt><dd class="mono">kafka</dd>
+        <dt>Produced</dt><dd>8.7k messages <span class="faint">· 1 producer</span></dd>
+        <dt>Consumed</dt><dd>17.4k messages <span class="faint">· 2 consumers</span></dd>
+        <dt>Fan-out</dt><dd>2 <span class="faint">· no orphan, no dead end</span></dd>
+        <dt>Last seen</dt><dd>42 s ago <span class="faint">(window 60 s)</span></dd>
+      </dl>
+      <div class="stack">
+        <span class="panel-kicker">Producers</span>
+        <div class="dep"><span class="badge b-kind">publish</span><span class="dep-name">orders-service</span><span class="dep-metrics">8.7k · p95 5 ms</span></div>
+      </div>
+      <div class="stack">
+        <span class="panel-kicker">Consumers</span>
+        <div class="dep"><span class="badge b-kind">consume</span><span class="dep-name">notification-service</span><span class="dep-metrics">8.7k · p95 12 ms</span></div>
+        <div class="dep"><span class="badge b-kind">consume</span><span class="dep-name">reporting-service<span class="badge b-added">new</span></span><span class="dep-metrics">8.7k · p95 20 ms</span></div>
+      </div>
+      <div class="stack">
+        <span class="panel-kicker">Insights · deterministic</span>
+        <div class="insight">
+          <div class="insight-title"><span class="badge b-changed">timeline</span><span>reporting-service started consuming yesterday</span></div>
+          <div class="insight-body">First seen yesterday 18:05 in PROD only. The same service also reads postgresql/orders directly, which the shared-database rule reports.</div>
+          <div class="insight-actions"><a class="btn btn-sm" href="#">Show on map</a><a class="btn btn-sm" href="#">Open in findings</a></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{}'>
+const W = 192, H = 56;
+const ICONS = {
+  service: 'M4 6.5h16v4.5H4zM4 13h16v4.5H4zM7.5 8.75h.01M7.5 15.25h.01',
+  database: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+  topic: 'M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16M5 19h.01',
+  external: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'
+};
+const TCLS = { service: 't-svc', database: 't-db', topic: 't-topic', external: 't-ext' };
+const C = { grey: '#4E5D76', amber: '#F5A524', red: '#FF6B6B', accent: '#38BDF8', service: '#8B9CFF', database: '#F2B33D', topic: '#F28AC1', external: '#9AA7B8' };
+const NODES = [
+  { key: 'gateway', type: 'service', name: 'api-gateway', sub: 'v3.4.0', x: 36, y: 370 },
+  { key: 'orders', type: 'service', name: 'orders-service', sub: 'v2.8.1', x: 276, y: 96 },
+  { key: 'inventory', type: 'service', name: 'inventory-service', sub: 'v1.9.0', x: 276, y: 188 },
+  { key: 'payments', type: 'service', name: 'payments-service', sub: 'v4.1.2', x: 276, y: 324 },
+  { key: 'catalog', type: 'service', name: 'catalog-service', sub: 'v2.2.1', x: 276, y: 416 },
+  { key: 'search', type: 'service', name: 'search-service', sub: 'v2.2.1', x: 276, y: 508 },
+  { key: 'redis', type: 'database', name: 'sessions', sub: 'redis', x: 276, y: 600 },
+  { key: 'dbOrders', type: 'database', name: 'orders', sub: 'postgresql', x: 516, y: 52 },
+  { key: 'topicOrders', type: 'topic', name: 'order-events', sub: 'kafka · 1 → 2', x: 516, y: 144 },
+  { key: 'dbPay', type: 'database', name: 'payments', sub: 'postgresql', x: 516, y: 280 },
+  { key: 'topicPay', type: 'topic', name: 'payment-events', sub: 'kafka · 1 → 1', x: 516, y: 372 },
+  { key: 'extStripe', type: 'external', name: 'api.stripe.com', sub: 'https', x: 516, y: 464 },
+  { key: 'dbCatalog', type: 'database', name: 'catalog', sub: 'postgresql', x: 516, y: 556 },
+  { key: 'reporting', type: 'service', name: 'reporting-service', sub: 'v0.9.3', x: 756, y: 52 },
+  { key: 'notify', type: 'service', name: 'notification-service', sub: 'v1.4.0', x: 756, y: 280 },
+  { key: 'extSendgrid', type: 'external', name: 'smtp.sendgrid.net', sub: 'smtp', x: 756, y: 372 }
+];
+const EDGES = [
+  { from: 'gateway', to: 'orders', kind: 'sync', calls: 12400, err: 0.3 },
+  { from: 'gateway', to: 'payments', kind: 'sync', calls: 2100, err: 0.8 },
+  { from: 'gateway', to: 'catalog', kind: 'sync', calls: 31800, err: 0.1 },
+  { from: 'gateway', to: 'search', kind: 'sync', calls: 9600, err: 0.0 },
+  { from: 'gateway', to: 'redis', kind: 'sync', calls: 40200, err: 0.0 },
+  { from: 'orders', to: 'inventory', kind: 'sync', calls: 8900, err: 0.2, ox: 64 },
+  { from: 'inventory', to: 'orders', kind: 'sync', calls: 1200, err: 0.0, ox: 128 },
+  { from: 'orders', to: 'dbOrders', kind: 'sync', calls: 24000, err: 0.0 },
+  { from: 'orders', to: 'topicOrders', kind: 'publish', calls: 8700, err: 0.0 },
+  { from: 'payments', to: 'dbPay', kind: 'sync', calls: 4000, err: 0.0 },
+  { from: 'payments', to: 'extStripe', kind: 'sync', calls: 2000, err: 1.9 },
+  { from: 'payments', to: 'topicPay', kind: 'publish', calls: 2000, err: 0.0 },
+  { from: 'catalog', to: 'dbCatalog', kind: 'sync', calls: 30000, err: 0.0 },
+  { from: 'search', to: 'catalog', kind: 'sync', calls: 5200, err: 0.0 },
+  { from: 'topicOrders', to: 'notify', kind: 'consume', calls: 8700, err: 0.0 },
+  { from: 'topicPay', to: 'notify', kind: 'consume', calls: 2000, err: 0.0 },
+  { from: 'notify', to: 'extSendgrid', kind: 'sync', calls: 6100, err: 4.2 },
+  { from: 'topicOrders', to: 'reporting', kind: 'consume', calls: 8700, err: 0.0 },
+  { from: 'reporting', to: 'dbOrders', kind: 'sync', calls: 420, err: 0.0 }
+];
+const FINDINGS = { orders: { n: 2, sev: 'high' }, inventory: { n: 1, sev: 'high' }, dbOrders: { n: 1, sev: 'high' }, reporting: { n: 1, sev: 'high' }, gateway: { n: 1, sev: 'medium' }, extStripe: { n: 1, sev: 'low' }, extSendgrid: { n: 1, sev: 'low' } };
+const byKey = Object.fromEntries(NODES.map((n) => [n.key, n]));
+function fmtK(n) { return n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
+function edgeGeom(a, b, e) {
+  if (a.x === b.x) {
+    const x = a.x + (e.ox || W / 2);
+    const down = b.y > a.y;
+    const y1 = down ? a.y + H : a.y;
+    const y2 = down ? b.y : b.y + H;
+    const side = e.ox && e.ox < W / 2 ? -44 : 44;
+    return { d: 'M ' + x + ' ' + y1 + ' L ' + x + ' ' + y2, lx: x + side, ly: (y1 + y2) / 2 };
+  }
+  if (b.x < a.x) {
+    const x1 = a.x, y1 = a.y + H / 2, x2 = b.x + W, y2 = b.y + H / 2;
+    return { d: 'M ' + x1 + ' ' + y1 + ' C ' + (x1 - 34) + ' ' + y1 + ', ' + (x2 + 34) + ' ' + y2 + ', ' + x2 + ' ' + y2, lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 - 18 };
+  }
+  const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2;
+  return { d: 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + 34) + ' ' + y1 + ', ' + (x2 - 34) + ' ' + y2 + ', ' + x2 + ' ' + y2, lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 };
+}
+function hasStream(k) { return EDGES.some((e) => e.kind !== 'sync' && (e.from === k || e.to === k)); }
+function adjacent(sel, k) { return !!sel && EDGES.some((e) => (e.from === sel && e.to === k) || (e.to === sel && e.from === k)); }
+function renderMap(sel, lens) {
+  const streams = lens === 'streams';
+  const nodes = NODES.map((n) => {
+    let op = 1;
+    if (sel) op = n.key === sel || adjacent(sel, n.key) ? 1 : streams && hasStream(n.key) ? 0.55 : 0.3;
+    else if (streams) op = hasStream(n.key) ? 1 : 0.35;
+    const f = FINDINGS[n.key];
+    return { key: n.key, name: n.name, sub: n.sub, x: n.x, y: n.y, icon: ICONS[n.type], tcls: TCLS[n.type], op, selected: n.key === sel, hasFindings: !!f, findings: f ? f.n : 0, badgeCls: f ? 'sev-' + f.sev : '' };
+  });
+  const edges = EDGES.map((e) => {
+    const g = edgeGeom(byKey[e.from], byKey[e.to], e);
+    const touching = !!sel && (e.from === sel || e.to === sel);
+    const tone = touching ? 'accent' : e.err >= 3 ? 'red' : e.err >= 1 ? 'amber' : 'grey';
+    let op = 1;
+    if (touching) op = 1;
+    else if (sel) op = streams && e.kind === 'sync' ? 0.08 : 0.2;
+    else if (streams && e.kind === 'sync') op = 0.12;
+    const w = Math.min(4, 1.2 + Math.log10(e.calls / 400 + 1)).toFixed(1);
+    return { d: g.d, stroke: C[tone], w, dash: e.kind === 'sync' ? 'none' : '7 5', op, mid: 'ah-' + tone, marker: 'url(#ah-' + tone + ')', touching, lx: g.lx, ly: g.ly, label: fmtK(e.calls) + ' · ' + e.err.toFixed(1) + '%' };
+  });
+  const pills = edges.filter((e) => e.touching).map((e) => ({ x: e.lx, y: e.ly, label: e.label }));
+  const mini = nodes.map((n) => ({ x: Math.round(n.x * 0.19) + 6, y: Math.round(n.y * 0.19) + 10, w: Math.round(W * 0.19), h: Math.round(H * 0.19), c: C[byKey[n.key].type], op: n.op }));
+  return { nodes, edges, pills, mini };
+}
+class Component extends DCLogic {
+  renderVals() {
+    return { mapA: renderMap(null, 'all'), mapB: renderMap('orders', 'all'), mapC: renderMap('topicOrders', 'streams') };
+  }
+}
+</script>
+</body>
+</html>

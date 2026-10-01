@@ -1,0 +1,204 @@
+@@HEAD:Architrace · Drift@@
+<div class="app" data-screen-label="Drift" data-theme="{{theme}}" style="display: grid; grid-template-columns: 84px 1fr; grid-template-rows: 56px 1fr; height: 100vh; min-height: 640px">
+@@RAIL@@
+<header class="topbar" style="display: flex; align-items: center; gap: 16px; padding: 0 20px; height: 56px">
+  <h1 class="title">Drift</h1>
+  <div class="seg" role="group" aria-label="Drift mode">
+    <button aria-pressed="{{isEnvMode}}" onClick="{{setEnvMode}}">Environments</button>
+    <button aria-pressed="{{isTimeMode}}" onClick="{{setTimeMode}}">Timeline</button>
+  </div>
+@@ASKBAR@@
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn icon-btn" aria-label="Copy link to this comparison" title="Copy link to this comparison"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Open this diff as JSON from the Query API" title="{{apiHint}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg></button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section style="flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap">
+      <sc-if value="{{isEnvMode}}" hint-placeholder-val="{{true}}">
+        <label class="faint" for="left" style="font-size: 12px">Left</label>
+        <span class="select-wrap"><select id="left" class="chip-select" value="{{left}}" onChange="{{onLeft}}"><option value="DEV">DEV</option><option value="STAGE">STAGE</option><option value="PROD">PROD</option></select><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span>
+        <button class="btn icon-btn" aria-label="Swap sides" onClick="{{swap}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3L4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"></path></svg></button>
+        <label class="faint" for="right" style="font-size: 12px">Right</label>
+        <span class="select-wrap"><select id="right" class="chip-select" value="{{right}}" onChange="{{onRight}}"><option value="DEV">DEV</option><option value="STAGE">STAGE</option><option value="PROD">PROD</option></select><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span>
+      </sc-if>
+      <sc-if value="{{isTimeMode}}" hint-placeholder-val="{{false}}">
+        <label class="faint" for="tenv" style="font-size: 12px">Environment</label>
+        <span class="select-wrap"><select id="tenv" class="chip-select" value="{{tenv}}" onChange="{{onTenv}}"><option value="DEV">DEV</option><option value="STAGE">STAGE</option><option value="PROD">PROD</option></select><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span>
+        <label class="faint" for="from" style="font-size: 12px">From</label>
+        <input id="from" class="field" type="datetime-local" value="2026-09-30T18:00" style="width: 200px; height: 30px; border-radius: 999px">
+        <label class="faint" style="font-size: 12px">To</label>
+        <span class="chip" aria-pressed="true"><span class="dot" style="background: {{liveDot}}"></span>now</span>
+      </sc-if>
+      <span class="faint" style="font-size: 12px; margin-left: 4px">{{semantics}}</span>
+      <div class="seg" role="group" aria-label="View" style="margin-left: auto">
+        <button aria-pressed="{{isList}}" onClick="{{setList}}">List</button>
+        <button aria-pressed="{{isMap}}" onClick="{{setMap}}">Map</button>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; padding: 14px 24px 0; flex-wrap: wrap">
+      <div class="counter"><span class="glyph b-added">+</span><div style="display: flex; flex-direction: column"><b>{{counts.added}}</b><span>nodes only in {{rightLabel}}</span></div></div>
+      <div class="counter"><span class="glyph b-removed">−</span><div style="display: flex; flex-direction: column"><b>{{counts.removed}}</b><span>nodes only in {{leftLabel}}</span></div></div>
+      <div class="counter"><span class="glyph b-changed">Δ</span><div style="display: flex; flex-direction: column"><b>{{counts.changed}}</b><span>version changes</span></div></div>
+      <div class="counter"><span class="glyph b-added">+</span><div style="display: flex; flex-direction: column"><b>{{counts.edgesAdded}}</b><span>dependencies only in {{rightLabel}}</span></div></div>
+      <div class="counter"><span class="glyph b-removed">−</span><div style="display: flex; flex-direction: column"><b>{{counts.edgesRemoved}}</b><span>dependencies only in {{leftLabel}}</span></div></div>
+    </div>
+    <sc-if value="{{isList}}" hint-placeholder-val="{{true}}">
+      <div class="page" style="padding-top: 16px; gap: 14px">
+        <sc-if value="{{noDiff}}" hint-placeholder-val="{{false}}">
+          <div class="empty card" style="padding: 40px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px"><path d="M20 6L9 17l-5-5"></path></svg><b style="color: var(--ink); font-weight: 600">No drift</b><span>Both sides have the same nodes, versions and dependencies.</span></div>
+        </sc-if>
+        <sc-for list="{{groups}}" as="grp" hint-placeholder-count="5">
+          <div class="group">
+            <button class="group-h" aria-expanded="{{grp.open}}" onClick="{{grp.toggle}}">
+              <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate({{grp.rot}}deg); transition: transform .15s"><path d="M9 6l6 6-6 6"></path></svg>
+              <h3>{{grp.label}}</h3>
+              <span class="badge b-kind">{{grp.count}}</span>
+              <span class="faint" style="margin-left: auto; font-size: 12px">{{grp.summary}}</span>
+            </button>
+            <sc-if value="{{grp.open}}" hint-placeholder-val="{{true}}">
+              <sc-for list="{{grp.rows}}" as="r" hint-placeholder-count="2">
+                <div class="diff-row">
+                  <span class="glyph {{r.cls}}">{{r.glyph}}</span>
+                  <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><b style="font-weight: 600">{{r.name}}</b><span class="muted" style="font-size: 12.5px">{{r.detail}}</span></span>
+                  <span style="display: flex; gap: 6px"><button class="btn btn-sm" onClick="{{r.showOnMap}}">Show on map</button><sc-if value="{{r.hasFinding}}" hint-placeholder-val="{{false}}"><a class="btn btn-sm" href="Findings.dc.html">Open finding</a></sc-if></span>
+                </div>
+              </sc-for>
+              <sc-if value="{{grp.empty}}" hint-placeholder-val="{{false}}"><div class="diff-row" style="grid-template-columns: 1fr"><span class="faint">No differences.</span></div></sc-if>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{isMap}}" hint-placeholder-val="{{false}}">
+      <section class="map" aria-label="Drift map" style="margin-top: 14px">
+        <div class="world-scroll" style="padding-top: 20px"><div class="world">
+          <sc-for list="{{g.edges}}" as="e" hint-placeholder-count="6">
+            <svg class="edge-svg" viewBox="0 0 960 720" preserveAspectRatio="xMinYMin meet" style="width: 960px; height: 720px" aria-hidden="true">
+              <defs><marker id="{{e.mid}}" orient="auto" markerWidth="5" markerHeight="5" refX="3.6" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" style="fill: {{e.stroke}}" stroke="none"></path></marker></defs>
+              <path d="{{e.d}}" fill="none" stroke-linecap="round" style="stroke: {{e.stroke}}; stroke-width: {{e.w}}px; stroke-dasharray: {{e.dash}}; opacity: {{e.op}}" marker-end="{{e.marker}}"></path>
+            </svg>
+          </sc-for>
+          <sc-for list="{{g.nodes}}" as="n" hint-placeholder-count="8">
+            <button class="node {{n.cls}}" aria-pressed="{{n.selected}}" onClick="{{n.pick}}" title="{{n.name}}" style="left: {{n.x}}px; top: {{n.y}}px; opacity: {{n.op}}">
+              <span class="node-icon {{n.tcls}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span>
+              <span class="node-text"><span class="node-name">{{n.name}}</span><span class="node-sub mono">{{n.sub}}</span></span>
+              <sc-if value="{{n.hasFlag}}" hint-placeholder-val="{{false}}"><span class="node-flag {{n.flagCls}}">{{n.flag}}</span></sc-if>
+            </button>
+          </sc-for>
+        </div></div>
+        <div class="legend" aria-label="Legend">
+          <div class="legend-col">
+            <div class="legend-row"><span class="glyph b-added" style="width: 18px; height: 18px; font-size: 11px">+</span>only in {{rightLabel}}</div>
+            <div class="legend-row"><span class="glyph b-removed" style="width: 18px; height: 18px; font-size: 11px">−</span>only in {{leftLabel}} (ghost)</div>
+            <div class="legend-row"><span class="glyph b-changed" style="width: 18px; height: 18px; font-size: 11px">Δ</span>version differs</div>
+          </div>
+          <div class="legend-col">
+            <div class="legend-row"><span class="line-sample" style="border-color: var(--added)"></span>dependency only in {{rightLabel}}</div>
+            <div class="legend-row"><span class="line-sample" style="border-color: var(--removed); border-top-style: dashed"></span>dependency only in {{leftLabel}}</div>
+            <div class="legend-row"><span class="line-sample"></span>same on both sides</div>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <div class="panel-head">
+      <span class="panel-kicker">Comparison</span>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+        <span class="badge b-kind" style="font-size: 13px; height: 24px">{{leftLabel}}</span>
+        <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        <span class="badge b-kind" style="font-size: 13px; height: 24px">{{rightLabel}}</span>
+      </div>
+      <span class="muted" style="font-size: 13px">{{headline}}</span>
+    </div>
+    <sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+      <div style="padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px">
+        <span class="panel-kicker">Selected</span>
+        <div style="display: flex; align-items: center; gap: 8px"><span class="glyph {{selInfo.cls}}">{{selInfo.glyph}}</span><b style="font-weight: 600">{{selInfo.name}}</b><button class="btn btn-ghost btn-sm" style="margin-left: auto" onClick="{{clearSel}}" aria-label="Clear selection"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button></div>
+        <span class="muted" style="font-size: 13px">{{selInfo.detail}}</span>
+      </div>
+    </sc-if>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <span class="panel-kicker">Drift summary · deterministic</span>
+@@INSIGHTS@@
+      <div class="note"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>Nodes are matched by their environment-independent id. Traffic metrics are never compared: volume is not drift.</span></div>
+    </div>
+  </aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Appearance"}}'>
+@@DATA@@
+class Component extends DCLogic {
+  state = { mode: 'env', left: 'DEV', right: 'PROD', tenv: 'PROD', view: 'list', closed: {}, sel: null, query: '', paletteOpen: false, theme: null };
+  renderVals() {
+    const s = this.state;
+    const theme = s.theme ?? this.props.theme ?? 'dark';
+    const C = COLORS[theme];
+    const envMode = s.mode === 'env';
+    const L = envMode ? graphAt(s.left, 'now') : graphAt(s.tenv, 'yesterday');
+    const R = envMode ? graphAt(s.right, 'now') : graphAt(s.tenv, 'now');
+    const leftLabel = envMode ? s.left : s.tenv + ' · 30 Sep 18:00';
+    const rightLabel = envMode ? s.right : s.tenv + ' · now';
+    const rightEnv = envMode ? s.right : s.tenv;
+    const d = diffGraphs(L, R);
+    const counts = { added: d.nodesAdded.length, removed: d.nodesRemoved.length, changed: d.nodesChanged.length, edgesAdded: d.edgesAdded.length, edgesRemoved: d.edgesRemoved.length };
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const pickKey = (key) => this.setState({ view: 'map', sel: { kind: 'node', key } });
+    const findingOn = (key) => findingsFor(rightEnv).some((f) => f.subjects.includes(key));
+    const rowsByType = {};
+    ['service', 'database', 'topic', 'external'].forEach((t) => { rowsByType[t] = []; });
+    d.nodesAdded.forEach((i) => rowsByType[i.node.type].push({ glyph: '+', cls: 'b-added', name: i.node.name, detail: 'exists only in ' + rightLabel + (i.ver ? ' · v' + i.ver : ''), showOnMap: () => pickKey(i.node.key), hasFinding: findingOn(i.node.key) }));
+    d.nodesRemoved.forEach((i) => rowsByType[i.node.type].push({ glyph: '−', cls: 'b-removed', name: i.node.name, detail: 'exists only in ' + leftLabel + (i.ver ? ' · v' + i.ver : ''), showOnMap: () => pickKey(i.node.key), hasFinding: false }));
+    d.nodesChanged.forEach((i) => rowsByType[i.node.type].push({ glyph: 'Δ', cls: 'b-changed', name: i.node.name, detail: 'v' + i.before + ' in ' + leftLabel + ' → v' + i.after + ' in ' + rightLabel, showOnMap: () => pickKey(i.node.key), hasFinding: findingOn(i.node.key) }));
+    const edgeRows = [];
+    d.edgesAdded.forEach((i) => edgeRows.push({ glyph: '+', cls: 'b-added', name: byKey[i.edge.from].name + ' → ' + byKey[i.edge.to].name, detail: i.edge.kind + ' · only in ' + rightLabel, showOnMap: () => pickKey(i.edge.to), hasFinding: findingOn(i.edge.to) }));
+    d.edgesRemoved.forEach((i) => edgeRows.push({ glyph: '−', cls: 'b-removed', name: byKey[i.edge.from].name + ' → ' + byKey[i.edge.to].name, detail: i.edge.kind + ' · only in ' + leftLabel, showOnMap: () => pickKey(i.edge.to), hasFinding: false }));
+    const mk = (id, label, rows) => ({ id, label, rows, count: rows.length, empty: rows.length === 0, open: !s.closed[id], rot: s.closed[id] ? 0 : 90, summary: rows.length ? rows.filter((r) => r.glyph === '+').length + ' added · ' + rows.filter((r) => r.glyph === '−').length + ' removed · ' + rows.filter((r) => r.glyph === 'Δ').length + ' changed' : 'identical', toggle: () => this.setState({ closed: Object.assign({}, s.closed, { [id]: !s.closed[id] }) }) });
+    const groups = [mk('service', 'Services', rowsByType.service), mk('database', 'Data stores', rowsByType.database), mk('topic', 'Topics', rowsByType.topic), mk('external', 'External', rowsByType.external), mk('edges', 'Dependencies', edgeRows)];
+    const stateOf = {}, verOf = {};
+    L.nodes.forEach((i) => { verOf[i.node.key] = i.ver; });
+    d.nodesAdded.forEach((i) => { stateOf[i.node.key] = 'added'; });
+    d.nodesRemoved.forEach((i) => { stateOf[i.node.key] = 'removed'; });
+    d.nodesChanged.forEach((i) => { stateOf[i.node.key] = 'changed'; });
+    const unionNodes = [...R.nodes, ...d.nodesRemoved].map((i) => ({ node: i.node, ver: i.ver, state: stateOf[i.node.key] || '', sub: stateOf[i.node.key] === 'changed' ? 'v' + verOf[i.node.key] + ' → v' + i.ver : undefined }));
+    const addedIds = new Set(d.edgesAdded.map((i) => edgeId(i.edge)));
+    const unionEdges = [...R.edges.map((i) => ({ edge: i.edge, state: addedIds.has(edgeId(i.edge)) ? 'added' : '' })), ...d.edgesRemoved.map((i) => ({ edge: i.edge, state: 'removed' }))];
+    const g = renderGraph({ items: unionNodes, edgeItems: unionEdges, types: { service: true, database: true, topic: true, external: true }, domain: 'all', find: '', sel: s.sel, C, pick: (sel) => this.setState({ sel }), env: rightEnv });
+    const insights = [];
+    if (d.nodesAdded.length) insights.push({ badge: '+' + d.nodesAdded.length, badgeCls: 'b-added', title: d.nodesAdded.map((i) => i.node.name).join(', ') + (d.nodesAdded.length > 1 ? ' exist' : ' exists') + ' only in ' + rightLabel, body: 'Brings ' + d.edgesAdded.filter((i) => d.nodesAdded.some((n) => n.node.key === i.edge.from || n.node.key === i.edge.to)).map((i) => byKey[i.edge.from].name + ' → ' + byKey[i.edge.to].name).join(' and ') + '.', href: 'Service-map.dc.html', action: 'Open map' });
+    if (d.nodesRemoved.length) insights.push({ badge: '−' + d.nodesRemoved.length, badgeCls: 'b-removed', title: d.nodesRemoved.map((i) => i.node.name).join(', ') + ' missing from ' + rightLabel, body: 'Present on the left side only. A rename shows as removed plus added, which is the truthful answer.', href: 'Service-map.dc.html', action: 'Open map' });
+    if (d.nodesChanged.length) insights.push({ badge: 'Δ' + d.nodesChanged.length, badgeCls: 'b-changed', title: d.nodesChanged.length + (d.nodesChanged.length > 1 ? ' services run' : ' service runs') + ' different versions', body: d.nodesChanged.map((i) => i.node.name + ' ' + i.before + ' → ' + i.after).join('; ') + '.', href: 'Service-map.dc.html', action: 'Open map' });
+    [...d.edgesAdded.map((i) => ({ i, side: rightLabel, other: L })), ...d.edgesRemoved.map((i) => ({ i, side: leftLabel, other: R }))].forEach(({ i, side, other }) => {
+      const target = byKey[i.edge.to];
+      if (target.type !== 'database') return;
+      const users = other.edges.filter((ei) => ei.edge.to === target.key && byKey[ei.edge.from].type === 'service').map((ei) => byKey[ei.edge.from].name);
+      if (users.length && !users.includes(byKey[i.edge.from].name)) insights.push({ badge: 'rule', badgeCls: 'sev-high', title: byKey[i.edge.from].name + ' → ' + target.name + ' makes the database shared', body: 'This dependency exists only in ' + side + '. Where it lands, ' + target.name + ' is used by ' + users.join(', ') + ' and ' + byKey[i.edge.from].name + ', which raises the shared-database rule.', href: 'Findings.dc.html', action: 'Open findings' });
+    });
+    if (!total) insights.push({ badge: 'aligned', badgeCls: 'b-ok', title: 'Both sides are identical', body: 'Same node ids, versions and dependency keys. Metrics may still differ; they are not part of drift.', href: 'Service-map.dc.html', action: 'Open map' });
+    const selNode = s.sel && s.sel.kind === 'node' ? byKey[s.sel.key] : null;
+    const selState = selNode ? stateOf[selNode.key] || '' : '';
+    const selInfo = selNode ? { name: selNode.name, glyph: selState === 'added' ? '+' : selState === 'removed' ? '−' : selState === 'changed' ? 'Δ' : '=', cls: selState ? 'b-' + selState : 'b-kind', detail: selState === 'added' ? 'Exists only in ' + rightLabel + '.' : selState === 'removed' ? 'Exists only in ' + leftLabel + '.' : selState === 'changed' ? 'v' + verOf[selNode.key] + ' → v' + R.nodes.find((i) => i.node.key === selNode.key).ver : 'Identical on both sides.' } : null;
+    const pal = palette(s.query, 'PROD', () => this.setState({ paletteOpen: false }));
+    return {
+      theme, isEnvMode: envMode, isTimeMode: !envMode, left: s.left, right: s.right, tenv: s.tenv, leftLabel, rightLabel, counts, groups, g, insights, noDiff: total === 0,
+      isList: s.view === 'list', isMap: s.view === 'map', liveDot: C.added,
+      semantics: 'Right side relative to left: “only in ' + rightLabel + '” is new on the right.',
+      apiHint: envMode ? 'GET /api/v1/diff/environments?left=' + s.left + '&right=' + s.right : 'GET /api/v1/diff/timeline?environment=' + s.tenv + '&from=2026-09-30T18:00:00Z',
+      headline: total ? total + ' differences · ' + counts.added + ' + ' + counts.removed + ' nodes, ' + counts.changed + ' versions, ' + (counts.edgesAdded + counts.edgesRemoved) + ' dependencies' : 'No differences',
+      hasSel: !!selInfo, selInfo, clearSel: () => this.setState({ sel: null }),
+      setEnvMode: () => this.setState({ mode: 'env', sel: null }), setTimeMode: () => this.setState({ mode: 'time', sel: null }),
+      setList: () => this.setState({ view: 'list' }), setMap: () => this.setState({ view: 'map' }),
+      onLeft: (e) => this.setState({ left: e.target.value, sel: null }), onRight: (e) => this.setState({ right: e.target.value, sel: null }), onTenv: (e) => this.setState({ tenv: e.target.value, sel: null }),
+      swap: () => this.setState({ left: s.right, right: s.left, sel: null }),
+      pal, query: s.query, paletteOpen: s.paletteOpen,
+      onQuery: (e) => this.setState({ query: e.target.value, paletteOpen: true }), openPalette: () => this.setState({ paletteOpen: true }), closePalette: () => this.setState({ paletteOpen: false }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

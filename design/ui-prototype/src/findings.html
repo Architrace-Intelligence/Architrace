@@ -1,0 +1,148 @@
+@@HEAD:Architrace · Findings@@
+<div class="app" data-screen-label="Findings" data-theme="{{theme}}" style="display: grid; grid-template-columns: 84px 1fr; grid-template-rows: 56px 1fr; height: 100vh; min-height: 640px">
+@@RAIL@@
+<header class="topbar" style="display: flex; align-items: center; gap: 16px; padding: 0 20px; height: 56px">
+  <h1 class="title">Findings</h1>
+  <div class="seg" role="group" aria-label="Environment">
+    <sc-for list="{{envs}}" as="env" hint-placeholder-count="3">
+      <button aria-pressed="{{env.active}}" onClick="{{env.pick}}"><span class="dot" style="background: {{env.dot}}"></span>{{env.name}}</button>
+    </sc-for>
+  </div>
+@@ASKBAR@@
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn icon-btn" aria-label="Copy link to this view" title="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Open findings as JSON from the Query API" title="GET /api/v1/environments/{{env}}/findings"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg></button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section class="page" aria-label="Findings list" style="gap: 16px">
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+      <sc-for list="{{sevChips}}" as="c" hint-placeholder-count="3">
+        <button class="chip" aria-pressed="{{c.on}}" onClick="{{c.toggle}}"><span class="dot" style="background: {{c.color}}"></span>{{c.label}}<span class="faint mono" style="font-size: 12px">{{c.count}}</span></button>
+      </sc-for>
+      <span class="select-wrap">
+        <label for="rule" class="sr-only">Rule</label>
+        <select id="rule" class="chip-select" value="{{rule}}" onChange="{{onRule}}">
+          <option value="all">All rules</option>
+          <option value="CyclicDependency">Cyclic dependency</option>
+          <option value="SharedDatabase">Shared database</option>
+          <option value="CrossDomainCoupling">Cross-domain coupling</option>
+          <option value="FanInHub">Fan-in hub</option>
+          <option value="LongSyncChain">Long sync chain</option>
+          <option value="UnknownExternal">Unknown external</option>
+        </select>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </span>
+      <span class="faint" style="font-size: 12px; margin-left: auto">Evaluated 42 s ago, after the latest snapshot · {{shown}} of {{total}} findings shown</span>
+    </div>
+    <sc-if value="{{noneShown}}" hint-placeholder-val="{{false}}">
+      <div class="empty card" style="padding: 40px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px"><path d="M20 6L9 17l-5-5"></path></svg><b style="color: var(--ink); font-weight: 600">Nothing to show</b><span>No finding matches the current severity and rule filters.</span></div>
+    </sc-if>
+    <sc-for list="{{groups}}" as="grp" hint-placeholder-count="3">
+      <div class="group">
+        <div class="group-h" style="cursor: default">
+          <h3>{{grp.label}}</h3>
+          <span class="badge {{grp.badgeCls}}">{{grp.count}}</span>
+          <span class="faint" style="font-size: 12px">{{grp.threshold}}</span>
+          <span class="mono faint" style="font-size: 11.5px; margin-left: auto">{{grp.config}}</span>
+        </div>
+        <sc-for list="{{grp.rows}}" as="f" hint-placeholder-count="2">
+          <div style="border-bottom: 1px solid var(--line)">
+            <button class="row-btn" aria-expanded="{{f.open}}" onClick="{{f.toggle}}" style="padding: 12px 16px; gap: 12px">
+              <span class="badge sev-{{f.sev}}">{{f.sev}}</span>
+              <span style="flex: 1; min-width: 0; font-weight: 500">{{f.title}}</span>
+              <span style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end">
+                <sc-for list="{{f.subjects}}" as="sub" hint-placeholder-count="2"><span class="badge b-kind" style="font-weight: 500">{{sub}}</span></sc-for>
+              </span>
+              <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate({{f.rot}}deg); transition: transform .15s; color: var(--ink-3)"><path d="M9 6l6 6-6 6"></path></svg>
+            </button>
+            <sc-if value="{{f.open}}" hint-placeholder-val="{{false}}">
+              <div style="padding: 0 16px 16px 16px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px">
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <span class="muted" style="font-size: 13px">{{f.detail}}</span>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                    <a class="btn btn-sm" href="Service-map.dc.html"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg>Show on map</a>
+                    <sc-if value="{{f.hasAllow}}" hint-placeholder-val="{{false}}"><button class="btn btn-sm" onClick="{{f.copyAllow}}"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>{{f.allowLabel}}</button></sc-if>
+                  </div>
+                  <sc-if value="{{f.hasAllow}}" hint-placeholder-val="{{false}}"><code class="mono" style="font-size: 12px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; color: var(--ink-2); word-break: break-all">{{f.allow}}</code></sc-if>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px">
+                  <span class="panel-kicker">Evidence</span>
+                  <ul class="evidence"><sc-for list="{{f.evidence}}" as="ev" hint-placeholder-count="2"><li>{{ev}}</li></sc-for></ul>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+    <div class="section-h" style="margin-top: 4px"><h2 style="font-size: 13px; color: var(--ink-3); font-weight: 600; letter-spacing: .06em; text-transform: uppercase">Rules that pass in {{env}}</h2></div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <sc-for list="{{passing}}" as="r" hint-placeholder-count="2"><span class="chip" aria-pressed="true" style="cursor: default"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--ok)"><path d="M20 6L9 17l-5-5"></path></svg>{{r.label}}<span class="faint" style="font-size: 12px">{{r.threshold}}</span></span></sc-for>
+    </div>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <div class="panel-head">
+      <span class="panel-kicker">Rules · {{env}}</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <div class="stat"><b style="color: var(--sev-high)">{{sc.high}}</b><span>high</span></div>
+        <div class="stat"><b style="color: var(--sev-med)">{{sc.medium}}</b><span>medium</span></div>
+        <div class="stat"><b style="color: var(--sev-low)">{{sc.low}}</b><span>low</span></div>
+      </div>
+      <span class="muted" style="font-size: 13px">Six deterministic rules run after every ingested snapshot. The same graph always yields the same findings.</span>
+    </div>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <span class="panel-kicker">Configuration</span>
+      <sc-for list="{{ruleList}}" as="r" hint-placeholder-count="6">
+        <div class="insight" style="gap: 4px; padding: 10px 12px">
+          <div class="insight-title" style="align-items: center"><span>{{r.label}}</span><span class="badge {{r.badgeCls}}" style="margin-left: auto">{{r.status}}</span></div>
+          <span class="muted" style="font-size: 12.5px">{{r.threshold}}</span>
+          <span class="mono faint" style="font-size: 11.5px; word-break: break-all">{{r.config}}</span>
+        </div>
+      </sc-for>
+      <div class="note"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>Thresholds live in the control plane configuration. Changing one re-evaluates on the next snapshot; findings are replaced per environment in one transaction.</span></div>
+    </div>
+  </aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Appearance"}}'>
+@@DATA@@
+class Component extends DCLogic {
+  state = { env: 'PROD', sev: { high: true, medium: true, low: true }, rule: 'all', open: { f1: true }, copied: null, query: '', paletteOpen: false, theme: null };
+  renderVals() {
+    const s = this.state;
+    const theme = s.theme ?? this.props.theme ?? 'dark';
+    const C = COLORS[theme];
+    const env = s.env;
+    const all = findingsFor(env);
+    const sc = sevCounts(all);
+    const shownList = all.filter((f) => s.sev[f.sev] && (s.rule === 'all' || f.rule === s.rule));
+    const envs = ENVS.map((name) => ({ name, active: name === env, dot: name === env ? C.accent : C.grey, pick: () => this.setState({ env: name }) }));
+    const sevColor = { high: C.red, medium: C.amber, low: theme === 'dark' ? '#7FA3C8' : '#2F5E8E' };
+    const sevChips = ['high', 'medium', 'low'].map((k) => ({ label: k[0].toUpperCase() + k.slice(1), count: sc[k], color: sevColor[k], on: s.sev[k], toggle: () => this.setState({ sev: Object.assign({}, s.sev, { [k]: !s.sev[k] }) }) }));
+    const order = ['CyclicDependency', 'SharedDatabase', 'CrossDomainCoupling', 'FanInHub', 'LongSyncChain', 'UnknownExternal'];
+    const groups = order.filter((r) => shownList.some((f) => f.rule === r)).map((r) => {
+      const rows = shownList.filter((f) => f.rule === r).map((f) => ({
+        sev: f.sev, title: f.title, detail: f.detail, evidence: f.evidence, subjects: f.subjects.map((k) => byKey[k].name), open: !!s.open[f.id], rot: s.open[f.id] ? 90 : 0,
+        toggle: () => this.setState({ open: Object.assign({}, s.open, { [f.id]: !s.open[f.id] }) }),
+        hasAllow: !!f.allow, allow: f.allow || '', allowLabel: s.copied === f.id ? 'Copied' : 'Copy allowlist line', copyAllow: () => this.setState({ copied: f.id })
+      }));
+      const top = rows.reduce((m, f) => (sevRank(f.sev) > sevRank(m) ? f.sev : m), 'low');
+      return { label: RULES[r].label, threshold: RULES[r].threshold, config: RULES[r].config, count: rows.length, badgeCls: 'sev-' + top, rows };
+    });
+    const passing = order.filter((r) => !all.some((f) => f.rule === r)).map((r) => ({ label: RULES[r].label, threshold: RULES[r].threshold }));
+    const ruleList = order.map((r) => { const n = all.filter((f) => f.rule === r).length; const top = all.filter((f) => f.rule === r).reduce((m, f) => (sevRank(f.sev) > sevRank(m) ? f.sev : m), 'low'); return { label: RULES[r].label, threshold: RULES[r].threshold, config: RULES[r].config, status: n ? n + (n > 1 ? ' findings' : ' finding') : 'pass', badgeCls: n ? 'sev-' + top : 'b-ok' }; });
+    const pal = palette(s.query, env, () => this.setState({ paletteOpen: false }));
+    return {
+      theme, env, envs, sevChips, rule: s.rule, groups, passing, ruleList, sc, shown: shownList.length, total: all.length, noneShown: shownList.length === 0,
+      onRule: (e) => this.setState({ rule: e.target.value }),
+      pal, query: s.query, paletteOpen: s.paletteOpen,
+      onQuery: (e) => this.setState({ query: e.target.value, paletteOpen: true }), openPalette: () => this.setState({ paletteOpen: true }), closePalette: () => this.setState({ paletteOpen: false }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -20,6 +20,8 @@ workflow (simple allowlists only).
 
 ## Design
 
+Visual design and interaction: [UI design](../ui-design/) (interactive prototypes).
+
 ### Engine
 
 ```

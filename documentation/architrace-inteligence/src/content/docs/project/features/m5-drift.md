@@ -19,6 +19,8 @@ Out: alerting on drift, scheduled drift reports (post-MVP).
 
 ## Design
 
+Visual design and interaction: [UI design](../ui-design/) (interactive prototypes).
+
 ### Domain
 
 ```

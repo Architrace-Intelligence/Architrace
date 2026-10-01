@@ -11,32 +11,40 @@ Last updated: **2026-10-01**
 
 ## Where we are
 
-- Stages 0 (analysis), 1 (MVP scope) and 2 (design) are done: architecture, feature pages
-  M0–M7 and ADR 0001–0010 are agreed. Stage 3 (implementation) starts with M0.
-- PR #20 and PR #21 (foundation documents, this site as the documentation home) are merged.
-- PRs #22 (decisions) and #23 (design) are open or merged; check `gh pr list`.
-- M0 PR 1 (`ARCHI-24-repository-hygiene`) is open for review: `main` builds green again,
-  stale files removed, templates fixed, community files added. The agent coverage gate is a
-  temporary ratchet (50 / 28 / 50 %) that M1 must raise back to 85 %.
-- Until M0 PR 1 is merged, CI on `main` is red (Spotless, agent test compilation, invalid
-  `pr-ci.yml`); the PR fixes all three.
-- Automation token for GitHub API is issued and verified; git pushes use SSH.
+- Stages 0–2 are done. Stage 3 (implementation) is open: M0 PR 1 (hygiene, ARCHI-24) is merged
+  as #26 and `main` builds green. The agent coverage gate is a temporary ratchet
+  (50 / 28 / 50 %) that M1 must raise back to 85 %.
+- The UI design (ARCHI-25) is in review: eight interactive prototypes plus the canvas
+  `MVP-frames` (five static frames of the initial release: Projects list and Service map) in
+  the Claude Design project "Architrace UI", the [UI design](../features/ui-design/) page,
+  and the sources under `design/ui-prototype/` and `design/ui-frames/`. The visual direction
+  (dark-first "calm control room") was chosen without a brief and needs the maintainer's
+  confirmation or redirection.
+- Automation token for the GitHub API is issued and verified; git pushes use SSH.
 
 ## Decisions
 
 Agreed and recorded (Requirements §7–8, ADR 0001–0010): PostgreSQL + Liquibase, CodeRabbit,
 maintainer-authored PRs with a zero-approval ruleset, React + TypeScript UI, sequential
-`ARCHI-<n>`, copyright holder.
+`ARCHI-<n>`, copyright holder. MVP scope M0–M7; design agreed on 2026-10-01.
 
-MVP scope agreed: M0–M7 (Requirements §8); design agreed on 2026-10-01. No decision is
-pending.
+The initial UI release is narrowed to two screens (maintainer, 2026-10-01): a Projects list
+filtered by project, environment and cluster, and the Service map of the chosen scope with
+its services and data streams.
+
+Pending: confirmation of the UI direction, the source of the *project* grouping (resource
+attribute or agent setting), and the drift refinement proposed on the UI design page
+(compare deployments in timeline mode only).
 
 ## Next step
 
-1. Merge M0 PR 1 (hygiene). Then M0 PR 2: `build-logic` conventions and
-   versioning (ARCHI-25), PR 3: pipelines and scanners, PR 4: main pipeline, release, images,
-   PR 5: ruleset, repository settings, `.coderabbit.yaml`. Plan: [M0 page](../features/m0-engineering-platform/).
-2. The maintainer installs the CodeRabbit app and creates an NVD API key secret (`NVD_API_KEY`)
+1. Maintainer reviews ARCHI-25 (UI design), starting with the `MVP-frames` canvas; open
+   points are listed at the end of the [UI design](../features/ui-design/) page. Changes go
+   into the same PR until it is merged.
+2. Then M0 continues with the next ticket number: PR 2 `build-logic` conventions and
+   versioning, PR 3 pipelines and scanners, PR 4 main pipeline, release, images, PR 5 ruleset,
+   repository settings, `.coderabbit.yaml`. Plan: [M0 page](../features/m0-engineering-platform/).
+3. The maintainer installs the CodeRabbit app and creates an NVD API key secret (`NVD_API_KEY`)
    before PR 3.
 
 ## How to resume

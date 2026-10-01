@@ -39,3 +39,7 @@ out/
 ### Python demo ###
 __pycache__/
 *.pyc
+
+### Tooling output ###
+.playwright-mcp/
+design/ui-prototype/project/

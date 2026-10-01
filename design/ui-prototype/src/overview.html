@@ -1,0 +1,117 @@
+@@HEAD:Architrace · Overview@@
+<div class="app" data-screen-label="Overview" data-theme="{{theme}}" style="display: grid; grid-template-columns: 84px 1fr; grid-template-rows: 56px 1fr; height: 100vh; min-height: 640px">
+@@RAIL@@
+<header class="topbar" style="display: flex; align-items: center; gap: 16px; padding: 0 20px; height: 56px">
+  <h1 class="title">Overview</h1>
+  <span class="muted" style="font-size: 13px; display: inline-flex; gap: 7px; align-items: center; white-space: nowrap"><span class="dot" style="background: {{liveDot}}"></span>Live · latest snapshot 12 s ago</span>
+@@ASKBAR@@
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn icon-btn" aria-label="Copy link to this view" title="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Open this view as JSON from the Query API" title="GET /api/v1/environments"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg></button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section class="page" aria-label="Environments overview">
+    <div class="section-h"><h2>Environments</h2><span class="faint" style="font-size: 13px">3 environments · 6 agents · one snapshot per agent every 60 s</span></div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px">
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="3">
+        <article class="card" style="padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <b style="font-size: 18px; font-weight: 600">{{c.name}}</b>
+            <span class="badge {{c.agentCls}}">{{c.agents}}</span>
+            <span class="faint" style="margin-left: auto; font-size: 12px; white-space: nowrap">snapshot {{c.last}}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+            <div class="stat"><b>{{c.services}}</b><span>services</span></div>
+            <div class="stat"><b>{{c.databases}}</b><span>databases</span></div>
+            <div class="stat"><b>{{c.topics}}</b><span>topics</span></div>
+            <div class="stat"><b>{{c.externals}}</b><span>external</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center"><span class="faint" style="font-size: 12px; width: 84px">Findings</span><span class="badge sev-high">{{c.high}} high</span><span class="badge sev-medium">{{c.medium}} medium</span><span class="badge sev-low">{{c.low}} low</span></div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center"><span class="faint" style="font-size: 12px; width: 84px">vs {{c.other}}</span><span class="badge b-changed">{{c.diffTotal}} differences</span><span class="faint" style="font-size: 12px">{{c.diffNote}}</span></div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap">
+            <a class="btn btn-primary btn-sm" href="Service-map.dc.html">Open map</a>
+            <a class="btn btn-sm" href="Drift.dc.html">Drift</a>
+            <a class="btn btn-sm" href="Findings.dc.html">Findings</a>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+    <div class="section-h"><h2>Recent changes</h2><span class="faint" style="font-size: 13px">derived from the snapshot series, all environments, last 3 days</span></div>
+    <div class="group">
+      <sc-for list="{{changes}}" as="ch" hint-placeholder-count="5">
+        <div class="diff-row" style="grid-template-columns: 28px 104px 1fr auto">
+          <span class="glyph {{ch.cls}}">{{ch.glyph}}</span>
+          <span class="mono faint" style="font-size: 12px">{{ch.when}}</span>
+          <span style="min-width: 0"><b style="font-weight: 600">{{ch.env}}</b> <span class="faint">·</span> {{ch.text}}</span>
+          <a class="btn btn-ghost btn-sm" href="{{ch.href}}">{{ch.action}}</a>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <div class="panel-head">
+      <span class="panel-kicker">Context</span>
+      <b style="font-size: 18px; font-weight: 600">All environments</b>
+      <span class="muted" style="font-size: 13px">What deserves attention right now, from the rules, the diffs and the agent heartbeats.</span>
+    </div>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <span class="panel-kicker">Insights · deterministic</span>
+@@INSIGHTS@@
+    </div>
+  </aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Appearance"}}'>
+@@DATA@@
+class Component extends DCLogic {
+  state = { query: '', paletteOpen: false, theme: null };
+  renderVals() {
+    const s = this.state;
+    const theme = s.theme ?? this.props.theme ?? 'dark';
+    const C = COLORS[theme];
+    const pal = palette(s.query, 'PROD', () => this.setState({ paletteOpen: false }));
+    const cards = ENVS.map((env) => {
+      const g = graphAt(env, 'now');
+      const agents = AGENTS.filter((a) => a.env === env);
+      const live = agents.filter((a) => a.status === 'live').length;
+      const sc = sevCounts(findingsFor(env));
+      const other = env === 'PROD' ? 'STAGE' : 'PROD';
+      const d = diffGraphs(g, graphAt(other, 'now'));
+      const nodesDiff = d.nodesAdded.length + d.nodesRemoved.length, versions = d.nodesChanged.length, edges = d.edgesAdded.length + d.edgesRemoved.length;
+      return {
+        name: env, agents: live + '/' + agents.length + ' agents live', agentCls: live === agents.length ? 'b-ok' : 'b-stale', last: agents.filter((a) => a.status === 'live').map((a) => a.last).sort()[0],
+        services: g.nodes.filter((i) => i.node.type === 'service').length, databases: g.nodes.filter((i) => i.node.type === 'database').length, topics: g.nodes.filter((i) => i.node.type === 'topic').length, externals: g.nodes.filter((i) => i.node.type === 'external').length,
+        high: sc.high, medium: sc.medium, low: sc.low, other, diffTotal: nodesDiff + versions + edges, diffNote: nodesDiff + ' nodes · ' + versions + ' versions · ' + edges + ' dependencies'
+      };
+    });
+    const changes = [
+      { when: 'Today 14:10', env: 'PROD', text: 'orders-service 2.8.0 → 2.8.1', glyph: 'Δ', cls: 'b-changed', href: 'Service-map.dc.html', action: 'Show on map' },
+      { when: 'Today 11:42', env: 'DEV', text: 'search-service 2.2.1 → 2.3.0', glyph: 'Δ', cls: 'b-changed', href: 'Drift.dc.html', action: 'Compare with PROD' },
+      { when: 'Today 11:42', env: 'DEV', text: 'new dependency: search-service → postgresql/catalog (sync). Raises shared-database on postgresql/catalog.', glyph: '+', cls: 'b-added', href: 'Findings.dc.html', action: 'Open finding' },
+      { when: 'Yesterday 18:05', env: 'PROD', text: 'new service: reporting-service 0.9.3 (platform)', glyph: '+', cls: 'b-added', href: 'Service-map.dc.html', action: 'Show on map' },
+      { when: 'Yesterday 18:05', env: 'PROD', text: 'new dependencies: order-events → reporting-service (consume), reporting-service → postgresql/orders (sync). Raises shared-database on postgresql/orders.', glyph: '+', cls: 'b-added', href: 'Findings.dc.html', action: 'Open finding' },
+      { when: '29 Sep 17:55', env: 'PROD', text: 'payments-service 4.1.1 → 4.1.2', glyph: 'Δ', cls: 'b-changed', href: 'Service-map.dc.html', action: 'Show on map' },
+      { when: '29 Sep 16:30', env: 'DEV', text: 'agent dev-ci stopped reporting; its 0 services left the current graph after the next window', glyph: '!', cls: 'b-stale', href: 'Agents.dc.html', action: 'Open agents' }
+    ];
+    const insights = [
+      { badge: '2 high', badgeCls: 'sev-high', title: 'PROD has 2 high findings', body: 'A synchronous cycle between orders-service and inventory-service, and postgresql/orders shared by orders-service and reporting-service since yesterday 18:05.', href: 'Findings.dc.html', action: 'Open findings' },
+      { badge: 'drift', badgeCls: 'b-changed', title: 'DEV is ahead of PROD by two services', body: 'search-service 2.3.0 and payments-service 4.2.0-rc.1. The new search build reads postgresql/catalog directly: promoting it will raise a shared-database finding in PROD.', href: 'Drift.dc.html', action: 'Compare DEV with PROD' },
+      { badge: 'aligned', badgeCls: 'b-ok', title: 'STAGE matches PROD except reporting-service', body: 'Same versions and dependencies everywhere else. reporting-service and its two dependencies exist only in PROD.', href: 'Drift.dc.html', action: 'Compare STAGE with PROD' },
+      { badge: '1 stale', badgeCls: 'b-stale', title: 'dev-ci stopped reporting 2 h ago', body: 'The other 5 agents are live. Services seen only by a stale agent leave the current graph after its next window.', href: 'Agents.dc.html', action: 'Open agents' }
+    ];
+    return {
+      theme, cards, changes, insights, pal, query: s.query, paletteOpen: s.paletteOpen, liveDot: C.added,
+      onQuery: (e) => this.setState({ query: e.target.value, paletteOpen: true }),
+      openPalette: () => this.setState({ paletteOpen: true }),
+      closePalette: () => this.setState({ paletteOpen: false }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>
