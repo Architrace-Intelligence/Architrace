@@ -79,3 +79,39 @@ Decision pending from the maintainer. Option A is assumed in the CI/CD plan.
 - [ ] If an LLM-backed reviewer is chosen, add its API key as a repository secret.
 - [ ] Provide the ticket numbering source (`ARCHI-<n>`) for branch and commit naming.
 - [ ] Confirm the copyright holder spelling in `license-header.txt` ("Dmitry Hryshchenko").
+
+## 7. Fine-grained token for automation
+
+A fine-grained personal access token, owned by the maintainer, is used by the automation for
+API operations (the CLI token in §1 stays untouched; git pushes keep using SSH). The token is
+stored outside the repository with owner-only file permissions and is never committed.
+
+Organisation policy: fine-grained tokens with a lifetime over **366 days are rejected** by the
+organisation, so the token must expire within a year and be rotated.
+
+Token settings:
+
+- Resource owner: `Architrace-Intelligence`
+- Repository access: only `Architrace-Intelligence/Architrace`
+- Expiration: at most 366 days
+
+| Repository permission   | Level          | Needed for                                                        |
+|-------------------------|----------------|-------------------------------------------------------------------|
+| Metadata                | Read           | mandatory                                                         |
+| Contents                | Read and write | push branches, tags, releases, merge                              |
+| Pull requests           | Read and write | open, update, close, merge PRs, review comments                   |
+| Issues                  | Read and write | issues, labels, milestones                                        |
+| Workflows               | Read and write | create and change files under `.github/workflows`                 |
+| Actions                 | Read and write | read logs, re-run and cancel runs                                 |
+| Administration          | Read and write | rulesets, merge settings, Dependabot / secret scanning / CodeQL setup |
+| Secrets                 | Read and write | repository secrets for scanners and reviewers                     |
+| Variables               | Read and write | repository variables                                              |
+| Environments            | Read and write | release environments, if used                                     |
+| Pages                   | Read and write | documentation site settings                                       |
+| Checks                  | Read           | see check runs on PRs                                             |
+| Commit statuses         | Read           | see statuses on PRs                                               |
+| Code scanning alerts    | Read           | read CodeQL findings                                              |
+| Dependabot alerts       | Read           | read dependency findings                                          |
+| Secret scanning alerts  | Read           | read secret findings                                              |
+
+No organisation permissions are required.
