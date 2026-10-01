@@ -39,10 +39,12 @@ flowchart LR
 - The control plane registers agents, validates and stores `GraphSnapshot` messages in
   PostgreSQL (agents, snapshots, nodes, edges; Liquibase), answers with acknowledgements and
   tracks liveness through heartbeats. `TopologyQuery` answers the current graph of a scope at
-  a point in time (latest snapshot per agent, merged) and a per-scope summary for the Projects
-  list; a scheduled job removes snapshots older than the retention period. The Query API under
-  `/api/v1` lists scopes and agents; the control plane serves its OpenAPI document and Swagger
-  UI. Health and metrics are on Actuator. No UI yet (M4).
+  a point in time (latest snapshot per agent, merged), the services of that graph with their
+  dependencies, a per-scope summary for the Projects list and the paged snapshot history; a
+  scheduled job removes snapshots older than the retention period. The Query API under
+  `/api/v1` exposes scopes, agents, graph, services, snapshot history and single snapshots,
+  with domain errors as typed RFC 9457 problems; the control plane serves its OpenAPI document
+  and Swagger UI. Health and metrics are on Actuator. No UI yet (M4).
 - Details and defects: [Requirements §3](../project/requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 
 ## Target architecture (MVP)
@@ -118,10 +120,10 @@ Packages are organised by feature, each with the same inner shape:
 |---------|--------------------------------|---------------------|----------|
 | `agents` | `Agent`, `AgentHealth` | registry, liveness | gRPC, repository |
 | `ingestion` | `IncomingSnapshot` | validation, mapping to topology | gRPC |
-| `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent` | store, current graph, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`) |
+| `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent`, `NodeView`, `Page` | store, current graph, node views, history, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`: controllers, model mapping, problem details) |
 | `drift` | `TopologyDiff` | environment diff, timeline diff | REST |
 | `rules` | `ArchitectureRule`, `Finding` | engine, scheduling after ingest | repository, REST |
-| `web` | | | OpenAPI document, Swagger UI, problem details, SPA serving (M4) |
+| `web` | | | OpenAPI document, Swagger UI, SPA serving (M4) |
 
 Design detail: [M2](../project/features/m2-control-plane-storage/), [M3](../project/features/m3-query-api/),
 [M5](../project/features/m5-drift/), [M6](../project/features/m6-architecture-rules/).

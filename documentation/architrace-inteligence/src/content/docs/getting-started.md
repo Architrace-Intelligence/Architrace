@@ -45,9 +45,10 @@ Default ports:
 Health and metrics are on Actuator: `http://localhost:8085/actuator/health` and
 `http://localhost:8085/actuator/metrics`.
 
-The [Query API](../reference/query-api/) is under `http://localhost:8085/api/v1`
-(`/scopes`, `/agents`); its OpenAPI document is at `/api/v1/openapi.yaml` and Swagger UI at
-`/swagger-ui`.
+The [Query API](../reference/query-api/) is under `http://localhost:8085/api/v1`: `/scopes`,
+`/scopes/{project}/{environment}/{cluster}/graph`, `…/services`, `…/snapshots`,
+`/snapshots/{id}` and `/agents`. Its OpenAPI document is at `/api/v1/openapi.yaml` and Swagger
+UI at `/swagger-ui`.
 
 The integration tests of the control plane start their own PostgreSQL through Testcontainers, so
 `./gradlew test` needs a running Docker daemon.

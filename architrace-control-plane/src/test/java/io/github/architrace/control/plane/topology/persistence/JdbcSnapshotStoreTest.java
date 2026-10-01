@@ -13,15 +13,20 @@ import io.github.architrace.control.plane.topology.EdgeKind;
 import io.github.architrace.control.plane.topology.EdgeMetrics;
 import io.github.architrace.control.plane.topology.NodeAttributes;
 import io.github.architrace.control.plane.topology.NodeType;
+import io.github.architrace.control.plane.topology.Page;
+import io.github.architrace.control.plane.topology.PageRequest;
 import io.github.architrace.control.plane.topology.Scope;
 import io.github.architrace.control.plane.topology.Snapshot;
+import io.github.architrace.control.plane.topology.SnapshotFilter;
 import io.github.architrace.control.plane.topology.SnapshotId;
+import io.github.architrace.control.plane.topology.SnapshotSummary;
 import io.github.architrace.control.plane.topology.TimeWindow;
 import io.github.architrace.control.plane.topology.TopologyEdge;
 import io.github.architrace.control.plane.topology.TopologyNode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,6 +166,59 @@ class JdbcSnapshotStoreTest extends JdbcStoreTest {
             .query(Integer.class)
             .single();
     assertThat(orphanNodes).isZero();
+  }
+
+  @Test
+  void listPagesTheSummariesOfAScopeNewestFirstWithinTheWindowEndRange() {
+    Agent a = agents.register(new AgentRegistration("list-a", "0.4.0", SCOPE), NOW);
+    Agent b = agents.register(new AgentRegistration("list-b", "0.4.0", SCOPE), NOW);
+    Scope dev = new Scope("webshop", "DEV", "k8s-dev");
+    Agent elsewhere = agents.register(new AgentRegistration("list-c", "0.4.0", dev), NOW);
+    SnapshotId oldest =
+        snapshots.save(snapshotWithNode(a, NOW.minusSeconds(180), "service:list-1"));
+    SnapshotId middle =
+        snapshots.save(emptySnapshot(b, NOW.minusSeconds(180), NOW.minusSeconds(120)));
+    SnapshotId newest =
+        snapshots.save(emptySnapshot(a, NOW.minusSeconds(120), NOW.minusSeconds(60)));
+    snapshots.save(
+        new Snapshot(
+            elsewhere.id(),
+            dev,
+            new TimeWindow(NOW.minusSeconds(120), NOW.minusSeconds(60)),
+            NOW,
+            List.of(),
+            List.of()));
+
+    Page<SnapshotSummary> firstPage =
+        snapshots.list(SnapshotFilter.all(SCOPE), new PageRequest(0, 2));
+    Page<SnapshotSummary> secondPage =
+        snapshots.list(SnapshotFilter.all(SCOPE), new PageRequest(1, 2));
+    Page<SnapshotSummary> bounded =
+        snapshots.list(
+            new SnapshotFilter(
+                SCOPE, Optional.of(NOW.minusSeconds(150)), Optional.of(NOW.minusSeconds(90))),
+            new PageRequest(0, 50));
+    Page<SnapshotSummary> lowerBound =
+        snapshots.list(
+            new SnapshotFilter(SCOPE, Optional.of(NOW.minusSeconds(120)), Optional.empty()),
+            new PageRequest(0, 50));
+
+    assertThat(firstPage.items()).extracting(SnapshotSummary::id).containsExactly(newest, middle);
+    assertThat(firstPage.totalItems()).isEqualTo(3);
+    assertThat(firstPage.items().get(0))
+        .isEqualTo(
+            new SnapshotSummary(
+                newest,
+                a.id(),
+                SCOPE,
+                new TimeWindow(NOW.minusSeconds(120), NOW.minusSeconds(60)),
+                NOW.minusSeconds(60),
+                0,
+                0));
+    assertThat(secondPage.items()).extracting(SnapshotSummary::id).containsExactly(oldest);
+    assertThat(secondPage.items().get(0).nodeCount()).isEqualTo(1);
+    assertThat(bounded.items()).extracting(SnapshotSummary::id).containsExactly(middle);
+    assertThat(lowerBound.items()).extracting(SnapshotSummary::id).containsExactly(newest, middle);
   }
 
   private static Snapshot snapshotWithNode(Agent agent, Instant end, String nodeId) {

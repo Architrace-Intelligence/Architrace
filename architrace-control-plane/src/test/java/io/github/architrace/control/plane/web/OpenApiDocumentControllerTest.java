@@ -25,6 +25,8 @@ class OpenApiDocumentControllerTest {
         .bodyText()
         .contains("openapi: 3.1.0")
         .contains("/scopes:")
+        .contains("/scopes/{project}/{environment}/{cluster}/graph:")
+        .contains("/snapshots/{snapshotId}:")
         .contains("/agents:");
   }
 }

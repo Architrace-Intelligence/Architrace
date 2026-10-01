@@ -4,11 +4,15 @@ info:
   version: v1
   description: |
     Read-only API of the Architrace control plane. It serves the UI and scripts with the
-    scopes the agents report and the agents themselves; later versions add the topology graph
-    of a scope at a point in time, services, snapshots, drift and findings.
+    scopes the agents report, the agents themselves, the topology graph of a scope at a point
+    in time, the services of a scope with their dependencies and the snapshot history behind
+    the graph; later versions add drift and findings.
 
     Every error is returned as RFC 9457 problem details with the media type
-    `application/problem+json`.
+    `application/problem+json`. Errors raised by the framework (unknown path, unreadable
+    parameter) carry no `type`, which RFC 9457 reads as `about:blank`; errors raised by the
+    domain carry a stable type `urn:architrace:problem:<slug>` (`scope-not-found`,
+    `snapshot-not-found`, `invalid-query`).
   license:
     name: Apache-2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
@@ -16,7 +20,9 @@ servers:
   - url: /api/v1
 tags:
   - name: scopes
-    description: Scopes (project, environment, cluster) with at least one registered agent
+    description: Scopes (project, environment, cluster) with at least one registered agent, their current graph and services
+  - name: snapshots
+    description: Snapshot history behind the graph of a scope
   - name: agents
     description: Agents registered with the control plane
 paths:
@@ -55,6 +61,225 @@ paths:
                       namespaces: 0
         default:
           $ref: "#/components/responses/Problem"
+  /scopes/{project}/{environment}/{cluster}/graph:
+    get:
+      tags: [scopes]
+      operationId: getGraph
+      summary: Current graph of a scope at a point in time
+      description: |
+        The latest snapshot of every agent of the scope at or before `at`, merged into one
+        graph. Nodes are united by id (versions, deployments and labels are unioned); edges are
+        united by source, target and kind (calls and errors are summed, latencies take the
+        maximum). Nodes are ordered by id, edges by source, target and kind. A scope without
+        snapshots answers an empty graph.
+      parameters:
+        - $ref: "#/components/parameters/Project"
+        - $ref: "#/components/parameters/Environment"
+        - $ref: "#/components/parameters/Cluster"
+        - $ref: "#/components/parameters/At"
+      responses:
+        "200":
+          description: The graph
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopologyGraph"
+              examples:
+                webshop:
+                  value:
+                    scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                    at: "2026-10-01T12:00:00Z"
+                    nodes:
+                      - id: "db:postgresql/orders"
+                        type: DATABASE
+                        name: orders
+                        versions: []
+                        deployments: []
+                        labels: {}
+                      - id: "service:orders"
+                        type: SERVICE
+                        name: orders
+                        versions: ["2.8.1"]
+                        deployments: [{ cluster: k8s-prod-eu1, namespace: orders }]
+                        labels: { team: orders }
+                      - id: "topic:kafka/order-events"
+                        type: TOPIC
+                        name: order-events
+                        versions: []
+                        deployments: []
+                        labels: {}
+                    edges:
+                      - sourceId: "service:orders"
+                        targetId: "db:postgresql/orders"
+                        kind: SYNC
+                        metrics: { calls: 24000, errors: 3, p50Millis: 3, p95Millis: 9, p99Millis: 22, maxMillis: 140 }
+                      - sourceId: "service:orders"
+                        targetId: "topic:kafka/order-events"
+                        kind: PUBLISH
+                        metrics: { calls: 8700, errors: 0, p50Millis: 2, p95Millis: 5, p99Millis: 9, maxMillis: 60 }
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          $ref: "#/components/responses/ScopeNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
+  /scopes/{project}/{environment}/{cluster}/services:
+    get:
+      tags: [scopes]
+      operationId: listServices
+      summary: Services of a scope with their dependencies
+      description: |
+        Every service node of the current graph at `at`, ordered by id, each with the edges
+        that end at it (`inbound`: callers and the streams it consumes) and the edges that
+        start at it (`outbound`: callees, databases, external hosts and the streams it
+        publishes to). The node at the other end of every edge is embedded, so the list is
+        self-contained.
+      parameters:
+        - $ref: "#/components/parameters/Project"
+        - $ref: "#/components/parameters/Environment"
+        - $ref: "#/components/parameters/Cluster"
+        - $ref: "#/components/parameters/At"
+      responses:
+        "200":
+          description: Services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NodeView"
+              examples:
+                webshop:
+                  value:
+                    - node:
+                        id: "service:orders"
+                        type: SERVICE
+                        name: orders
+                        versions: ["2.8.1"]
+                        deployments: [{ cluster: k8s-prod-eu1, namespace: orders }]
+                        labels: {}
+                      inbound:
+                        - node:
+                            id: "service:checkout"
+                            type: SERVICE
+                            name: checkout
+                            versions: ["4.1.0"]
+                            deployments: [{ cluster: k8s-prod-eu1, namespace: checkout }]
+                            labels: {}
+                          edge:
+                            sourceId: "service:checkout"
+                            targetId: "service:orders"
+                            kind: SYNC
+                            metrics: { calls: 12400, errors: 37, p50Millis: 12, p95Millis: 48, p99Millis: 90, maxMillis: 410 }
+                      outbound:
+                        - node:
+                            id: "db:postgresql/orders"
+                            type: DATABASE
+                            name: orders
+                            versions: []
+                            deployments: []
+                            labels: {}
+                          edge:
+                            sourceId: "service:orders"
+                            targetId: "db:postgresql/orders"
+                            kind: SYNC
+                            metrics: { calls: 24000, errors: 3, p50Millis: 3, p95Millis: 9, p99Millis: 22, maxMillis: 140 }
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          $ref: "#/components/responses/ScopeNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
+  /scopes/{project}/{environment}/{cluster}/snapshots:
+    get:
+      tags: [snapshots]
+      operationId: listSnapshots
+      summary: Snapshot history of a scope, newest first
+      description: |
+        One summary per stored snapshot of the scope whose window ends between `from` and `to`
+        (both inclusive, both optional), ordered by window end descending, paginated with
+        `page` and `size`. The summaries carry counts only; `GET /snapshots/{snapshotId}`
+        returns the nodes and edges.
+      parameters:
+        - $ref: "#/components/parameters/Project"
+        - $ref: "#/components/parameters/Environment"
+        - $ref: "#/components/parameters/Cluster"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+      responses:
+        "200":
+          description: One page of snapshot summaries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SnapshotPage"
+              examples:
+                webshop:
+                  value:
+                    items:
+                      - id: 42
+                        agentId: 1
+                        scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                        window: { start: "2026-10-01T11:59:00Z", end: "2026-10-01T12:00:00Z" }
+                        receivedAt: "2026-10-01T12:00:01Z"
+                        nodeCount: 17
+                        edgeCount: 31
+                      - id: 41
+                        agentId: 2
+                        scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                        window: { start: "2026-10-01T11:58:30Z", end: "2026-10-01T11:59:30Z" }
+                        receivedAt: "2026-10-01T11:59:31Z"
+                        nodeCount: 9
+                        edgeCount: 12
+                    page: 0
+                    size: 50
+                    totalItems: 2
+                    totalPages: 1
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          $ref: "#/components/responses/ScopeNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
+  /snapshots/{snapshotId}:
+    get:
+      tags: [snapshots]
+      operationId: getSnapshot
+      summary: One snapshot with its nodes and edges
+      description: |
+        The snapshot exactly as the agent reported it, before any merging. Nodes are ordered
+        by id, edges by source, target and kind.
+      parameters:
+        - $ref: "#/components/parameters/SnapshotId"
+      responses:
+        "200":
+          description: The snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Snapshot"
+              examples:
+                webshop:
+                  value:
+                    id: 42
+                    agentId: 1
+                    scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                    window: { start: "2026-10-01T11:59:00Z", end: "2026-10-01T12:00:00Z" }
+                    receivedAt: "2026-10-01T12:00:01Z"
+                    nodes:
+                      - id: "service:orders"
+                        type: SERVICE
+                        name: orders
+                        versions: ["2.8.1"]
+                        deployments: [{ cluster: k8s-prod-eu1, namespace: orders }]
+                        labels: {}
+                    edges: []
+        "404":
+          $ref: "#/components/responses/SnapshotNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
   /agents:
     get:
       tags: [agents]
@@ -85,6 +310,83 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
 components:
+  parameters:
+    Project:
+      name: project
+      in: path
+      required: true
+      description: Project of the scope
+      schema:
+        type: string
+    Environment:
+      name: environment
+      in: path
+      required: true
+      description: Environment of the scope
+      schema:
+        type: string
+    Cluster:
+      name: cluster
+      in: path
+      required: true
+      description: Kubernetes cluster of the scope
+      schema:
+        type: string
+    At:
+      name: at
+      in: query
+      required: false
+      description: |
+        Point in time (RFC 3339) the graph is resolved for: the latest snapshot of every agent
+        whose window ends at or before it. Defaults to now.
+      schema:
+        type: string
+        format: date-time
+    From:
+      name: from
+      in: query
+      required: false
+      description: Earliest window end to include (RFC 3339, inclusive); unbounded when absent
+      schema:
+        type: string
+        format: date-time
+    To:
+      name: to
+      in: query
+      required: false
+      description: Latest window end to include (RFC 3339, inclusive); unbounded when absent
+      schema:
+        type: string
+        format: date-time
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Zero-based page index
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+    Size:
+      name: size
+      in: query
+      required: false
+      description: Items per page
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 200
+        default: 50
+    SnapshotId:
+      name: snapshotId
+      in: path
+      required: true
+      description: Snapshot id as listed by the snapshot history
+      schema:
+        type: integer
+        format: int64
   responses:
     Problem:
       description: Error
@@ -92,6 +394,48 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    InvalidQuery:
+      description: A query parameter is out of range or the parameters contradict each other
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            range:
+              value:
+                type: "urn:architrace:problem:invalid-query"
+                title: Invalid query
+                status: 400
+                detail: "from 2026-10-01T12:00:00Z must not be after to 2026-10-01T11:00:00Z"
+                instance: /api/v1/scopes/webshop/PROD/k8s-prod-eu1/snapshots
+    ScopeNotFound:
+      description: No agent has registered for the scope
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            unknown:
+              value:
+                type: "urn:architrace:problem:scope-not-found"
+                title: Scope not found
+                status: 404
+                detail: "no agent has registered for scope webshop/PROD/k8s-prod-eu2"
+                instance: /api/v1/scopes/webshop/PROD/k8s-prod-eu2/graph
+    SnapshotNotFound:
+      description: No snapshot has this id, or it has been removed by retention
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            unknown:
+              value:
+                type: "urn:architrace:problem:snapshot-not-found"
+                title: Snapshot not found
+                status: 404
+                detail: "no snapshot with id 7"
+                instance: /api/v1/snapshots/7
   schemas:
     Scope:
       type: object
@@ -143,6 +487,246 @@ components:
           type: string
           format: date-time
           description: End of the newest snapshot window; absent until the first snapshot arrives
+    TopologyGraph:
+      type: object
+      description: The current graph of a scope at a point in time.
+      required: [scope, at, nodes, edges]
+      properties:
+        scope:
+          $ref: "#/components/schemas/Scope"
+        at:
+          type: string
+          format: date-time
+          description: Point in time the graph was resolved for
+        nodes:
+          type: array
+          description: Nodes ordered by id
+          items:
+            $ref: "#/components/schemas/TopologyNode"
+        edges:
+          type: array
+          description: Edges ordered by source, target and kind
+          items:
+            $ref: "#/components/schemas/TopologyEdge"
+    TopologyNode:
+      type: object
+      description: A service, database, topic or external host.
+      required: [id, type, name, versions, deployments, labels]
+      properties:
+        id:
+          type: string
+          description: |
+            Stable node id, the same in every scope and snapshot, for example `service:orders`,
+            `db:postgresql/orders`, `topic:kafka/order-events`. It may contain `/`.
+        type:
+          $ref: "#/components/schemas/NodeType"
+        name:
+          type: string
+          description: Display name
+        versions:
+          type: array
+          description: Versions seen for the node; empty for nodes without a version
+          items:
+            type: string
+        deployments:
+          type: array
+          description: Where the node runs; empty for nodes the agent does not see deployed
+          items:
+            $ref: "#/components/schemas/Deployment"
+        labels:
+          type: object
+          description: Free-form labels reported by the agent
+          additionalProperties:
+            type: string
+    NodeType:
+      type: string
+      description: What a node stands for.
+      enum: [SERVICE, DATABASE, TOPIC, EXTERNAL]
+    Deployment:
+      type: object
+      description: One place a node runs.
+      required: [cluster, namespace]
+      properties:
+        cluster:
+          type: string
+          description: Kubernetes cluster
+        namespace:
+          type: string
+          description: Kubernetes namespace; empty when unknown
+    TopologyEdge:
+      type: object
+      description: A dependency between two nodes with the metrics of the window.
+      required: [sourceId, targetId, kind, metrics]
+      properties:
+        sourceId:
+          type: string
+          description: Id of the node the edge starts at
+        targetId:
+          type: string
+          description: Id of the node the edge ends at
+        kind:
+          $ref: "#/components/schemas/EdgeKind"
+        metrics:
+          $ref: "#/components/schemas/EdgeMetrics"
+    EdgeKind:
+      type: string
+      description: |
+        Direction follows the data: `SYNC` goes from the caller to the callee, `PUBLISH` from
+        the producer to the topic, `CONSUME` from the topic to the consumer.
+      enum: [SYNC, PUBLISH, CONSUME]
+    EdgeMetrics:
+      type: object
+      description: Calls, errors and latency percentiles of an edge in the window.
+      required: [calls, errors, p50Millis, p95Millis, p99Millis, maxMillis]
+      properties:
+        calls:
+          type: integer
+          format: int64
+          minimum: 0
+        errors:
+          type: integer
+          format: int64
+          minimum: 0
+        p50Millis:
+          type: integer
+          format: int64
+          minimum: 0
+        p95Millis:
+          type: integer
+          format: int64
+          minimum: 0
+        p99Millis:
+          type: integer
+          format: int64
+          minimum: 0
+        maxMillis:
+          type: integer
+          format: int64
+          minimum: 0
+    NodeView:
+      type: object
+      description: A node of the current graph with the edges that touch it and their other ends.
+      required: [node, inbound, outbound]
+      properties:
+        node:
+          $ref: "#/components/schemas/TopologyNode"
+        inbound:
+          type: array
+          description: Edges that end at the node, ordered by source, target and kind
+          items:
+            $ref: "#/components/schemas/Dependency"
+        outbound:
+          type: array
+          description: Edges that start at the node, ordered by source, target and kind
+          items:
+            $ref: "#/components/schemas/Dependency"
+    Dependency:
+      type: object
+      description: One edge seen from one of its nodes, with the node at the other end.
+      required: [node, edge]
+      properties:
+        node:
+          $ref: "#/components/schemas/TopologyNode"
+        edge:
+          $ref: "#/components/schemas/TopologyEdge"
+    TimeWindow:
+      type: object
+      description: The half-open time range a snapshot covers.
+      required: [start, end]
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+    SnapshotSummary:
+      type: object
+      description: One stored snapshot without its nodes and edges.
+      required: [id, agentId, scope, window, receivedAt, nodeCount, edgeCount]
+      properties:
+        id:
+          type: integer
+          format: int64
+        agentId:
+          type: integer
+          format: int64
+          description: Agent that reported the snapshot
+        scope:
+          $ref: "#/components/schemas/Scope"
+        window:
+          $ref: "#/components/schemas/TimeWindow"
+        receivedAt:
+          type: string
+          format: date-time
+          description: When the control plane stored the snapshot
+        nodeCount:
+          type: integer
+          format: int32
+          minimum: 0
+        edgeCount:
+          type: integer
+          format: int32
+          minimum: 0
+    Snapshot:
+      type: object
+      description: One stored snapshot as the agent reported it.
+      required: [id, agentId, scope, window, receivedAt, nodes, edges]
+      properties:
+        id:
+          type: integer
+          format: int64
+        agentId:
+          type: integer
+          format: int64
+          description: Agent that reported the snapshot
+        scope:
+          $ref: "#/components/schemas/Scope"
+        window:
+          $ref: "#/components/schemas/TimeWindow"
+        receivedAt:
+          type: string
+          format: date-time
+          description: When the control plane stored the snapshot
+        nodes:
+          type: array
+          description: Nodes ordered by id
+          items:
+            $ref: "#/components/schemas/TopologyNode"
+        edges:
+          type: array
+          description: Edges ordered by source, target and kind
+          items:
+            $ref: "#/components/schemas/TopologyEdge"
+    SnapshotPage:
+      type: object
+      description: One page of snapshot summaries.
+      required: [items, page, size, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SnapshotSummary"
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Zero-based index of this page
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Requested page size
+        totalItems:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Snapshots matching the filter across all pages
+        totalPages:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Pages needed for all matching snapshots; `0` when nothing matches
     Agent:
       type: object
       description: An agent registration as the control plane sees it.
@@ -175,7 +759,9 @@ components:
         type:
           type: string
           format: uri
-          description: Problem type; `about:blank` when the status code says it all
+          description: |
+            Problem type: absent (RFC 9457 default `about:blank`) when the status code says it
+            all, otherwise a stable `urn:architrace:problem:<slug>`
         title:
           type: string
         status:
