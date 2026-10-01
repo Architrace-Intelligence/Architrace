@@ -10,7 +10,8 @@ repository root. This page is the short human version.
 ## Flow
 
 1. Every change starts from an agreed feature (see [Requirements](../requirements/)) and a
-   branch from `main` named `ARCHI-<n>-<topic>`.
+   branch from `main` named `ARCHI-<n>-<topic>`. Ticket numbers are sequential: take the
+   highest number used in branches and PR titles and add one.
 2. Work is tested locally with all quality gates green:
 
    ```bash
@@ -21,8 +22,9 @@ repository root. This page is the short human version.
    patterns and approaches used, architecture impact, testing, documentation.
 4. CI runs formatting, compilation, tests with coverage, static analysis, security scanning and
    an automated AI code review by an independent agent.
-5. The maintainer reviews and merges (squash). The main pipeline builds, versions and publishes
-   artifacts and this site.
+5. The maintainer reviews and merges (squash); the merge is the approval, see
+   [ADR 0003](../adr/0003-review-identity-and-merge-gate/). The main pipeline builds, versions
+   and publishes artifacts and this site.
 
 ## Commit and PR title convention
 
@@ -39,6 +41,6 @@ footer bumps the major version.
 ## Documentation rules
 
 - Everything readers need is on this site; it is updated in the same PR as the change.
-- Architecture decisions are recorded as ADRs under *Project → Decisions* only after the
+- Architecture decisions are recorded as ADRs in the [decision log](../adr/) only after the
   maintainer has agreed them.
 - No documentation comments in code: names, types and structure carry the meaning.

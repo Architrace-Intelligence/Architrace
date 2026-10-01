@@ -225,8 +225,8 @@ command reads the version from the manifest instead of a literal.
 | Gemini Code Assist | GitHub App by Google. | Free for public repositories. | Good summaries; weaker inline findings than CodeRabbit in comparisons. |
 | GitHub Copilot code review | Native, ruleset-triggered (`copilot_code_review`, already in the disabled ruleset). | Requires a paid Copilot plan even on public repos. | Not free. |
 
-Proposal: CodeRabbit as the blocking reviewer plus `required conversation resolution` in the
-ruleset. If the maintainer prefers an in-workflow step, PR-Agent with a Gemini key.
+Decision: CodeRabbit with `required conversation resolution` in the ruleset, see
+[ADR 0002](../adr/0002-coderabbit-ai-review/). PR-Agent with a bring-your-own key is the fallback.
 
 ### 5.5 Static analysis and security
 
@@ -295,18 +295,49 @@ architecture value from within a day?
 
 ### Open questions for the maintainer
 
-Answers are recorded in §7 once given.
+Answers are recorded in §7 once given; the agreed scope goes to §8.
 
-1. Agree the "in scope" list, or move items (for example, M6 out, or C12 in).
+1. Agree the "in scope" list, or move items (for example, M6 out, or C12 in). **Decided: M0–M7 as proposed, see §8.**
 2. UI stack preference: React + TypeScript SPA served by the control plane (recommended for an
-   interactive graph), or server-side rendering kept inside Spring Boot.
-3. Storage: PostgreSQL agreed? Migration tool: Flyway (recommended) or Liquibase.
-4. AI reviewer choice (§5.4) and review identity option (`docs/github-access.md` §4).
-5. Ticket numbering: where do `ARCHI-<n>` numbers come from, and the next free number.
+   interactive graph), or server-side rendering kept inside Spring Boot. **Decided: React + TypeScript.**
+3. Storage: PostgreSQL agreed? Migration tool: Flyway (recommended) or Liquibase. **Decided: PostgreSQL + Liquibase.**
+4. AI reviewer choice (§5.4) and review identity option ([GitHub setup §4](../github-access/#4-the-review-identity-problem)). **Decided: CodeRabbit; option A.**
+5. Ticket numbering: where do `ARCHI-<n>` numbers come from, and the next free number. **Decided: sequential.**
 6. Is `environment` a required agent config value (one agent per environment) or derived per
    span? Recommendation: required in config, overridable by resource attribute.
 7. Keep Spring Boot 4 milestone / snapshot repositories, or pin to a GA line for stability.
 
-## 7. Agreed MVP
+## 7. Agreed decisions
 
-_To be filled after the maintainer's decision on §6._
+Recorded as the maintainer answers the open questions in §6.
+
+| # | Question | Decision | Date | Record |
+|---|----------|----------|------|--------|
+| 2 | UI stack | React + TypeScript single-page application bundled into the control plane artifact | 2026-10-01 | [ADR 0004](../adr/0004-react-typescript-ui/) |
+| 3 | Storage and migrations | PostgreSQL with Liquibase | 2026-10-01 | [ADR 0001](../adr/0001-postgresql-liquibase/) |
+| 4 | AI reviewer | CodeRabbit GitHub App, gate through required conversation resolution | 2026-10-01 | [ADR 0002](../adr/0002-coderabbit-ai-review/) |
+| 5 | Review identity | Option A: maintainer-authored PRs, zero required approvals, merge is the approval | 2026-10-01 | [ADR 0003](../adr/0003-review-identity-and-merge-gate/) |
+| 6 | Ticket numbering | `ARCHI-<n>` is sequential; the next number is one above the highest used in branches and PR titles | 2026-10-01 | `AGENTS.md` |
+| 7a | Copyright holder | License header in the maintainer's name, spelled `Dmytro Hryshchenko`; existing headers are fixed in the repository hygiene feature | 2026-10-01 | `AGENTS.md` |
+
+Still open: **7b** Spring Boot milestone / snapshot repositories (to be decided in the control
+plane design).
+
+## 8. Agreed MVP
+
+Agreed by the maintainer on 2026-10-01: the scope in §6 as proposed, features **M0–M7**, in
+the order M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7, with M7 started early enough that the compose
+stack works from M2 onwards. Everything listed under "Out of MVP" stays out.
+
+| # | Feature | Design page |
+|---|---------|-------------|
+| M0 | Engineering platform | `project/features/m0-engineering-platform` |
+| M1 | Agent pipeline completion | `project/features/m1-agent-pipeline` |
+| M2 | Control plane ingestion and storage | `project/features/m2-control-plane-storage` |
+| M3 | Query API | `project/features/m3-query-api` |
+| M4 | Service map UI | `project/features/m4-service-map` |
+| M5 | Drift | `project/features/m5-drift` |
+| M6 | Architecture rules | `project/features/m6-architecture-rules` |
+| M7 | Packaging and demo | `project/features/m7-packaging-demo` |
+
+Design pages are produced in the design stage and linked from here once they exist.

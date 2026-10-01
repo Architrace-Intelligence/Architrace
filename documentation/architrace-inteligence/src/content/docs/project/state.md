@@ -11,28 +11,32 @@ Last updated: **2026-10-01**
 
 ## Where we are
 
-- Stage 0 (analysis) is done, stage 1 (MVP scope agreement) is waiting for the maintainer.
-- PR #20 (AGENTS.md, requirements, progress, GitHub setup, PR template) is merged.
-- Active branch: `ARCHI-21-docs-site`: moves the project pages onto this site, adds this page
-  and the contributing page, documents the automation token. Nothing else is in flight.
+- Stages 0 (analysis) and 1 (MVP scope agreement) are done. Stage 2 (design) is starting.
+- PR #20 and PR #21 (foundation documents, this site as the documentation home) are merged.
+- Active branch: `ARCHI-22-record-decisions`: ADR 0001–0003 and the decisions recorded on
+  the project pages. Nothing else is in flight.
 - CI on `main` is red for known reasons (Spotless, agent test compilation, invalid
   `pr-ci.yml`); see [Requirements §3](../requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 - Automation token for GitHub API is issued and verified; git pushes use SSH.
 
-## Decisions pending
+## Decisions
 
-Listed in [Requirements §6, open questions](../requirements/#open-questions-for-the-maintainer)
-and in [GitHub setup §6](../github-access/#6-setup-checklist-for-the-maintainer). Until they are
-answered no design or implementation work starts.
+Agreed and recorded (Requirements §7, ADR 0001–0004): PostgreSQL + Liquibase, CodeRabbit,
+maintainer-authored PRs with a zero-approval ruleset, React + TypeScript UI, sequential
+`ARCHI-<n>`, copyright holder.
+
+MVP scope agreed: M0–M7 (Requirements §8). Spring Boot repository pinning is decided in the
+control plane design.
 
 ## Next step
 
-1. Get `ARCHI-21-docs-site` merged. Receive the maintainer's answers, record them in
-   Requirements §7 ("Agreed MVP") and in the GitHub setup checklist.
-2. Open the design stage: architecture page, first ADRs (storage, UI stack, module layout,
-   versioning), feature pages for M0–M7, feature order.
+1. Get `ARCHI-22-record-decisions` merged.
+2. Design stage, one PR: architecture page (current and target), feature pages for M0–M7,
+   proposed ADRs (module layout, versioning, topology model, contract-first APIs, data access,
+   Spring Boot GA pinning). The maintainer reviews; ADRs flip to accepted on agreement.
 3. First implementation feature is M0 (engineering platform): repository hygiene, single PR
-   pipeline, versioning, AI review, scanners, `main` ruleset.
+   pipeline, versioning, `.coderabbit.yaml`, scanners, `main` ruleset. The maintainer installs
+   the CodeRabbit app in parallel.
 
 ## How to resume
 

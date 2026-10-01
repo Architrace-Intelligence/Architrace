@@ -41,7 +41,8 @@ export default defineConfig({
             { label: 'Requirements', slug: 'project/requirements' },
             { label: 'Progress', slug: 'project/progress' },
             { label: 'Contributing', slug: 'project/contributing' },
-            { label: 'GitHub setup', slug: 'project/github-access' }
+            { label: 'GitHub setup', slug: 'project/github-access' },
+            { label: 'Decisions', autogenerate: { directory: 'project/adr' } }
           ]
         }
       ]

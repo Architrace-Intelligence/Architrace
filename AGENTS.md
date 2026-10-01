@@ -31,14 +31,16 @@ Development is feature-driven and PR-only.
 1. Agree the feature scope with the maintainer (it must exist in the Requirements page or be
    explicitly requested).
 2. Record architectural decisions as ADRs under `DOCS/project/adr/` **only after the maintainer agrees**.
-3. Branch from `main`: `ARCHI-<n>-<short-topic>` (ticket number from the maintainer).
+3. Branch from `main`: `ARCHI-<n>-<short-topic>`. Ticket numbers are sequential: the next
+   number is one above the highest used in existing branches and PR titles.
 4. Implement, test locally (all quality gates green), update docs.
 5. Open a PR using `.github/PULL_REQUEST_TEMPLATE.md`; fill every section honestly.
-6. CI runs quality gates and an automated AI code review by a second agent. Address its
-   findings, then the maintainer reviews, approves and merges.
+6. CI runs the quality gates and CodeRabbit reviews the PR. Resolve every review thread
+   (fix or answer), then the maintainer reviews and merges; the merge is the approval.
 7. After merge the main pipeline builds, versions and publishes artifacts.
 
 Never push directly to `main`. Never merge your own PR. Never force-push a shared branch.
+Never push onto a merged branch: follow-up work gets a new branch and a new PR.
 
 ### Commit convention
 
@@ -104,7 +106,7 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   behaviour separated from data).
 - **No documentation comments in code.** No Javadoc, no explanatory comments. Names, types
   and structure carry the meaning. The only allowed header is the SPDX license header enforced
-  by Spotless.
+  by Spotless; the copyright holder is `Dmytro Hryshchenko`.
 - Prefer small, single-purpose classes; constructor injection; no static mutable state.
 - Tests: JUnit 6, AssertJ, Mockito. Test behaviour through public API; never use reflection
   to reach private members. Keep coverage above the configured JaCoCo thresholds.
@@ -124,7 +126,10 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   spans into a service graph, streams graph batches to the control plane over bidirectional
   gRPC. Entry point `io.github.architrace.MainApp`, commands `run`, `dry-run`, `version`.
 - Control plane (`architrace-control-plane`): Spring Boot 4 + Spring gRPC. Accepts agent
-  streams, answers health, pushes config updates. HTTP `8085`, gRPC `9090`.
+  streams, answers health, pushes config updates. HTTP `8085`, gRPC `9090`. Persistence:
+  PostgreSQL with Liquibase (ADR 0001). Serves the UI bundle (ADR 0004).
+- UI (planned module): React + TypeScript single-page application, Vite, generated OpenAPI
+  client, bundled into the control plane jar (ADR 0004).
 - API (`architrace-api`): protobuf contract `architrace-agent.proto`
   (`architrace.controlplane.v1`), generated Java in `io.github.architrace.grpc.proto`.
 - Demo stack: `otel-test-app/` (Python Flask services + OTel Collector + docker compose).
