@@ -33,6 +33,16 @@ export default defineConfig({
             { label: 'gRPC Contract', slug: 'reference/grpc-contract' },
             { label: 'Modules', slug: 'reference/modules' }
           ]
+        },
+        {
+          label: 'Project',
+          items: [
+            { label: 'Current state', slug: 'project/state' },
+            { label: 'Requirements', slug: 'project/requirements' },
+            { label: 'Progress', slug: 'project/progress' },
+            { label: 'Contributing', slug: 'project/contributing' },
+            { label: 'GitHub setup', slug: 'project/github-access' }
+          ]
         }
       ]
     })
