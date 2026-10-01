@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.protobuf)
 }
 
-description = "Demo project for Spring Boot"
+description = "Architrace control plane"
 
 configurations {
     compileOnly {
@@ -14,8 +14,6 @@ configurations {
 
 repositories {
     mavenCentral()
-    maven("https://repo.spring.io/milestone")
-    maven("https://repo.spring.io/snapshot")
 }
 
 dependencies {
@@ -27,11 +25,16 @@ dependencies {
     implementation(project(":api"))
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.grpc.spring.boot.starter)
+    implementation(libs.spring.boot.starter.data.jdbc)
+    implementation(libs.spring.boot.starter.liquibase)
 
-    runtimeOnly(libs.postgresql)
+    implementation(libs.postgresql)
 
     testImplementation(libs.spring.boot.starter.actuator.test)
     testImplementation(libs.spring.boot.starter.webmvc.test)
+    testImplementation(libs.spring.boot.starter.data.jdbc.test)
+    testImplementation(libs.spring.boot.testcontainers)
+    testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.spring.grpc.test)
 
     testRuntimeOnly(libs.junit.platform.launcher)

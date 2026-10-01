@@ -4,14 +4,24 @@
  */
 package io.github.architrace.control.plane;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 @SpringBootTest(properties = "spring.grpc.server.enabled=false")
+@Import(PostgresTestcontainers.class)
 class ControlPlaneApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+  @Autowired JdbcClient jdbc;
 
+  @Test
+  void appliesSchemaOnStartup() {
+    Integer changeSets =
+        jdbc.sql("select count(*) from databasechangelog").query(Integer.class).single();
+    assertThat(changeSets).isGreaterThanOrEqualTo(4);
+  }
 }

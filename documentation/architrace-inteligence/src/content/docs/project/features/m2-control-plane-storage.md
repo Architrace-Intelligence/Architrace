@@ -3,7 +3,7 @@ title: M2. Control plane ingestion and storage
 description: Snapshots from every agent are validated, persisted and merged into a current graph per environment.
 ---
 
-Status: design agreed · Order: 3 · Requirements: F5, F6, N3, N4, N7
+Status: in progress (PR 1 of 3 delivered: schema and stores) · Order: 3 · Requirements: F5, F6, N3, N4, N7
 
 ## Goal
 
@@ -31,13 +31,30 @@ Out: REST endpoints (M3), diff (M5), rules (M6), authentication.
 
 | Table | Columns | Notes |
 |-------|---------|-------|
-| `agent` | id, name, environment, cluster, first_seen_at, last_seen_at | unique (name, environment) |
-| `snapshot` | id, agent_id, environment, window_start, window_end, received_at, node_count, edge_count | index (environment, window_end) |
+| `agent` | id, name, agent_version, project, environment, cluster, first_seen_at, last_seen_at | unique (name, project, environment, cluster) |
+| `snapshot` | id, agent_id, project, environment, cluster, window_start, window_end, received_at, node_count, edge_count | index (project, environment, cluster, window_end), index (agent_id, window_end) |
 | `snapshot_node` | snapshot_id, node_id, type, name, attributes (jsonb) | pk (snapshot_id, node_id) |
 | `snapshot_edge` | snapshot_id, source_id, target_id, kind, calls, errors, latency_p50, latency_p95, latency_p99, latency_max | pk (snapshot_id, source_id, target_id, kind) |
 
-`attributes` holds versions, clusters, namespaces and type-specific fields as a JSON document
+`attributes` holds versions, deployments (cluster, namespace) and free labels as a JSON document
 so new node attributes do not need a migration.
+
+The scope columns (`project`, `environment`, `cluster`) come from the UI design of the initial
+release: the Projects list shows one row per scope and the map opens for one scope. The agent
+reports its scope at registration; snapshots are denormalised with it so scope queries need no
+join. Where the project value comes from on the agent side is an open point of the
+[UI design](../ui-design/).
+
+### Code shape (PR 1)
+
+- `topology`: domain records without framework imports (`Scope`, `TimeWindow`, `TopologyNode`,
+  `NodeAttributes`, `TopologyEdge`, `EdgeMetrics`, `Snapshot`, `Agent`, `AgentRegistration`)
+  and the ports `SnapshotStore` and `AgentStore`.
+- `topology.persistence`: Spring Data JDBC aggregates (`SnapshotRow` with node and edge rows,
+  `AgentRow`), repositories, the `JsonDocument` ↔ `jsonb` converters, the Jackson codec for
+  node attributes, and the adapters `JdbcSnapshotStore` and `JdbcAgentStore`.
+- Tests: `@DataJdbcTest` slices and the application context run against PostgreSQL 17 in
+  Testcontainers (`PostgresTestcontainers`, `@ServiceConnection`).
 
 ### Ingestion
 
@@ -81,9 +98,11 @@ stay well under 100 ms.
 
 ## Delivery plan
 
-1. GA baseline, PostgreSQL, Liquibase, first schema, Testcontainers wiring, compose service.
-2. Agent registry, gRPC stream service, ingestion with validation and persistence.
-3. Current graph query, retention job, metrics, architecture page update.
+1. GA baseline, PostgreSQL, Liquibase, first schema, Testcontainers wiring, compose service
+   (ARCHI-26, delivered).
+2. Protobuf v1 redesign, agent registry, gRPC stream service, ingestion with validation and
+   persistence.
+3. Current graph and scope queries, retention job, metrics, architecture page update.
 
 ## Risks and open points
 

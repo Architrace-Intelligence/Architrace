@@ -6,7 +6,7 @@ description: Build and run Architrace locally.
 ## Prerequisites
 
 - Java 25+
-- Docker (optional, for the demo stack)
+- Docker (for the PostgreSQL database, the integration tests and the demo stack)
 - Node.js (for this docs site only)
 
 ## Repository structure
@@ -25,14 +25,25 @@ description: Build and run Architrace locally.
 
 ## Run control-plane locally
 
+The control plane needs PostgreSQL. The demo stack ships one; start it first:
+
 ```bash
+docker compose -f otel-test-app/docker-compose.yml up -d postgres
 ./gradlew :control-plane:bootRun
 ```
+
+Liquibase applies the schema on start-up. Connection settings default to
+`jdbc:postgresql://localhost:5432/architrace` with user and password `architrace`; override them
+with `ARCHITRACE_DB_URL`, `ARCHITRACE_DB_USERNAME` and `ARCHITRACE_DB_PASSWORD`.
 
 Default ports:
 
 - HTTP: `8085`
 - gRPC: `9090`
+- PostgreSQL: `5432`
+
+The integration tests of the control plane start their own PostgreSQL through Testcontainers, so
+`./gradlew test` needs a running Docker daemon.
 
 ## Build and run agent
 

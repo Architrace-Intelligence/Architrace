@@ -67,3 +67,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-01 | M0 PR 1 merged (#26): main builds green again |
 | 2026-10-01 | UI design: interactive prototypes of the MVP screens, foundations and agent-first principles (ARCHI-25) |
 | 2026-10-01 | Initial UI release narrowed to Projects list and Service map; five static frames added to the design (ARCHI-25) |
+| 2026-10-01 | M2 PR 1: PostgreSQL schema, Spring Data JDBC stores, Testcontainers (ARCHI-26) |
