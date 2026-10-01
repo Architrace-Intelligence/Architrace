@@ -11,7 +11,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 
 | # | Stage                                   | State       | Notes                                                  |
 |---|-----------------------------------------|-------------|--------------------------------------------------------|
-| 0 | Project analysis and requirements       | review      | [Requirements](../requirements/) opened for review     |
+| 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | in progress | Candidate scope in [Requirements §6](../requirements/#6-proposed-mvp-scope) |
 | 2 | Design (architecture, ADRs, features)   | todo        | Starts after stage 1 is agreed                         |
 | 3 | Implementation (feature by feature)     | todo        |                                                        |
@@ -21,12 +21,12 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 
 | Item                                              | State | PR / note                                   |
 |---------------------------------------------------|-------|---------------------------------------------|
-| AGENTS.md                                         | review | foundation PR                              |
-| Requirements document                             | review | foundation PR                              |
-| Progress document                                 | review | foundation PR                              |
-| GitHub access and setup checklist                 | review | foundation PR, [GitHub setup](../github-access/) |
-| Pull request template                             | review | foundation PR                              |
-| Documentation moved to the site, current-state page | review | foundation PR                            |
+| AGENTS.md                                         | done  | PR #20                                     |
+| Requirements document                             | done  | PR #20                                     |
+| Progress document                                 | done  | PR #20                                     |
+| GitHub access and setup checklist                 | done  | PR #20, [GitHub setup](../github-access/)   |
+| Pull request template                             | done  | PR #20                                     |
+| Documentation moved to the site, current-state page | review | follow-up PR                             |
 | Commit convention and automated versioning        | todo  | needs agreement (requirements §5.3)         |
 | CI: single PR pipeline with quality gates         | todo  | needs agreement (requirements §5.2)         |
 | CI: AI code review step                           | todo  | tool choice pending (requirements §5.4)     |

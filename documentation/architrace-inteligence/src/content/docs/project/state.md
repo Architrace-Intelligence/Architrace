@@ -12,8 +12,9 @@ Last updated: **2026-10-01**
 ## Where we are
 
 - Stage 0 (analysis) is done, stage 1 (MVP scope agreement) is waiting for the maintainer.
-- Active branch: `ARCHI-21-project-foundation`, draft PR #20. It contains `AGENTS.md`, the
-  project pages on this site, the PR template fix. Nothing else is in flight.
+- PR #20 (AGENTS.md, requirements, progress, GitHub setup, PR template) is merged.
+- Active branch: `ARCHI-21-docs-site`: moves the project pages onto this site, adds this page
+  and the contributing page, documents the automation token. Nothing else is in flight.
 - CI on `main` is red for known reasons (Spotless, agent test compilation, invalid
   `pr-ci.yml`); see [Requirements §3](../requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 - Automation token for GitHub API is issued and verified; git pushes use SSH.
@@ -26,8 +27,8 @@ answered no design or implementation work starts.
 
 ## Next step
 
-1. Receive the maintainer's answers, record them in Requirements §7 ("Agreed MVP") and in the
-   GitHub setup checklist, mark PR #20 ready, get it merged.
+1. Get `ARCHI-21-docs-site` merged. Receive the maintainer's answers, record them in
+   Requirements §7 ("Agreed MVP") and in the GitHub setup checklist.
 2. Open the design stage: architecture page, first ADRs (storage, UI stack, module layout,
    versioning), feature pages for M0–M7, feature order.
 3. First implementation feature is M0 (engineering platform): repository hygiene, single PR
