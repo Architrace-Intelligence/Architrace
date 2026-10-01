@@ -19,11 +19,16 @@ class RegistrationServiceTest {
     RegistrationService sut = new RegistrationService();
     RecordingObserver observer = new RecordingObserver();
 
-    sut.sendRegister("agent-a", observer);
+    sut.sendRegister(new AgentIdentity("agent-a", "0.1.0", "demo", "DEV", "cluster-1"), observer);
 
     assertThat(observer.values).hasSize(1);
     assertThat(observer.values.getFirst().hasRegister()).isTrue();
-    assertThat(observer.values.getFirst().getRegister().getAgentName()).isEqualTo("agent-a");
+    var register = observer.values.getFirst().getRegister();
+    assertThat(register.getAgentName()).isEqualTo("agent-a");
+    assertThat(register.getAgentVersion()).isEqualTo("0.1.0");
+    assertThat(register.getProject()).isEqualTo("demo");
+    assertThat(register.getEnvironment()).isEqualTo("DEV");
+    assertThat(register.getClusterId()).isEqualTo("cluster-1");
   }
 
   private static final class RecordingObserver implements StreamObserver<AgentRegisterRequestedEvent> {

@@ -143,7 +143,7 @@ drives OTLP in and asserts the `GraphBatch` out through in-process gRPC.
 
 1. `SpanRecord`, `Peer`, attribute mapping, normaliser, config v2 with `dry-run`.
 2. Node and edge builder, pending index, metrics, window.
-3. Snapshot scheduler, protobuf v1 redesign, publisher, queue, runtime fix.
+3. Snapshot scheduler, publisher of `GraphSnapshot` (the contract was extended in ARCHI-28; remove `GraphBatch`), queue, runtime fix.
 4. Eviction sweeps, metrics endpoint, rate-limited logging, load test.
 5. Cleanup, integration test, reference pages (configuration, CLI).
 

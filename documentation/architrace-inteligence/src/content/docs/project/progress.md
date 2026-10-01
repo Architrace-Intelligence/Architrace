@@ -45,7 +45,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 |---------|-------|--------|----|-------|
 | [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | ARCHI-24 | PR 1 of 5 (hygiene) merged as #26 |
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | todo | agreed | | |
-| [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | todo | agreed | | |
+| [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | in progress | agreed | ARCHI-26, ARCHI-28 | PR 2 of 3: schema, stores, ingestion |
 | [M3 Query API](../features/m3-query-api/) | todo | agreed | | |
 | [M4 Service map UI](../features/m4-service-map/) | todo | agreed · [UI design](../features/ui-design/) in review | ARCHI-25 | prototypes and initial-release frames in Claude Design |
 | [M5 Drift](../features/m5-drift/) | todo | agreed · UI design in review | | |
@@ -69,3 +69,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-01 | Initial UI release narrowed to Projects list and Service map; five static frames added to the design (ARCHI-25) |
 | 2026-10-01 | M2 PR 1: PostgreSQL schema, Spring Data JDBC stores, Testcontainers (ARCHI-26) |
 | 2026-10-01 | Gradle dependency locking for every module, fixes the SonarCloud finding on build files (ARCHI-27) |
+| 2026-10-01 | M2 PR 2: contract extended with scope and snapshots, ingestion, agent registry and liveness (ARCHI-28) |

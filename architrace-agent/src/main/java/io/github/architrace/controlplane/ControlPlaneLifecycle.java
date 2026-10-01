@@ -24,7 +24,7 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
 
   private static final Logger log = LoggerFactory.getLogger(ControlPlaneLifecycle.class);
 
-  private final String agentName;
+  private final AgentIdentity identity;
   private final TransportClient transportClient;
   private final RegistrationService registrationService;
   private final ControlPlaneSession session;
@@ -32,12 +32,12 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
   private final CompletableFuture<Void> streamClosed = new CompletableFuture<>();
 
   public ControlPlaneLifecycle(
-      String agentName,
+      AgentIdentity identity,
       TransportClient transportClient,
       RegistrationService registrationService,
       List<ControlMessageHandler> handlers) {
 
-    this.agentName = agentName;
+    this.identity = identity;
     this.transportClient = transportClient;
     this.registrationService = registrationService;
 
@@ -74,8 +74,8 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
   public void run() {
     try (var scope = StructuredTaskScope.open(StructuredTaskScope.Joiner.awaitAllSuccessfulOrThrow())) {
       var observer = transportClient.open(new ControlPlaneStreamObserver(session, streamClosed));
-      registrationService.sendRegister(agentName, observer);
-      log.info("Control-plane session started for agent='{}'.", agentName);
+      registrationService.sendRegister(identity, observer);
+      log.info("Control-plane session started for agent='{}'.", identity.name());
 
       scope.fork(() -> outboundWriterTask(observer));
       scope.fork(this::heartbeatTask);

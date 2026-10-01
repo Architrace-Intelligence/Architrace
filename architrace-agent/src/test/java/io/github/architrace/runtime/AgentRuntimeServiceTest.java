@@ -5,6 +5,7 @@
 package io.github.architrace.runtime;
 
 
+import io.github.architrace.controlplane.AgentIdentity;
 import io.github.architrace.controlplane.ControlPlaneBootstrapService;
 import io.github.architrace.controlplane.ControlPlaneLifecycle;
 import io.github.architrace.controlplane.RegistrationService;
@@ -52,7 +53,7 @@ class AgentRuntimeServiceTest {
   void runControlPlaneSupervisorShouldStopWhenSessionFails() throws Exception {
     AtomicBoolean lifecycleClosed = new AtomicBoolean(false);
     ControlPlaneLifecycle failingLifecycle = new ControlPlaneLifecycle(
-        "agent-a",
+        new AgentIdentity("agent-a", "0.1.0", "demo", "DEV", "cluster-1"),
         new ThrowingTransportClient(lifecycleClosed),
         new RegistrationService(),
         List.of());
@@ -98,7 +99,9 @@ class AgentRuntimeServiceTest {
             new AgentConfig.Agent("agent-a"),
             new AgentConfig.ControlPlane(new AgentConfig.Bootstrap("localhost:9090")),
             freePort,
-            1L);
+            1L,
+            "DEV",
+            "demo");
 
     AtomicReference<Throwable> failure = new AtomicReference<>();
     Thread worker = Thread.ofVirtual().start(() -> {
@@ -129,7 +132,9 @@ class AgentRuntimeServiceTest {
         new AgentConfig.Agent("agent-a"),
         new AgentConfig.ControlPlane(new AgentConfig.Bootstrap("localhost:9090")),
         4319,
-        retrySeconds);
+        retrySeconds,
+        "DEV",
+        "demo");
   }
 
   private static Object invokePrivate(Object target, String methodName, Class<?>[] signature, Object... args)
