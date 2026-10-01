@@ -9,10 +9,12 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -100,5 +102,29 @@ class TopologyModelTest {
     nodes.clear();
 
     assertThat(snapshot.nodes()).hasSize(1);
+  }
+
+  @Test
+  void topologyGraphCopiesCollectionsAndRejectsNulls() {
+    Scope scope = new Scope("p", "PROD", "c");
+    List<TopologyNode> nodes =
+        new ArrayList<>(
+            List.of(new TopologyNode("service:a", NodeType.SERVICE, "a", NodeAttributes.none())));
+    TopologyGraph graph = new TopologyGraph(scope, T0, nodes, List.of());
+    nodes.clear();
+
+    assertThat(graph.nodes()).hasSize(1);
+    assertThatNullPointerException()
+        .isThrownBy(() -> new TopologyGraph(null, T0, List.of(), List.of()));
+    assertThatNullPointerException()
+        .isThrownBy(() -> new TopologyGraph(scope, null, List.of(), List.of()));
+  }
+
+  @Test
+  void scopeSummaryRejectsNulls() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> new ScopeSummary(null, 0, 0, 0, 0, 0, Optional.empty()));
+    assertThatNullPointerException()
+        .isThrownBy(() -> new ScopeSummary(new Scope("p", "PROD", "c"), 0, 0, 0, 0, 0, null));
   }
 }

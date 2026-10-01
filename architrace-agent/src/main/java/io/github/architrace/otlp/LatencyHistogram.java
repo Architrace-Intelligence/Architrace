@@ -4,33 +4,26 @@
  */
 package io.github.architrace.otlp;
 
+import java.util.Arrays;
+import java.util.OptionalInt;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class LatencyHistogram {
 
-  private static final long[] BUCKETS = {
-      5,10,25,50,100,250,500,1000,2000,5000
-  };
+  private static final long[] BUCKETS = {5, 10, 25, 50, 100, 250, 500, 1000, 2000, 5000};
 
-  private final LongAdder[] counts;
-
-  public LatencyHistogram() {
-    counts = new LongAdder[BUCKETS.length + 1];
-    for (int i = 0; i < counts.length; i++) {
-      counts[i] = new LongAdder();
-    }
-  }
+  private final LongAdder[] counts =
+      Stream.generate(LongAdder::new).limit(BUCKETS.length + 1L).toArray(LongAdder[]::new);
 
   public void record(long latency) {
-
-    for (int i = 0; i < BUCKETS.length; i++) {
-      if (latency <= BUCKETS[i]) {
-        counts[i].increment();
-        return;
-      }
-    }
-
-    counts[counts.length - 1].increment();
+    int bucket =
+        IntStream.range(0, BUCKETS.length)
+            .filter(i -> latency <= BUCKETS[i])
+            .findFirst()
+            .orElse(BUCKETS.length);
+    counts[bucket].increment();
   }
 
   public long p95() {
@@ -42,38 +35,15 @@ public class LatencyHistogram {
   }
 
   private long percentile(double p) {
-
-    long total = 0;
-
-    for (LongAdder c : counts) {
-      total += c.sum();
-    }
-
-    long target = (long) (total * p);
-
-    long cumulative = 0;
-
-    for (int i = 0; i < counts.length; i++) {
-
-      cumulative += counts[i].sum();
-
-      if (cumulative >= target) {
-
-        if (i < BUCKETS.length) {
-          return BUCKETS[i];
-        }
-
-        return BUCKETS[BUCKETS.length - 1];
-      }
-    }
-
-    return 0;
+    long[] cumulative = Arrays.stream(counts).mapToLong(LongAdder::sum).toArray();
+    Arrays.parallelPrefix(cumulative, Long::sum);
+    long target = (long) (cumulative[cumulative.length - 1] * p);
+    OptionalInt bucket =
+        IntStream.range(0, cumulative.length).filter(i -> cumulative[i] >= target).findFirst();
+    return bucket.isPresent() ? BUCKETS[Math.min(bucket.getAsInt(), BUCKETS.length - 1)] : 0;
   }
 
   public void merge(LatencyHistogram other) {
-
-    for (int i = 0; i < counts.length; i++) {
-      counts[i].add(other.counts[i].sum());
-    }
+    IntStream.range(0, counts.length).forEach(i -> counts[i].add(other.counts[i].sum()));
   }
 }

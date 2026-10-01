@@ -7,7 +7,6 @@ package io.github.architrace.controlplane;
 import io.github.architrace.grpc.proto.ConfigUpdate;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.grpc.stub.StreamObserver;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -58,16 +57,14 @@ public class ControlPlaneRegistry {
 
   public void tick() {
     long now = System.currentTimeMillis();
-    for (Map.Entry<String, AgentSession> entry : sessions.entrySet()) {
-      String agentName = entry.getKey();
-      AgentSession session = entry.getValue();
-      sendConfig(
-          ConfigUpdate.newBuilder()
-              .setVersion(nextVersion(agentName))
-              .putConfig("control.updatedAtEpochMs", Long.toString(now))
-              .build(),
-          session.responseObserver);
-    }
+    sessions.forEach(
+        (agentName, session) ->
+            sendConfig(
+                ConfigUpdate.newBuilder()
+                    .setVersion(nextVersion(agentName))
+                    .putConfig("control.updatedAtEpochMs", Long.toString(now))
+                    .build(),
+                session.responseObserver));
   }
 
   private String nextVersion(String agentName) {

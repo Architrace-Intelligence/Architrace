@@ -18,9 +18,13 @@ import io.github.architrace.grpc.proto.GraphSnapshot;
 import io.github.architrace.grpc.proto.SnapshotEdge;
 import io.github.architrace.grpc.proto.SnapshotNode;
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 public final class SnapshotMapper {
@@ -89,26 +93,46 @@ public final class SnapshotMapper {
   }
 
   private static void requireUniqueNodes(List<TopologyNode> nodes) {
-    Set<String> seen = new HashSet<>();
-    for (TopologyNode node : nodes) {
-      if (!seen.add(node.id())) {
-        throw new InvalidSnapshotException("duplicate node id " + node.id());
-      }
-    }
+    firstDuplicate(nodes.stream().map(TopologyNode::id))
+        .ifPresent(
+            id -> {
+              throw new InvalidSnapshotException("duplicate node id " + id);
+            });
   }
 
   private static void requireKnownEndpoints(List<TopologyNode> nodes, List<TopologyEdge> edges) {
     Set<String> ids = nodes.stream().map(TopologyNode::id).collect(Collectors.toSet());
-    Set<String> keys = new HashSet<>();
-    for (TopologyEdge edge : edges) {
-      if (!ids.contains(edge.sourceId()) || !ids.contains(edge.targetId())) {
-        throw new InvalidSnapshotException(
-            "edge " + edge.sourceId() + " -> " + edge.targetId() + " references an unknown node");
-      }
-      if (!keys.add(edge.sourceId() + '>' + edge.targetId() + ':' + edge.kind())) {
-        throw new InvalidSnapshotException(
-            "duplicate edge " + edge.sourceId() + " -> " + edge.targetId() + " " + edge.kind());
-      }
-    }
+    edges.stream()
+        .filter(edge -> !ids.contains(edge.sourceId()) || !ids.contains(edge.targetId()))
+        .findFirst()
+        .ifPresent(
+            edge -> {
+              throw new InvalidSnapshotException(
+                  "edge "
+                      + edge.sourceId()
+                      + " -> "
+                      + edge.targetId()
+                      + " references an unknown node");
+            });
+    firstDuplicate(edges.stream().map(SnapshotMapper::edgeKey))
+        .ifPresent(
+            key -> {
+              throw new InvalidSnapshotException("duplicate edge " + key);
+            });
+  }
+
+  private static String edgeKey(TopologyEdge edge) {
+    return edge.sourceId() + " -> " + edge.targetId() + " " + edge.kind();
+  }
+
+  private static <T> Optional<T> firstDuplicate(Stream<T> values) {
+    return values
+        .collect(
+            Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()))
+        .entrySet()
+        .stream()
+        .filter(entry -> entry.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .findFirst();
   }
 }

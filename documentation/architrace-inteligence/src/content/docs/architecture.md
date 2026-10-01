@@ -38,7 +38,10 @@ flowchart LR
   sends no `GraphSnapshot` until the pipeline is completed (M1).
 - The control plane registers agents, validates and stores `GraphSnapshot` messages in
   PostgreSQL (agents, snapshots, nodes, edges; Liquibase), answers with acknowledgements and
-  tracks liveness through heartbeats. No HTTP API, no UI.
+  tracks liveness through heartbeats. `TopologyQuery` answers the current graph of a scope at
+  a point in time (latest snapshot per agent, merged) and a per-scope summary for the Projects
+  list; a scheduled job removes snapshots older than the retention period. Health and metrics
+  are on Actuator. No HTTP query API yet (M3), no UI.
 - Details and defects: [Requirements §3](../project/requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 
 ## Target architecture (MVP)
