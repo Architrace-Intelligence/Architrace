@@ -116,7 +116,10 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
 ./gradlew spotlessApply classes test jacocoTestReport jacocoTestCoverageVerification
 ```
 
-- Dependencies are declared in `gradle/libs.versions.toml` only.
+- Dependencies are declared in `gradle/libs.versions.toml` only. Resolved versions are locked
+  per module in `gradle.lockfile`; after any dependency change run
+  `./gradlew dependencies :api:dependencies :agent:dependencies :control-plane:dependencies --write-locks`
+  and commit the lockfiles.
 - Security: never commit secrets; never weaken scanners to make a build green; treat
   findings from Snyk, OWASP Dependency-Check, CodeQL and Sonar as work items.
 

@@ -24,6 +24,9 @@ Last updated: **2026-10-01**
   through Liquibase, Spring Data JDBC stores for agents and snapshots, Testcontainers tests,
   `postgres` service in the demo compose file. The agent coverage gate stays at the temporary
   ratchet (50 / 28 / 50 %) until M1.
+- Dependency locking (ARCHI-27): every module carries a `gradle.lockfile`; a dependency change
+  must rewrite it with `--write-locks`. This closed the SonarCloud finding that failed the
+  quality gate of PR #31 (new security rating).
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
 
 ## Decisions
