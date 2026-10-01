@@ -331,13 +331,13 @@ stack works from M2 onwards. Everything listed under "Out of MVP" stays out.
 
 | # | Feature | Design page |
 |---|---------|-------------|
-| M0 | Engineering platform | `project/features/m0-engineering-platform` |
-| M1 | Agent pipeline completion | `project/features/m1-agent-pipeline` |
-| M2 | Control plane ingestion and storage | `project/features/m2-control-plane-storage` |
-| M3 | Query API | `project/features/m3-query-api` |
-| M4 | Service map UI | `project/features/m4-service-map` |
-| M5 | Drift | `project/features/m5-drift` |
-| M6 | Architecture rules | `project/features/m6-architecture-rules` |
-| M7 | Packaging and demo | `project/features/m7-packaging-demo` |
+| M0 | Engineering platform | [m0-engineering-platform](../features/m0-engineering-platform/) |
+| M1 | Agent pipeline completion | [m1-agent-pipeline](../features/m1-agent-pipeline/) |
+| M2 | Control plane ingestion and storage | [m2-control-plane-storage](../features/m2-control-plane-storage/) |
+| M3 | Query API | [m3-query-api](../features/m3-query-api/) |
+| M4 | Service map UI | [m4-service-map](../features/m4-service-map/) |
+| M5 | Drift | [m5-drift](../features/m5-drift/) |
+| M6 | Architecture rules | [m6-architecture-rules](../features/m6-architecture-rules/) |
+| M7 | Packaging and demo | [m7-packaging-demo](../features/m7-packaging-demo/) |
 
-Design pages are produced in the design stage and linked from here once they exist.
+Each design page states goal, scope, design, acceptance criteria and the PR delivery plan.

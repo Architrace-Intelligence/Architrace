@@ -11,10 +11,11 @@ Last updated: **2026-10-01**
 
 ## Where we are
 
-- Stages 0 (analysis) and 1 (MVP scope agreement) are done. Stage 2 (design) is starting.
+- Stages 0 (analysis) and 1 (MVP scope agreement) are done. Stage 2 (design) is in review.
 - PR #20 and PR #21 (foundation documents, this site as the documentation home) are merged.
-- Active branch: `ARCHI-22-record-decisions`: ADR 0001–0003 and the decisions recorded on
-  the project pages. Nothing else is in flight.
+- `ARCHI-22-record-decisions` (ADR 0001–0004, agreed scope) is open or merged; check.
+- Active branch: `ARCHI-23-design`: architecture page, feature pages M0–M7, ADR 0005–0010
+  (proposed), mermaid rendering on the site. Nothing else is in flight.
 - CI on `main` is red for known reasons (Spotless, agent test compilation, invalid
   `pr-ci.yml`); see [Requirements §3](../requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 - Automation token for GitHub API is issued and verified; git pushes use SSH.
@@ -30,13 +31,11 @@ control plane design.
 
 ## Next step
 
-1. Get `ARCHI-22-record-decisions` merged.
-2. Design stage, one PR: architecture page (current and target), feature pages for M0–M7,
-   proposed ADRs (module layout, versioning, topology model, contract-first APIs, data access,
-   Spring Boot GA pinning). The maintainer reviews; ADRs flip to accepted on agreement.
-3. First implementation feature is M0 (engineering platform): repository hygiene, single PR
-   pipeline, versioning, `.coderabbit.yaml`, scanners, `main` ruleset. The maintainer installs
-   the CodeRabbit app in parallel.
+1. Get the design PR reviewed: the maintainer agrees or amends the feature pages and
+   ADR 0005–0010; on agreement flip the ADR status to accepted (one follow-up commit).
+2. Start M0 (engineering platform) following its delivery plan, PR by PR, starting with the
+   hygiene PR that makes `main` green. Next ticket number: ARCHI-24.
+3. The maintainer installs the CodeRabbit app in parallel.
 
 ## How to resume
 
