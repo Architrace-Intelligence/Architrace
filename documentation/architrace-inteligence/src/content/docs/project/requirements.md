@@ -168,6 +168,7 @@ Gaps and defects found:
 | N6 | Java 25 idioms: records, sealed types, pattern matching, virtual threads, structured concurrency; DOP style with behaviour outside data. |
 | N7 | 85%+ test coverage kept; integration tests with Testcontainers for PostgreSQL and gRPC. |
 | N8 | Apache-2.0, public, no references to private infrastructure. |
+| N9 | Agent-first UI: one Ask bar for commands and names (questions once an insights provider exists), a context rail of evidence-based cards from deterministic sources, URL-addressable views, every screen openable as JSON. The MVP ships without AI (F11). |
 
 ### 4.3 Engineering process
 

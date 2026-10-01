@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Architrace · Service map</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+@@CSS@@
+</style>
+</helmet>
+<div class="app" data-screen-label="Service map" data-theme="{{theme}}" style="display: grid; grid-template-columns: 84px 1fr; grid-template-rows: 56px 1fr; height: 100vh; min-height: 640px">
+@@RAIL@@
+<header class="topbar" style="display: flex; align-items: center; gap: 16px; padding: 0 20px; height: 56px">
+  <h1 class="title">Service map</h1>
+  <div class="seg" role="group" aria-label="Environment">
+    <sc-for list="{{envs}}" as="env" hint-placeholder-count="3">
+      <button aria-pressed="{{env.active}}" onClick="{{env.pick}}"><span class="dot" style="background: {{env.dot}}"></span>{{env.name}}</button>
+    </sc-for>
+  </div>
+  <div class="ask">
+    <svg class="ico ask-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <label for="ask" class="sr-only">Ask or jump to</label>
+    <input id="ask" class="ask-input" type="text" autocomplete="off" placeholder="Ask or jump to… try “compare DEV with PROD” or a service name" value="{{query}}" onChange="{{onQuery}}" onFocus="{{openPalette}}">
+    <span class="ask-kbd" aria-hidden="true"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+    <sc-if value="{{paletteOpen}}" hint-placeholder-val="{{false}}">
+      <button class="backdrop" aria-label="Close command palette" onClick="{{closePalette}}"></button>
+      <div class="palette" role="dialog" aria-label="Command palette">
+        <sc-if value="{{pal.hasActions}}" hint-placeholder-val="{{true}}">
+          <div class="pal-section">Actions</div>
+          <sc-for list="{{pal.actions}}" as="a" hint-placeholder-count="4">
+            <a class="pal-item" href="{{a.href}}"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><span>{{a.label}}</span><span class="pal-hint mono">{{a.hint}}</span></a>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{pal.hasNodes}}" hint-placeholder-val="{{false}}">
+          <div class="pal-section">Nodes in {{env}}</div>
+          <sc-for list="{{pal.nodes}}" as="n" hint-placeholder-count="2">
+            <button class="pal-item" onClick="{{n.pick}}"><span class="node-icon {{n.tcls}}" style="width: 24px; height: 24px; border-radius: 6px"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span><span>{{n.name}}</span><span class="pal-hint mono">{{n.sub}}</span></button>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{pal.noMatch}}" hint-placeholder-val="{{false}}">
+          <div class="empty" style="padding: 18px">No command or node matches “{{pal.query}}”.</div>
+        </sc-if>
+        <div class="pal-foot">
+          <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          <span>Today this bar understands commands and names. Natural-language questions arrive with the AI insights provider; the bar, the answers panel and the links stay the same.</span>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; position: relative; flex: none">
+    <button class="btn" aria-pressed="{{timeOpen}}" aria-haspopup="dialog" onClick="{{toggleTime}}">
+      <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <span class="dot" style="background: {{timeDot}}"></span>{{timeLabel}}
+      <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+    <sc-if value="{{timeOpen}}" hint-placeholder-val="{{false}}">
+      <button class="backdrop" aria-label="Close time selector" onClick="{{toggleTime}}"></button>
+      <div class="popover" role="dialog" aria-label="Point in time">
+        <button class="pop-item" aria-pressed="{{isLive}}" onClick="{{setLive}}"><span class="radio"></span><span style="display: flex; flex-direction: column; gap: 2px"><b style="font-weight: 600">Live</b><span class="muted" style="font-size: 12.5px">Latest snapshot per agent, refreshed every window (60 s).</span></span></button>
+        <button class="pop-item" aria-pressed="{{isAt}}" onClick="{{setAt}}"><span class="radio"></span><span style="display: flex; flex-direction: column; gap: 2px"><b style="font-weight: 600">At a point in time</b><span class="muted" style="font-size: 12.5px">The graph as the latest snapshots before this moment saw it.</span></span></button>
+        <div style="display: flex; gap: 8px; padding: 4px 10px 8px 46px; align-items: center">
+          <label for="at" class="sr-only">Timestamp</label>
+          <input id="at" class="field" type="datetime-local" value="2026-09-30T18:00" onChange="{{onAt}}">
+          <button class="btn btn-primary" onClick="{{applyAt}}">Apply</button>
+        </div>
+      </div>
+    </sc-if>
+    <button class="btn icon-btn" aria-label="Copy link to this view" title="Copy link to this view">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg>
+    </button>
+    <button class="btn icon-btn" aria-label="Open this view as JSON from the Query API" title="GET /api/v1/environments/{{env}}/graph">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg>
+    </button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section class="map" aria-label="Service map canvas">
+    <div class="filterbar">
+      <span class="select-wrap">
+        <label for="domain" class="sr-only">Domain</label>
+        <select id="domain" class="chip-select" value="{{domain}}" onChange="{{onDomain}}">
+          <option value="all">All domains</option>
+          <option value="edge">edge</option>
+          <option value="orders">orders</option>
+          <option value="payments">payments</option>
+          <option value="catalog">catalog</option>
+          <option value="platform">platform</option>
+          <option value="identity">identity</option>
+        </select>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </span>
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+        <button class="chip" aria-pressed="{{c.on}}" onClick="{{c.toggle}}"><span class="dot" style="background: {{c.color}}"></span>{{c.label}}<span class="faint mono" style="font-size: 12px">{{c.count}}</span></button>
+      </sc-for>
+      <span class="find">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <label for="find" class="sr-only">Find in map</label>
+        <input id="find" type="text" placeholder="Find in map" value="{{find}}" onChange="{{onFind}}" autocomplete="off">
+      </span>
+    </div>
+    <div class="world-scroll"><div class="world">
+    <sc-for list="{{g.edges}}" as="e" hint-placeholder-count="6">
+      <svg class="edge-svg" viewBox="0 0 960 720" preserveAspectRatio="xMinYMin meet" style="width: 960px; height: 720px" aria-hidden="true">
+        <defs><marker id="{{e.mid}}" orient="auto" markerWidth="5" markerHeight="5" refX="3.6" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" style="fill: {{e.stroke}}" stroke="none"></path></marker></defs>
+        <path d="{{e.d}}" fill="none" stroke-linecap="round" style="stroke: {{e.stroke}}; stroke-width: {{e.w}}px; stroke-dasharray: {{e.dash}}; opacity: {{e.op}}; transition: opacity .15s, stroke .15s" marker-end="{{e.marker}}"></path>
+      </svg>
+    </sc-for>
+    <sc-for list="{{g.nodes}}" as="n" hint-placeholder-count="8">
+      <button class="node {{n.cls}}" aria-pressed="{{n.selected}}" onClick="{{n.pick}}" title="{{n.name}}" style="left: {{n.x}}px; top: {{n.y}}px; opacity: {{n.op}}">
+        <span class="node-icon {{n.tcls}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span>
+        <span class="node-text"><span class="node-name">{{n.name}}</span><span class="node-sub mono">{{n.sub}}</span></span>
+        <sc-if value="{{n.hasFindings}}" hint-placeholder-val="{{false}}"><span class="node-badge {{n.badgeCls}}" title="Findings on this node">{{n.findings}}</span></sc-if>
+      </button>
+    </sc-for>
+    <sc-for list="{{g.pills}}" as="p" hint-placeholder-count="2">
+      <button class="edge-pill" aria-pressed="{{p.selected}}" onClick="{{p.pick}}" style="left: {{p.x}}px; top: {{p.y}}px">{{p.label}}</button>
+    </sc-for>
+    </div></div>
+    <sc-if value="{{g.isEmpty}}" hint-placeholder-val="{{false}}">
+      <div class="empty" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 320px">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <b style="color: var(--ink); font-weight: 600">Nothing matches these filters</b>
+        <span>Turn a node type back on or clear the domain filter.</span>
+      </div>
+    </sc-if>
+    <div class="legend" aria-label="Legend">
+      <div class="legend-col">
+        <div class="legend-row"><span class="dot" style="background: var(--svc)"></span>Service</div>
+        <div class="legend-row"><span class="dot" style="background: var(--db)"></span>Database</div>
+        <div class="legend-row"><span class="dot" style="background: var(--topic)"></span>Topic</div>
+        <div class="legend-row"><span class="dot" style="background: var(--ext)"></span>External</div>
+      </div>
+      <div class="legend-col">
+        <div class="legend-row"><span class="line-sample"></span>sync call</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-style: dashed"></span>publish / consume</div>
+        <div class="legend-row"><span class="line-sample" style="border-top-width: 4px"></span>width = calls</div>
+      </div>
+      <div class="legend-col">
+        <div class="legend-row"><span class="line-sample" style="border-color: var(--sev-med)"></span>errors ≥ 1%</div>
+        <div class="legend-row"><span class="line-sample" style="border-color: var(--sev-high)"></span>errors ≥ 3%</div>
+        <div class="legend-row"><span class="node-badge sev-high" style="width: 16px; height: 16px; font-size: 10px">2</span>findings on node</div>
+      </div>
+    </div>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button aria-label="Zoom in"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+      <button aria-label="Zoom out"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+      <button aria-label="Fit to view"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"></path></svg></button>
+    </div>
+    <div class="minimap" aria-hidden="true">
+      <sc-for list="{{g.mini}}" as="m" hint-placeholder-count="8">
+        <span style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: {{m.w}}px; height: {{m.h}}px; border-radius: 2px; background: {{m.c}}; opacity: {{m.op}}"></span>
+      </sc-for>
+    </div>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <sc-if value="{{showNode}}" hint-placeholder-val="{{true}}">
+      <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span class="panel-kicker">{{node.typeLabel}} · {{env}}</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left: auto" onClick="{{clearSel}}" aria-label="Close details"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span class="node-icon {{node.tcls}}" style="width: 36px; height: 36px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="{{node.icon}}"></path></svg></span>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <b style="font-size: 16px; font-weight: 600">{{node.name}}</b>
+            <span class="mono faint" style="font-size: 12px">{{node.id}}</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <span class="badge b-kind">domain {{node.domain}}</span>
+          <sc-if value="{{node.hasFindings}}" hint-placeholder-val="{{true}}"><span class="badge {{node.badgeCls}}">{{node.findings}} findings</span></sc-if>
+          <sc-if value="{{node.hasDrift}}" hint-placeholder-val="{{false}}"><span class="badge b-changed">differs from {{node.driftEnv}}</span></sc-if>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="{{tabOverview}}" onClick="{{pickOverview}}">Overview</button>
+        <button class="tab" role="tab" aria-selected="{{tabDeps}}" onClick="{{pickDeps}}">Dependencies <span class="tab-count">{{node.depCount}}</span></button>
+        <button class="tab" role="tab" aria-selected="{{tabFindings}}" onClick="{{pickFindings}}">Findings <span class="tab-count">{{node.findings}}</span></button>
+        <button class="tab" role="tab" aria-selected="{{tabHistory}}" onClick="{{pickHistory}}">History</button>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px">
+        <sc-if value="{{tabOverview}}" hint-placeholder-val="{{true}}">
+          <dl class="kv" style="margin: 0">
+            <dt>Versions seen</dt><dd><span class="mono">{{node.version}}</span> <span class="faint">· {{node.pods}} replicas</span></dd>
+            <dt>Cluster</dt><dd class="mono">{{node.cluster}}</dd>
+            <dt>Namespace</dt><dd class="mono">{{node.domain}}</dd>
+            <dt>Last seen</dt><dd>42 s ago <span class="faint">(window 60 s)</span></dd>
+            <dt>Inbound</dt><dd>{{node.inCount}} dependencies · {{node.inCalls}} calls</dd>
+            <dt>Outbound</dt><dd>{{node.outCount}} dependencies · {{node.outCalls}} calls</dd>
+          </dl>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span class="panel-kicker">Insights · deterministic</span>
+            <sc-for list="{{node.insights}}" as="i" hint-placeholder-count="2">
+              <div class="insight">
+                <div class="insight-title"><span class="badge {{i.badgeCls}}">{{i.badge}}</span><span>{{i.title}}</span></div>
+                <div class="insight-body">{{i.body}}</div>
+                <div class="insight-actions"><a class="btn btn-sm" href="{{i.href}}">{{i.action}}</a></div>
+              </div>
+            </sc-for>
+            <sc-if value="{{node.noInsights}}" hint-placeholder-val="{{false}}"><div class="note"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><path d="M20 6L9 17l-5-5"></path></svg><span>No rule fires on this node and it is identical in the other environments.</span></div></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{tabDeps}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span class="panel-kicker">Inbound</span>
+            <sc-for list="{{node.inbound}}" as="d" hint-placeholder-count="2">
+              <button class="dep" onClick="{{d.pick}}"><span class="badge b-kind">{{d.kind}}</span><span>{{d.name}}</span><span class="mono">{{d.metrics}}</span></button>
+            </sc-for>
+            <sc-if value="{{node.noInbound}}" hint-placeholder-val="{{false}}"><span class="faint" style="font-size: 13px">No inbound dependencies in this window.</span></sc-if>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span class="panel-kicker">Outbound</span>
+            <sc-for list="{{node.outbound}}" as="d" hint-placeholder-count="2">
+              <button class="dep" onClick="{{d.pick}}"><span class="badge b-kind">{{d.kind}}</span><span>{{d.name}}</span><span class="mono">{{d.metrics}}</span></button>
+            </sc-for>
+            <sc-if value="{{node.noOutbound}}" hint-placeholder-val="{{false}}"><span class="faint" style="font-size: 13px">No outbound dependencies in this window.</span></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{tabFindings}}" hint-placeholder-val="{{false}}">
+          <sc-for list="{{node.findingList}}" as="f" hint-placeholder-count="1">
+            <div class="insight">
+              <div class="insight-title"><span class="badge sev-{{f.sev}}">{{f.sev}}</span><span>{{f.title}}</span></div>
+              <div class="insight-body">{{f.detail}}</div>
+              <ul class="evidence"><sc-for list="{{f.evidence}}" as="ev" hint-placeholder-count="2"><li>{{ev}}</li></sc-for></ul>
+              <div class="insight-actions"><a class="btn btn-sm" href="Findings.dc.html">Open in findings</a></div>
+            </div>
+          </sc-for>
+          <sc-if value="{{node.noFindingsList}}" hint-placeholder-val="{{false}}"><div class="empty">No rule fires on this node.</div></sc-if>
+        </sc-if>
+        <sc-if value="{{tabHistory}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span class="panel-kicker">Versions in {{env}}</span>
+            <sc-for list="{{node.history}}" as="h" hint-placeholder-count="2">
+              <div class="dep" style="cursor: default"><span class="mono" style="margin-left: 0; color: var(--ink)">v{{h.v}}</span><span class="faint" style="font-size: 12px">since {{h.since}}</span></div>
+            </sc-for>
+          </div>
+          <div class="note"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span>History is derived from the snapshot series (retained 30 days). Pick a point in time in the top bar to see the map as it was.</span></div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{showEdge}}" hint-placeholder-val="{{false}}">
+      <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span class="panel-kicker">Dependency · {{env}}</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left: auto" onClick="{{clearSel}}" aria-label="Close details"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <b style="font-size: 15px; font-weight: 600; line-height: 1.3">{{edge.from}} <span class="faint">→</span> {{edge.to}}</b>
+          <div style="display: flex; gap: 6px"><span class="badge b-kind">{{edge.kind}}</span><span class="badge {{edge.errCls}}">{{edge.err}} errors</span></div>
+        </div>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <div class="stat card" style="padding: 12px"><b>{{edge.calls}}</b><span>calls in window</span></div>
+          <div class="stat card" style="padding: 12px"><b>{{edge.errors}}</b><span>errors in window</span></div>
+          <div class="stat card" style="padding: 12px"><b>{{edge.p50}} <span class="faint" style="font-size: 12px">ms</span></b><span>p50 latency</span></div>
+          <div class="stat card" style="padding: 12px"><b>{{edge.p95}} <span class="faint" style="font-size: 12px">ms</span></b><span>p95 latency</span></div>
+          <div class="stat card" style="padding: 12px"><b>{{edge.p99}} <span class="faint" style="font-size: 12px">ms</span></b><span>p99 latency</span></div>
+          <div class="stat card" style="padding: 12px"><b>{{edge.max}} <span class="faint" style="font-size: 12px">ms</span></b><span>max latency</span></div>
+        </div>
+        <dl class="kv" style="margin: 0">
+          <dt>Window</dt><dd>14:31:10 – 14:32:10 <span class="faint">(60 s)</span></dd>
+          <dt>Edge key</dt><dd class="mono" style="font-size: 12px; word-break: break-all">{{edge.key}}</dd>
+          <dt>Reported by</dt><dd class="mono">{{edge.agent}}</dd>
+        </dl>
+        <div class="note"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>Metrics are per window and never part of drift: traffic volume is not architecture.</span></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{showEnv}}" hint-placeholder-val="{{false}}">
+      <div class="panel-head">
+        <span class="panel-kicker">Environment</span>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <b style="font-size: 18px; font-weight: 600">{{env}}</b>
+          <span class="badge b-ok">{{envInfo.agentsLive}} agents live</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+          <div class="stat"><b>{{envInfo.services}}</b><span>services</span></div>
+          <div class="stat"><b>{{envInfo.databases}}</b><span>databases</span></div>
+          <div class="stat"><b>{{envInfo.topics}}</b><span>topics</span></div>
+          <div class="stat"><b>{{envInfo.externals}}</b><span>external</span></div>
+        </div>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <span class="panel-kicker">Insights · deterministic</span>
+        <sc-for list="{{envInfo.insights}}" as="i" hint-placeholder-count="3">
+          <div class="insight">
+            <div class="insight-title"><span class="badge {{i.badgeCls}}">{{i.badge}}</span><span>{{i.title}}</span></div>
+            <div class="insight-body">{{i.body}}</div>
+            <div class="insight-actions"><a class="btn btn-sm" href="{{i.href}}">{{i.action}}</a></div>
+          </div>
+        </sc-for>
+        <div class="note">
+          <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>
+          <span>Every card above comes from rules, diffs and the snapshot series. An AI insights provider, when configured, adds narrative on top of the same evidence.</span>
+        </div>
+        <span class="faint" style="font-size: 12px">Select a node or a dependency to see its context here.</span>
+      </div>
+    </sc-if>
+  </aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Appearance"},"$preview":{"width":1440,"height":900}}'>
+@@DATA@@
+class Component extends DCLogic {
+  state = { env: 'PROD', sel: { kind: 'node', key: 'orders' }, types: { service: true, database: true, topic: true, external: true }, domain: 'all', find: '', query: '', paletteOpen: false, timeOpen: false, timeMode: 'live', at: '2026-09-30T18:00', tab: 'overview', theme: null };
+  renderVals() {
+    const s = this.state;
+    const theme = s.theme ?? this.props.theme ?? 'dark';
+    const C = COLORS[theme];
+    const env = s.env;
+    const live = graphAt(env, 'now');
+    const pick = (sel) => this.setState({ sel, tab: 'overview', paletteOpen: false, query: '' });
+    const g = renderGraph({ items: live.nodes, edgeItems: live.edges, types: s.types, domain: s.domain, find: s.find, sel: s.sel, C, pick, env });
+    g.isEmpty = g.nodes.length === 0;
+    const envs = ENVS.map((name) => ({ name, active: name === env, dot: name === env ? C.accent : C.grey, pick: () => this.setState({ env: name, sel: null }) }));
+    const chips = Object.keys(TYPE_LABEL).map((t) => ({ label: TYPE_LABEL[t], count: g.counts[t], color: C[t], on: s.types[t], toggle: () => this.setState({ types: Object.assign({}, s.types, { [t]: !s.types[t] }) }) }));
+    const pal = palette(s.query, env, (key) => pick({ kind: 'node', key }));
+    const selNode = s.sel && s.sel.kind === 'node' ? byKey[s.sel.key] : null;
+    const selEdge = s.sel && s.sel.kind === 'edge' ? EDGES.find((e) => edgeId(e) === s.sel.id) : null;
+    let node = null;
+    if (selNode) {
+      const n = selNode;
+      const inbound = live.edges.filter((ei) => ei.edge.to === n.key).map((ei) => ({ kind: ei.edge.kind, name: byKey[ei.edge.from].name, metrics: fmtK(ei.edge.calls) + ' · ' + ei.edge.err.toFixed(1) + '% · p95 ' + ei.edge.p95 + ' ms', pick: () => pick({ kind: 'edge', id: edgeId(ei.edge) }) }));
+      const outbound = live.edges.filter((ei) => ei.edge.from === n.key).map((ei) => ({ kind: ei.edge.kind, name: byKey[ei.edge.to].name, metrics: fmtK(ei.edge.calls) + ' · ' + ei.edge.err.toFixed(1) + '% · p95 ' + ei.edge.p95 + ' ms', pick: () => pick({ kind: 'edge', id: edgeId(ei.edge) }) }));
+      const fl = nodeFindings(env, n.key);
+      const top = fl.reduce((m, f) => (sevRank(f.sev) > sevRank(m) ? f.sev : m), 'low');
+      const otherEnv = env === 'PROD' ? 'DEV' : 'PROD';
+      const otherVer = n.ver ? n.ver[otherEnv] : null;
+      const drift = n.type === 'service' && otherVer !== undefined && otherVer !== n.ver[env];
+      const insights = fl.map((f) => ({ badge: f.sev, badgeCls: 'sev-' + f.sev, title: f.title, body: f.detail, href: 'Findings.dc.html', action: 'Open finding' }));
+      if (drift) insights.push({ badge: 'drift', badgeCls: 'b-changed', title: n.name + ' runs v' + n.ver[env] + ' here and ' + (otherVer ? 'v' + otherVer : 'does not exist') + ' in ' + otherEnv, body: otherVer ? 'Version drift between environments. Compare the two to see what else differs.' : 'This service exists only in ' + env + '.', href: 'Drift.dc.html', action: 'Compare environments' });
+      node = {
+        name: n.name, id: n.id, domain: n.domain, icon: ICONS[n.type], tcls: TCLS[n.type], typeLabel: TYPE_LABEL[n.type].replace(/s$/, ''),
+        version: n.type === 'service' ? 'v' + n.ver[env] : n.sub, pods: n.pods ? n.pods[env] : 1, cluster: clusterOf(env),
+        inCount: inbound.length, outCount: outbound.length, inCalls: fmtK(live.edges.filter((ei) => ei.edge.to === n.key).reduce((a, ei) => a + ei.edge.calls, 0)), outCalls: fmtK(live.edges.filter((ei) => ei.edge.from === n.key).reduce((a, ei) => a + ei.edge.calls, 0)),
+        depCount: inbound.length + outbound.length, inbound, outbound, noInbound: inbound.length === 0, noOutbound: outbound.length === 0,
+        hasFindings: fl.length > 0, findings: fl.length, badgeCls: 'sev-' + top, findingList: fl, noFindingsList: fl.length === 0,
+        hasDrift: drift, driftEnv: otherEnv, insights, noInsights: insights.length === 0,
+        history: n.history || [{ v: n.sub, since: 'first snapshot' }]
+      };
+    }
+    let edge = null;
+    if (selEdge) {
+      const e = selEdge;
+      edge = { from: byKey[e.from].name, to: byKey[e.to].name, kind: e.kind, err: e.err.toFixed(1) + '%', errCls: e.err >= 3 ? 'sev-high' : e.err >= 1 ? 'sev-medium' : 'b-ok', calls: fmtK(e.calls), errors: fmtK(Math.round(e.calls * e.err / 100)), p50: e.p50, p95: e.p95, p99: e.p99, max: e.max, key: '(' + byKey[e.from].id + ', ' + byKey[e.to].id + ', ' + e.kind + ')', agent: AGENTS.find((a) => a.env === env).name };
+    }
+    const fl = findingsFor(env);
+    const sc = sevCounts(fl);
+    const agents = AGENTS.filter((a) => a.env === env);
+    const envInsights = [];
+    const high = fl.filter((f) => f.sev === 'high');
+    envInsights.push({ badge: sc.high + ' high', badgeCls: sc.high ? 'sev-high' : 'b-ok', title: fl.length + ' findings: ' + sc.high + ' high, ' + sc.medium + ' medium, ' + sc.low + ' low', body: high.length ? high.map((f) => f.title).join('. ') + '.' : 'No high-severity finding in this environment.', href: 'Findings.dc.html', action: 'Open findings' });
+    const driftText = { PROD: ['reporting-service exists only in PROD', 'It consumes order-events and reads postgresql/orders directly, which raises the shared-database finding. DEV also runs newer search-service and payments-service builds.'], DEV: ['DEV is ahead of PROD by two services', 'search-service 2.3.0 and payments-service 4.2.0-rc.1 are not in PROD yet. The new search build reads postgresql/catalog directly: promoting it will raise a shared-database finding in PROD.'], STAGE: ['STAGE matches PROD except reporting-service', 'reporting-service and its two dependencies exist only in PROD. Versions are identical.'] }[env];
+    envInsights.push({ badge: 'drift', badgeCls: 'b-changed', title: driftText[0], body: driftText[1], href: 'Drift.dc.html', action: 'Compare environments' });
+    const stale = agents.filter((a) => a.status !== 'live');
+    envInsights.push({ badge: stale.length ? stale.length + ' stale' : 'healthy', badgeCls: stale.length ? 'b-stale' : 'b-ok', title: agents.length + ' agents report this environment', body: stale.length ? stale.map((a) => a.name).join(', ') + ' last reported ' + stale[0].last + '. Services seen only by a stale agent leave the current graph after its next window.' : 'Latest snapshot ' + agents[0].last + '. Windows are 60 s; the current graph is the union of the latest window per agent.', href: 'Agents.dc.html', action: 'Open agents' });
+    const envInfo = { services: live.nodes.filter((i) => i.node.type === 'service').length, databases: live.nodes.filter((i) => i.node.type === 'database').length, topics: live.nodes.filter((i) => i.node.type === 'topic').length, externals: live.nodes.filter((i) => i.node.type === 'external').length, agentsLive: agents.filter((a) => a.status === 'live').length + '/' + agents.length, insights: envInsights };
+    const isLive = s.timeMode === 'live';
+    return {
+      theme, env, envs, chips, g, pal,
+      query: s.query, find: s.find, domain: s.domain, paletteOpen: s.paletteOpen, timeOpen: s.timeOpen,
+      onQuery: (e) => this.setState({ query: e.target.value, paletteOpen: true }),
+      openPalette: () => this.setState({ paletteOpen: true }),
+      closePalette: () => this.setState({ paletteOpen: false }),
+      onFind: (e) => this.setState({ find: e.target.value }),
+      onDomain: (e) => this.setState({ domain: e.target.value }),
+      toggleTime: () => this.setState({ timeOpen: !s.timeOpen }),
+      setLive: () => this.setState({ timeMode: 'live', timeOpen: false }),
+      setAt: () => this.setState({ timeMode: 'at' }),
+      onAt: (e) => this.setState({ at: e.target.value }),
+      applyAt: () => this.setState({ timeMode: 'at', timeOpen: false }),
+      isLive, isAt: !isLive, timeLabel: isLive ? 'Live · 42 s ago' : s.at.replace('T', ' '), timeDot: isLive ? C.added : C.amber,
+      showNode: !!node, showEdge: !!edge, showEnv: !node && !edge, node, edge, envInfo,
+      clearSel: () => this.setState({ sel: null }),
+      tabOverview: s.tab === 'overview', tabDeps: s.tab === 'deps', tabFindings: s.tab === 'findings', tabHistory: s.tab === 'history',
+      pickOverview: () => this.setState({ tab: 'overview' }), pickDeps: () => this.setState({ tab: 'deps' }), pickFindings: () => this.setState({ tab: 'findings' }), pickHistory: () => this.setState({ tab: 'history' }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

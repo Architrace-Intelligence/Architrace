@@ -1,0 +1,30 @@
+  <div class="ask">
+    <svg class="ico ask-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    <label for="ask" class="sr-only">Ask or jump to</label>
+    <input id="ask" class="ask-input" type="text" autocomplete="off" placeholder="Ask or jump to… try “compare DEV with PROD” or a service name" value="{{query}}" onChange="{{onQuery}}" onFocus="{{openPalette}}">
+    <span class="ask-kbd" aria-hidden="true"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+    <sc-if value="{{paletteOpen}}" hint-placeholder-val="{{false}}">
+      <button class="backdrop" aria-label="Close command palette" onClick="{{closePalette}}"></button>
+      <div class="palette" role="dialog" aria-label="Command palette">
+        <sc-if value="{{pal.hasActions}}" hint-placeholder-val="{{true}}">
+          <div class="pal-section">Actions</div>
+          <sc-for list="{{pal.actions}}" as="a" hint-placeholder-count="4">
+            <a class="pal-item" href="{{a.href}}"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><span>{{a.label}}</span><span class="pal-hint mono">{{a.hint}}</span></a>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{pal.hasNodes}}" hint-placeholder-val="{{false}}">
+          <div class="pal-section">Nodes in PROD</div>
+          <sc-for list="{{pal.nodes}}" as="n" hint-placeholder-count="2">
+            <a class="pal-item" href="Service-map.dc.html"><span class="node-icon {{n.tcls}}" style="width: 24px; height: 24px; border-radius: 6px"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span><span>{{n.name}}</span><span class="pal-hint mono">{{n.sub}}</span></a>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{pal.noMatch}}" hint-placeholder-val="{{false}}">
+          <div class="empty" style="padding: 18px">No command or node matches “{{pal.query}}”.</div>
+        </sc-if>
+        <div class="pal-foot">
+          <svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          <span>Today this bar understands commands and names. Natural-language questions arrive with the AI insights provider; the bar, the answers panel and the links stay the same.</span>
+        </div>
+      </div>
+    </sc-if>
+  </div>

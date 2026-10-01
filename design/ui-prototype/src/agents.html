@@ -1,0 +1,107 @@
+@@HEAD:Architrace · Agents@@
+<div class="app" data-screen-label="Agents" data-theme="{{theme}}" style="display: grid; grid-template-columns: 84px 1fr; grid-template-rows: 56px 1fr; height: 100vh; min-height: 640px">
+@@RAIL@@
+<header class="topbar" style="display: flex; align-items: center; gap: 16px; padding: 0 20px; height: 56px">
+  <h1 class="title">Agents</h1>
+  <span class="muted" style="font-size: 13px; display: inline-flex; gap: 7px; align-items: center; white-space: nowrap"><span class="dot" style="background: {{liveDot}}"></span>{{liveCount}} of {{totalCount}} live</span>
+@@ASKBAR@@
+  <div style="display: flex; align-items: center; gap: 8px; flex: none">
+    <button class="btn icon-btn" aria-label="Copy link to this view" title="Copy link to this view"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"></path></svg></button>
+    <button class="btn icon-btn" aria-label="Open agents as JSON from the Query API" title="GET /api/v1/agents"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2"></path></svg></button>
+  </div>
+</header>
+<main style="display: flex; min-width: 0; min-height: 0">
+  <section class="page" aria-label="Registered agents" style="gap: 16px">
+    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+      <div class="counter"><div style="display: flex; flex-direction: column"><b>{{totalCount}}</b><span>agents registered</span></div></div>
+      <div class="counter"><span class="dot" style="background: {{liveDot}}; width: 10px; height: 10px"></span><div style="display: flex; flex-direction: column"><b>{{liveCount}}</b><span>live</span></div></div>
+      <div class="counter"><span class="dot" style="background: {{staleDot}}; width: 10px; height: 10px"></span><div style="display: flex; flex-direction: column"><b>{{staleCount}}</b><span>stale</span></div></div>
+      <div class="counter"><div style="display: flex; flex-direction: column"><b>60 s</b><span>snapshot window</span></div></div>
+    </div>
+    <div class="group" style="overflow: auto">
+      <table class="table" aria-label="Agents">
+        <thead><tr><th>Agent</th><th>Environment</th><th>Cluster</th><th>Status</th><th>Last snapshot</th><th>Spans / s</th><th>Dropped</th><th>Services seen</th><th>Version</th></tr></thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="a" hint-placeholder-count="6">
+            <tr aria-selected="{{a.selected}}" style="background: {{a.bg}}">
+              <td><button class="row-btn" onClick="{{a.pick}}" style="font-weight: 600"><span class="mono">{{a.name}}</span></button></td>
+              <td>{{a.env}}</td>
+              <td class="mono" style="font-size: 12px">{{a.cluster}}</td>
+              <td><span class="badge {{a.statusCls}}">{{a.status}}</span></td>
+              <td>{{a.last}}</td>
+              <td class="mono">{{a.rate}}</td>
+              <td class="mono">{{a.dropped}}</td>
+              <td class="mono">{{a.services}}</td>
+              <td class="mono" style="font-size: 12px">{{a.version}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <div class="note" style="max-width: 760px"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>An agent is live while its bidirectional stream is open and it delivered a snapshot within two windows. The current graph of an environment is the union of the latest snapshot per live agent; services seen only by a stale agent leave it after the next window.</span></div>
+  </section>
+  <aside class="panel" aria-label="Context">
+    <div class="panel-head">
+      <span class="panel-kicker">Agent</span>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <b class="mono" style="font-size: 17px; font-weight: 600">{{sel.name}}</b>
+        <span class="badge {{sel.statusCls}}">{{sel.status}}</span>
+      </div>
+      <span class="muted" style="font-size: 13px">{{sel.env}} · {{sel.cluster}} · agent {{sel.version}}</span>
+    </div>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px">
+      <dl class="kv" style="margin: 0">
+        <dt>Last snapshot</dt><dd>{{sel.last}}</dd>
+        <dt>Window</dt><dd>{{sel.window}} <span class="faint">· metrics per window</span></dd>
+        <dt>Throughput</dt><dd class="mono">{{sel.rate}} <span class="faint" style="font-family: var(--sans)">spans</span></dd>
+        <dt>Dropped spans</dt><dd class="mono">{{sel.dropped}}</dd>
+        <dt>Services seen</dt><dd>{{sel.services}} <span class="faint">in the last window</span></dd>
+        <dt>Stream</dt><dd>{{sel.stream}}</dd>
+      </dl>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span class="panel-kicker">Configuration · from the agent</span>
+        <dl class="kv" style="margin: 0">
+          <dt>OTLP intake</dt><dd class="mono">grpc :4317</dd>
+          <dt>Environment</dt><dd class="mono">deployment.environment.name → {{sel.env}}</dd>
+          <dt>Attribute mapping</dt><dd>standard OpenTelemetry resource attributes</dd>
+          <dt>In-flight spans</dt><dd class="mono">200k <span class="faint" style="font-family: var(--sans)">· eviction after 30 s</span></dd>
+          <dt>Snapshot interval</dt><dd class="mono">60 s</dd>
+        </dl>
+      </div>
+      <sc-if value="{{sel.isStale}}" hint-placeholder-val="{{false}}">
+        <div class="insight">
+          <div class="insight-title"><span class="badge b-stale">stale</span><span>No snapshot for {{sel.last}}</span></div>
+          <div class="insight-body">The stream is closed. Services only this agent reported are no longer part of the current {{sel.env}} graph; history keeps them until retention ends (30 days).</div>
+          <div class="insight-actions"><a class="btn btn-sm" href="Drift.dc.html">See what left the graph</a></div>
+        </div>
+      </sc-if>
+      <div class="note"><svg class="ico ico-s" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>Configuration is read from the agent's own config in the MVP. Pushing changes from here is a later capability.</span></div>
+    </div>
+  </aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Appearance"}}'>
+@@DATA@@
+class Component extends DCLogic {
+  state = { sel: 'prod-eu1-a', query: '', paletteOpen: false, theme: null };
+  renderVals() {
+    const s = this.state;
+    const theme = s.theme ?? this.props.theme ?? 'dark';
+    const C = COLORS[theme];
+    const rows = AGENTS.map((a) => ({ name: a.name, env: a.env, cluster: a.cluster, status: a.status, statusCls: a.status === 'live' ? 'b-ok' : 'b-stale', last: a.last, rate: a.rate, dropped: a.dropped, services: a.services, version: a.version, selected: a.name === s.sel, bg: a.name === s.sel ? 'var(--accent-soft)' : 'transparent', pick: () => this.setState({ sel: a.name }) }));
+    const a = AGENTS.find((x) => x.name === s.sel);
+    const sel = { name: a.name, env: a.env, cluster: a.cluster, status: a.status, statusCls: a.status === 'live' ? 'b-ok' : 'b-stale', last: a.last, window: a.window, rate: a.rate, dropped: a.dropped, services: a.services, version: a.version, isStale: a.status !== 'live', stream: a.status === 'live' ? 'open since 28 Sep, 09:12' : 'closed 2 h ago' };
+    const live = AGENTS.filter((x) => x.status === 'live').length;
+    const pal = palette(s.query, 'PROD', () => this.setState({ paletteOpen: false }));
+    return {
+      theme, rows, sel, liveCount: live, totalCount: AGENTS.length, staleCount: AGENTS.length - live, liveDot: C.added, staleDot: C.amber,
+      pal, query: s.query, paletteOpen: s.paletteOpen,
+      onQuery: (e) => this.setState({ query: e.target.value, paletteOpen: true }), openPalette: () => this.setState({ paletteOpen: true }), closePalette: () => this.setState({ paletteOpen: false }),
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' })
+    };
+  }
+}
+</script>
+</body>
+</html>

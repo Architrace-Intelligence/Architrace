@@ -19,6 +19,8 @@ Out: drift view (M5), findings view (M6), editing, authentication.
 
 ## Design
 
+Visual design and interaction: [UI design](../ui-design/) (interactive prototypes).
+
 ### Module and build
 
 - `architrace-ui`: Vite, React, TypeScript strict, ESLint, Prettier, Vitest with Testing
