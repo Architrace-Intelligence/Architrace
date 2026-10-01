@@ -145,8 +145,10 @@ class TopologyModelTest {
   @Test
   void snapshotFilterRejectsAnInvertedRangeAndMatchesWindowEndsInclusively() {
     Scope scope = new Scope("p", "PROD", "c");
+    Optional<Instant> start = Optional.of(T0);
+    Optional<Instant> earlierEnd = Optional.of(T0.minusSeconds(1));
     assertThatExceptionOfType(InvalidQueryException.class)
-        .isThrownBy(() -> new SnapshotFilter(scope, Optional.of(T0), Optional.of(T0.minusSeconds(1))))
+        .isThrownBy(() -> new SnapshotFilter(scope, start, earlierEnd))
         .withMessageContaining("from");
     assertThatNullPointerException()
         .isThrownBy(() -> new SnapshotFilter(scope, null, Optional.empty()));

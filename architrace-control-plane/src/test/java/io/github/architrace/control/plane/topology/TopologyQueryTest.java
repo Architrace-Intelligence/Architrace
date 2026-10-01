@@ -148,8 +148,10 @@ class TopologyQueryTest {
     assertThat(secondPage.items()).extracting(SnapshotSummary::id).containsExactly(oldest);
     assertThat(secondPage.items().get(0).nodeCount()).isEqualTo(1);
     assertThat(bounded.items()).extracting(SnapshotSummary::id).containsExactly(middle);
+    SnapshotFilter unknownScope = SnapshotFilter.all(ACCOUNTING);
+    PageRequest firstTen = new PageRequest(0, 10);
     assertThatExceptionOfType(ScopeNotFoundException.class)
-        .isThrownBy(() -> query.snapshots(SnapshotFilter.all(ACCOUNTING), new PageRequest(0, 10)));
+        .isThrownBy(() -> query.snapshots(unknownScope, firstTen));
   }
 
   @Test
@@ -159,8 +161,9 @@ class TopologyQueryTest {
     SnapshotId id = snapshots.save(stored);
 
     assertThat(query.snapshot(id)).isEqualTo(stored);
+    SnapshotId missing = new SnapshotId(99);
     assertThatExceptionOfType(SnapshotNotFoundException.class)
-        .isThrownBy(() -> query.snapshot(new SnapshotId(99)))
+        .isThrownBy(() -> query.snapshot(missing))
         .withMessageContaining("99");
   }
 
