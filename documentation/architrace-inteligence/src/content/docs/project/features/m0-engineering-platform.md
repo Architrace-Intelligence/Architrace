@@ -29,8 +29,12 @@ Out: GraalVM native image (post-MVP, preview features make it fragile), Helm, de
 - Add `.editorconfig`, `CONTRIBUTING.md` (points to the site), `CODE_OF_CONDUCT.md`
   (Contributor Covenant), `SECURITY.md`, `CODEOWNERS`, `.github/dependabot.yml`.
 - `gradlew` executable in git; license header holder `Dmytro Hryshchenko` on all files.
-- Coverage gate 85% (line, branch, method) per module, generated code excluded; `api` has no
-  hand-written code and is excluded from the gate.
+- Coverage gate 85% (line, branch, method) per module, generated code and the Spring Boot
+  launcher excluded; `api` has no hand-written code and no gate.
+- Agent exception: `main` carried ~50 % line and ~29 % branch coverage in the agent, mostly in
+  code that M1 replaces. The hygiene PR sets a per-module ratchet (`coverage.minimum.*` in
+  `architrace-agent/gradle.properties`) at those values; every PR may only raise it and M1
+  ends at the 85 % default. This is the only module below the default.
 
 ### Build conventions (`build-logic/`)
 

@@ -1,11 +1,12 @@
 /*
- * SPDX-FileCopyrightText: Copyright (c) 2026 Dmitry Hryshchenko
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
 package io.github.architrace.otlp;
 
 
 import io.github.architrace.service.graph.SpanExtractor;
+import io.github.architrace.service.processor.SpanBatchProcessor;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse;
@@ -22,7 +23,8 @@ class OtlpTraceServiceImplTest {
 
   @BeforeEach
   void setUp() {
-//    sut = new OtlpTraceServiceImpl(new SpanExtractor());
+    var batchProcessor = new SpanBatchProcessor(new SpanRingBuffer(16), new SpanPipeline(List.of()));
+    sut = new OtlpTraceServiceImpl(new SpanReceiver(new SpanExtractor(), batchProcessor));
   }
 
   @Test

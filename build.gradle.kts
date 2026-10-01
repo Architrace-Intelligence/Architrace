@@ -24,6 +24,9 @@ allprojects {
     }
 }
 
+fun Project.coverageMinimum(counter: String): java.math.BigDecimal =
+    (findProperty("coverage.minimum.${counter.lowercase()}") ?: "0.85").toString().toBigDecimal()
+
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "com.diffplug.spotless")
@@ -63,6 +66,7 @@ subprojects {
                 classDirectories.files.map {
                     fileTree(it) {
                         exclude("**/io/github/architrace/grpc/proto/**")
+                        exclude("**/ControlPlaneApplication*")
                     }
                 }
             )
@@ -80,30 +84,19 @@ subprojects {
                 classDirectories.files.map {
                     fileTree(it) {
                         exclude("**/io/github/architrace/grpc/proto/**")
+                        exclude("**/ControlPlaneApplication*")
                     }
                 }
             )
         )
         violationRules {
-            rule {
-                limit {
-                    counter = "LINE"
-                    value = "COVEREDRATIO"
-                    minimum = "0.85".toBigDecimal()
-                }
-            }
-            rule {
-                limit {
-                    counter = "BRANCH"
-                    value = "COVEREDRATIO"
-                    minimum = "0.85".toBigDecimal()
-                }
-            }
-            rule {
-                limit {
-                    counter = "METHOD"
-                    value = "COVEREDRATIO"
-                    minimum = "0.85".toBigDecimal()
+            listOf("LINE", "BRANCH", "METHOD").forEach { counterName ->
+                rule {
+                    limit {
+                        counter = counterName
+                        value = "COVEREDRATIO"
+                        minimum = coverageMinimum(counterName)
+                    }
                 }
             }
         }

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright (c) 2026 Dmitry Hryshchenko
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
 package io.github.architrace.runtime;
@@ -13,6 +13,12 @@ import io.github.architrace.core.config.AgentConfigLoader;
 import io.github.architrace.grpc.TransportClient;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.otlp.SpanPipeline;
+import io.github.architrace.otlp.SpanReceiver;
+import io.github.architrace.otlp.SpanRingBuffer;
+import io.github.architrace.service.graph.SpanExtractor;
+import io.github.architrace.service.processor.SpanBatchProcessor;
+import io.github.architrace.otlp.GraphSnapshot;
 import io.github.architrace.service.runtime.AgentRuntimeService;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
@@ -97,7 +103,14 @@ class AgentRuntimeServiceTest {
     AtomicReference<Throwable> failure = new AtomicReference<>();
     Thread worker = Thread.ofVirtual().start(() -> {
       try {
-        invokePrivate(sut, "runReceiver", new Class[] {AgentConfig.class}, config);
+        invokePrivate(
+            sut,
+            "runReceiver",
+            new Class[] {AgentConfig.class, SpanReceiver.class},
+            config,
+            new SpanReceiver(
+                new SpanExtractor(),
+                new SpanBatchProcessor(new SpanRingBuffer(16), new SpanPipeline(List.of()))));
       } catch (Throwable throwable) {
         failure.set(throwable);
       }
@@ -149,6 +162,10 @@ class AgentRuntimeServiceTest {
     @Override
     public void close() {
       closeCalled.set(true);
+    }
+
+    @Override
+    public void send(GraphSnapshot snapshot) {
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright (c) 2026 Dmitry Hryshchenko
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
 package io.github.architrace.control.plane.service.grpc;
@@ -9,6 +9,7 @@ import io.github.architrace.grpc.proto.AgentHealthResponse;
 import io.github.architrace.grpc.proto.AgentRegister;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.grpc.proto.GraphBatch;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,33 @@ class AgentServiceTest {
     assertThat(responseObserver.values).hasSize(1);
     assertThat(responseObserver.values.getFirst().hasConfigUpdate()).isTrue();
     assertThat(responseObserver.completed).isTrue();
+  }
+
+  @Test
+  void connectShouldIgnoreGraphBatchEvents() {
+    AgentService sut = new AgentService();
+    RecordingObserver<ControlPlaneCommand> responseObserver = new RecordingObserver<>();
+    StreamObserver<AgentRegisterRequestedEvent> requestObserver = sut.connect(responseObserver);
+
+    requestObserver.onNext(
+        AgentRegisterRequestedEvent.newBuilder()
+            .setGraphBatch(GraphBatch.newBuilder().setAgentName("agent-a").build())
+            .build());
+
+    assertThat(responseObserver.values).isEmpty();
+    assertThat(responseObserver.completed).isFalse();
+  }
+
+  @Test
+  void connectShouldKeepResponseStreamOpenWhenAgentStreamFails() {
+    AgentService sut = new AgentService();
+    RecordingObserver<ControlPlaneCommand> responseObserver = new RecordingObserver<>();
+    StreamObserver<AgentRegisterRequestedEvent> requestObserver = sut.connect(responseObserver);
+
+    requestObserver.onError(new IllegalStateException("agent went away"));
+
+    assertThat(responseObserver.values).isEmpty();
+    assertThat(responseObserver.completed).isFalse();
   }
 
   @Test
