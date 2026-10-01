@@ -63,7 +63,11 @@ final class AgentConnection implements StreamObserver<AgentRegisterRequestedEven
 
   @Override
   public void onError(Throwable throwable) {
-    log.warn("Agent stream of {} failed: {}", describe(), throwable.getMessage());
+    log.atWarn()
+        .setMessage("Agent stream of {} failed: {}")
+        .addArgument(this::describe)
+        .addArgument(throwable::getMessage)
+        .log();
     disconnect();
   }
 
@@ -119,7 +123,11 @@ final class AgentConnection implements StreamObserver<AgentRegisterRequestedEven
                       .setSnapshotId(id.value()))
               .build());
     } catch (InvalidSnapshotException e) {
-      log.warn("Rejected snapshot from {}: {}", describe(), e.getMessage());
+      log.atWarn()
+          .setMessage("Rejected snapshot from {}: {}")
+          .addArgument(this::describe)
+          .addArgument(e::getMessage)
+          .log();
       reject(snapshot.getWindowEndEpochMs(), e.getMessage());
     }
   }
