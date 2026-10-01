@@ -14,8 +14,8 @@ class LatencyHistogramTest {
   @Test
   void percentilesReportTheUpperBoundOfTheBucketReached() {
     LatencyHistogram histogram = new LatencyHistogram();
-    record(histogram, 20, 95);
-    record(histogram, 900, 5);
+    recordTimes(histogram, 20, 95);
+    recordTimes(histogram, 900, 5);
 
     assertThat(histogram.p95()).isEqualTo(25);
     assertThat(histogram.p99()).isEqualTo(1000);
@@ -24,7 +24,7 @@ class LatencyHistogramTest {
   @Test
   void latenciesAboveTheLastBucketReportTheLastBucket() {
     LatencyHistogram histogram = new LatencyHistogram();
-    record(histogram, 10_000, 100);
+    recordTimes(histogram, 10_000, 100);
 
     assertThat(histogram.p95()).isEqualTo(5000);
     assertThat(histogram.p99()).isEqualTo(5000);
@@ -33,9 +33,9 @@ class LatencyHistogramTest {
   @Test
   void mergeAddsTheCountsOfTheOtherHistogram() {
     LatencyHistogram fast = new LatencyHistogram();
-    record(fast, 20, 95);
+    recordTimes(fast, 20, 95);
     LatencyHistogram slow = new LatencyHistogram();
-    record(slow, 900, 5);
+    recordTimes(slow, 900, 5);
 
     fast.merge(slow);
 
@@ -43,7 +43,7 @@ class LatencyHistogramTest {
     assertThat(fast.p99()).isEqualTo(1000);
   }
 
-  private static void record(LatencyHistogram histogram, long latency, int times) {
-    IntStream.range(0, times).forEach(i -> histogram.record(latency));
+  private static void recordTimes(LatencyHistogram histogram, long latency, int times) {
+    IntStream.range(0, times).forEach(i -> histogram.recordTimes(latency));
   }
 }

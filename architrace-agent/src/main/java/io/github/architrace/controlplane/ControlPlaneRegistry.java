@@ -7,7 +7,6 @@ package io.github.architrace.controlplane;
 import io.github.architrace.grpc.proto.ConfigUpdate;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.grpc.stub.StreamObserver;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
