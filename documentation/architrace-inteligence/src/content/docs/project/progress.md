@@ -35,7 +35,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | Branch ruleset on `main`                          | todo  | shape agreed in ADR 0003; applied in M0     |
 | ADR folder and first ADRs                         | done  | ADR 0001–0010 accepted                      |
 | Architecture page                                 | done  | current and target views                    |
-| Repository hygiene (templates, stale files)       | todo  | requirements §4.6                           |
+| Repository hygiene (templates, stale files)       | review | M0 PR 1 (ARCHI-24)                         |
 
 ## Features
 
@@ -43,7 +43,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 
 | Feature | State | Design | PR | Notes |
 |---------|-------|--------|----|-------|
-| [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | | PR 1 of 5: hygiene |
+| [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | ARCHI-24 | PR 1 of 5 (hygiene) in review |
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | todo | agreed | | |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | todo | agreed | | |
 | [M3 Query API](../features/m3-query-api/) | todo | agreed | | |
@@ -63,3 +63,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-01 | MVP scope M0–M7 agreed; design stage opened |
 | 2026-10-01 | Design PR: architecture page, feature pages M0–M7, ADR 0005–0010 proposed |
 | 2026-10-01 | Design agreed by the maintainer; ADR 0005–0010 accepted; implementation starts with M0 |
+| 2026-10-01 | M0 PR 1: repository hygiene, build green, community files, labels created |

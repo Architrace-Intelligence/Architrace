@@ -15,10 +15,11 @@ Last updated: **2026-10-01**
   M0–M7 and ADR 0001–0010 are agreed. Stage 3 (implementation) starts with M0.
 - PR #20 and PR #21 (foundation documents, this site as the documentation home) are merged.
 - PRs #22 (decisions) and #23 (design) are open or merged; check `gh pr list`.
-- Active work: M0 PR 1, repository hygiene (`ARCHI-24-repository-hygiene`), making `main`
-  build green and cleaning stale files.
-- CI on `main` is red for known reasons (Spotless, agent test compilation, invalid
-  `pr-ci.yml`); see [Requirements §3](../requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
+- M0 PR 1 (`ARCHI-24-repository-hygiene`) is open for review: `main` builds green again,
+  stale files removed, templates fixed, community files added. The agent coverage gate is a
+  temporary ratchet (50 / 28 / 50 %) that M1 must raise back to 85 %.
+- Until M0 PR 1 is merged, CI on `main` is red (Spotless, agent test compilation, invalid
+  `pr-ci.yml`); the PR fixes all three.
 - Automation token for GitHub API is issued and verified; git pushes use SSH.
 
 ## Decisions
@@ -32,7 +33,7 @@ pending.
 
 ## Next step
 
-1. Finish and merge M0 PR 1 (hygiene). Then M0 PR 2: `build-logic` conventions and
+1. Merge M0 PR 1 (hygiene). Then M0 PR 2: `build-logic` conventions and
    versioning (ARCHI-25), PR 3: pipelines and scanners, PR 4: main pipeline, release, images,
    PR 5: ruleset, repository settings, `.coderabbit.yaml`. Plan: [M0 page](../features/m0-engineering-platform/).
 2. The maintainer installs the CodeRabbit app and creates an NVD API key secret (`NVD_API_KEY`)

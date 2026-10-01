@@ -222,80 +222,10 @@ jobs:
             architrace-agent/build/libs/*.jar
             **/build/libs/*.jar
 
-  native-image-docker:
-    name: Native Image (Docker)
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-
-      - name: Build GraalVM native image in Docker
-        run: docker build -f Dockerfile.native -t architrace-native:ci .
-
-      - name: Compute GHCR image metadata
-        id: ghcr-meta
-        if: ${{ github.event_name != 'pull_request' }}
-        shell: bash
-        run: |
-          repo_lc="${GITHUB_REPOSITORY,,}"
-          image="ghcr.io/${repo_lc}"
-          short_sha="${GITHUB_SHA::7}"
-          tags="${image}:sha-${short_sha}"
-
-          if [ "${GITHUB_REF}" = "refs/heads/main" ] || [ "${GITHUB_REF}" = "refs/heads/master" ]; then
-            tags="${tags},${image}:latest"
-          fi
-
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            tag_name="${GITHUB_REF#refs/tags/}"
-            tags="${tags},${image}:${tag_name}"
-          fi
-
-          echo "image=${image}" >> "$GITHUB_OUTPUT"
-          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
-
-      - name: Login to GHCR
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push image to GHCR
-        if: ${{ github.event_name != 'pull_request' }}
-        shell: bash
-        run: |
-          IFS=',' read -ra TAGS <<< "${{ steps.ghcr-meta.outputs.tags }}"
-          for tag in "${TAGS[@]}"; do
-            docker tag architrace-native:ci "$tag"
-            docker push "$tag"
-          done
-
-      - name: Export native binary from Docker image
-        run: |
-          cid=$(docker create architrace-native:ci)
-          mkdir -p native-dist
-          docker cp "$cid:/app/architrace" native-dist/architrace
-          docker rm "$cid"
-          chmod +x native-dist/architrace
-
-      - name: Upload native binary artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: architrace-native-linux
-          path: native-dist/architrace
-
-
   cd-release:
     name: CD Release
     needs:
       - build
-      - native-image-docker
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
