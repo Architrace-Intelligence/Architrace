@@ -60,28 +60,29 @@ Options:
 | **A (recommended)** | Ruleset requires: PR, all status checks green, AI review threads resolved, linear history, **0 approvals**. The maintainer's merge click is the approval. | Authorship stays with the maintainer. No extra accounts. |
 | B | Create a GitHub App or a machine user used by the automation to push and open PRs. Maintainer approves as themselves. | Commits and PRs are authored by the bot identity, which contradicts the "only the maintainer is visible" rule. |
 
-Decision pending from the maintainer. Option A is assumed in the CI/CD plan.
+**Decided 2026-10-01: option A.** See [ADR 0003](../adr/0003-review-identity-and-merge-gate/).
 
 ## 5. Proposed `main` ruleset
 
 - Restrict deletions, block force pushes, require linear history.
 - Require a pull request before merging; squash merge only; `delete_branch_on_merge` on.
-- Required status checks: `build`, `quality`, `security`, `ai-review` (names fixed in the CI
-  design).
+- Required status checks: `build`, `quality`, `security` (names fixed in the CI design). The AI
+  review gate is *required conversation resolution*, not a status check.
 - Require conversation resolution before merge.
 - No bypass actors.
 
 ## 6. Setup checklist for the maintainer
 
-- [ ] Decide §4 (review identity).
-- [ ] Choose the AI reviewer ([Requirements §5.4](../requirements/#54-ai-code-review-second-agent-in-the-pr-pipeline)) and install it if it is a GitHub App.
+- [x] Decide §4 (review identity): option A.
+- [x] Choose the AI reviewer: CodeRabbit ([ADR 0002](../adr/0002-coderabbit-ai-review/)).
+- [ ] Install the CodeRabbit GitHub App on `Architrace-Intelligence/Architrace` (organisation owner, UI only).
 - [ ] Confirm SonarCloud project key: the build still uses `Architrace-Intelligence_Architrace-agent`;
       the project in SonarCloud must have *Automatic Analysis* switched off because analysis is
       CI-driven.
 - [ ] Confirm the Snyk organisation slug (`SNYK_ORG`).
-- [ ] If an LLM-backed reviewer is chosen, add its API key as a repository secret.
-- [ ] Provide the ticket numbering source (`ARCHI-<n>`) for branch and commit naming.
-- [ ] Confirm the copyright holder spelling in `license-header.txt` ("Dmitry Hryshchenko").
+
+- [x] Ticket numbering: `ARCHI-<n>` sequential.
+- [x] Copyright holder: `Dmytro Hryshchenko`; header fixed in the hygiene feature.
 
 ## 7. Fine-grained token for automation
 

@@ -26,14 +26,14 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | Progress document                                 | done  | PR #20                                     |
 | GitHub access and setup checklist                 | done  | PR #20, [GitHub setup](../github-access/)   |
 | Pull request template                             | done  | PR #20                                     |
-| Documentation moved to the site, current-state page | review | follow-up PR                             |
+| Documentation moved to the site, current-state page | done  | PR #21                                   |
 | Commit convention and automated versioning        | todo  | needs agreement (requirements §5.3)         |
 | CI: single PR pipeline with quality gates         | todo  | needs agreement (requirements §5.2)         |
-| CI: AI code review step                           | todo  | tool choice pending (requirements §5.4)     |
+| CI: AI code review                                | todo  | CodeRabbit (ADR 0002); app install pending  |
 | CI: security scanning (Snyk, OWASP, CodeQL, …)    | todo  | needs agreement (requirements §5.5)         |
 | CD: main pipeline, release, images                | todo  | needs agreement (requirements §5.2)         |
-| Branch ruleset on `main`                          | todo  | see `docs/github-access.md`                 |
-| ADR folder and first ADRs                         | todo  | after design decisions are agreed           |
+| Branch ruleset on `main`                          | todo  | shape agreed in ADR 0003; applied in M0     |
+| ADR folder and first ADRs                         | review | ADR 0001–0003, PR ARCHI-22                 |
 | Architecture document                             | todo  | first version in design stage               |
 | Repository hygiene (templates, stale files)       | todo  | requirements §4.6                           |
 
@@ -51,3 +51,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 |------------|--------------------------------------------------------------|
 | 2026-10-01 | Project analysed, requirements and process documents drafted |
 | 2026-10-01 | Automation token issued and verified; documentation moved to the site |
+| 2026-10-01 | Decisions recorded: storage, AI reviewer, review identity, ticket numbering, copyright |
