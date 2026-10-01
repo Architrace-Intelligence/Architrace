@@ -11,7 +11,7 @@ Last updated: **2026-10-01**
 
 ## Where we are
 
-- Stage 0 (analysis) is done, stage 1 (MVP scope agreement) is waiting for the maintainer.
+- Stages 0 (analysis) and 1 (MVP scope agreement) are done. Stage 2 (design) is starting.
 - PR #20 and PR #21 (foundation documents, this site as the documentation home) are merged.
 - Active branch: `ARCHI-22-record-decisions`: ADR 0001–0003 and the decisions recorded on
   the project pages. Nothing else is in flight.
@@ -25,14 +25,15 @@ Agreed and recorded (Requirements §7, ADR 0001–0004): PostgreSQL + Liquibase,
 maintainer-authored PRs with a zero-approval ruleset, React + TypeScript UI, sequential
 `ARCHI-<n>`, copyright holder.
 
-Still open before design starts: **MVP scope** (Requirements §6, question 1; M0–M7 proposed).
-Spring Boot repository pinning is decided in the control plane design.
+MVP scope agreed: M0–M7 (Requirements §8). Spring Boot repository pinning is decided in the
+control plane design.
 
 ## Next step
 
-1. Get `ARCHI-22-record-decisions` merged. Agree the MVP scope, record it in Requirements §8.
-2. Open the design stage: architecture page, first ADRs (storage, UI stack, module layout,
-   versioning), feature pages for M0–M7, feature order.
+1. Get `ARCHI-22-record-decisions` merged.
+2. Design stage, one PR: architecture page (current and target), feature pages for M0–M7,
+   proposed ADRs (module layout, versioning, topology model, contract-first APIs, data access,
+   Spring Boot GA pinning). The maintainer reviews; ADRs flip to accepted on agreement.
 3. First implementation feature is M0 (engineering platform): repository hygiene, single PR
    pipeline, versioning, `.coderabbit.yaml`, scanners, `main` ruleset. The maintainer installs
    the CodeRabbit app in parallel.

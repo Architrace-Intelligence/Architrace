@@ -297,7 +297,7 @@ architecture value from within a day?
 
 Answers are recorded in §7 once given; the agreed scope goes to §8.
 
-1. Agree the "in scope" list, or move items (for example, M6 out, or C12 in).
+1. Agree the "in scope" list, or move items (for example, M6 out, or C12 in). **Decided: M0–M7 as proposed, see §8.**
 2. UI stack preference: React + TypeScript SPA served by the control plane (recommended for an
    interactive graph), or server-side rendering kept inside Spring Boot. **Decided: React + TypeScript.**
 3. Storage: PostgreSQL agreed? Migration tool: Flyway (recommended) or Liquibase. **Decided: PostgreSQL + Liquibase.**
@@ -320,9 +320,24 @@ Recorded as the maintainer answers the open questions in §6.
 | 6 | Ticket numbering | `ARCHI-<n>` is sequential; the next number is one above the highest used in branches and PR titles | 2026-10-01 | `AGENTS.md` |
 | 7a | Copyright holder | License header in the maintainer's name, spelled `Dmytro Hryshchenko`; existing headers are fixed in the repository hygiene feature | 2026-10-01 | `AGENTS.md` |
 
-Still open: **1** MVP scope, **7b** Spring Boot milestone / snapshot repositories (to be
-decided in the control plane design).
+Still open: **7b** Spring Boot milestone / snapshot repositories (to be decided in the control
+plane design).
 
 ## 8. Agreed MVP
 
-_To be filled after the maintainer's decision on §6, question 1._
+Agreed by the maintainer on 2026-10-01: the scope in §6 as proposed, features **M0–M7**, in
+the order M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7, with M7 started early enough that the compose
+stack works from M2 onwards. Everything listed under "Out of MVP" stays out.
+
+| # | Feature | Design page |
+|---|---------|-------------|
+| M0 | Engineering platform | `project/features/m0-engineering-platform` |
+| M1 | Agent pipeline completion | `project/features/m1-agent-pipeline` |
+| M2 | Control plane ingestion and storage | `project/features/m2-control-plane-storage` |
+| M3 | Query API | `project/features/m3-query-api` |
+| M4 | Service map UI | `project/features/m4-service-map` |
+| M5 | Drift | `project/features/m5-drift` |
+| M6 | Architecture rules | `project/features/m6-architecture-rules` |
+| M7 | Packaging and demo | `project/features/m7-packaging-demo` |
+
+Design pages are produced in the design stage and linked from here once they exist.

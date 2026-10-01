@@ -12,8 +12,8 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | # | Stage                                   | State       | Notes                                                  |
 |---|-----------------------------------------|-------------|--------------------------------------------------------|
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
-| 1 | MVP scope agreement                     | in progress | Candidate scope in [Requirements §6](../requirements/#6-proposed-mvp-scope) |
-| 2 | Design (architecture, ADRs, features)   | todo        | Starts after stage 1 is agreed                         |
+| 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
+| 2 | Design (architecture, ADRs, features)   | in progress | Design PR in preparation                               |
 | 3 | Implementation (feature by feature)     | todo        |                                                        |
 | 4 | Testing, hardening, release 1.0         | todo        |                                                        |
 
@@ -43,7 +43,14 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 
 | Feature | State | Design | PR | Notes |
 |---------|-------|--------|----|-------|
-|         |       |        |    |       |
+| M0 Engineering platform | todo | pending | | first to implement |
+| M1 Agent pipeline completion | todo | pending | | |
+| M2 Control plane ingestion and storage | todo | pending | | |
+| M3 Query API | todo | pending | | |
+| M4 Service map UI | todo | pending | | |
+| M5 Drift | todo | pending | | |
+| M6 Architecture rules | todo | pending | | |
+| M7 Packaging and demo | todo | pending | | compose stack needed from M2 |
 
 ## History
 
@@ -53,3 +60,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-01 | Automation token issued and verified; documentation moved to the site |
 | 2026-10-01 | Decisions recorded: storage, AI reviewer, review identity, ticket numbering, copyright |
 | 2026-10-01 | UI stack decided: React + TypeScript (ADR 0004) |
+| 2026-10-01 | MVP scope M0–M7 agreed; design stage opened |
