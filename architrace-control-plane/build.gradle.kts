@@ -36,6 +36,7 @@ dependencies {
     testImplementation(libs.spring.boot.testcontainers)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.spring.grpc.test)
+    testImplementation(libs.grpc.inprocess)
 
     testRuntimeOnly(libs.junit.platform.launcher)
 }

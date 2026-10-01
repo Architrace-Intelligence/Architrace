@@ -68,6 +68,11 @@ class AgentConfigLoaderTest {
   }
 
   @Test
+  void loadShouldFailWhenEnvironmentIsMissing() throws Exception {
+    assertMissingField("testdata/config/missing-environment.json", "Missing required config field: environment");
+  }
+
+  @Test
   void loadShouldFailWhenAgentNameIsMissing() throws Exception {
     assertMissingField("testdata/config/missing-agent-name.json", "Missing required config field: agent.name");
   }

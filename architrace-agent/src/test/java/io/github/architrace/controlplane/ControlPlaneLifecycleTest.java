@@ -20,12 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ControlPlaneLifecycleTest {
 
+  private static final AgentIdentity IDENTITY =
+      new AgentIdentity("agent-a", "0.1.0", "demo", "DEV", "cluster-1");
+
   @Test
   void runShouldRegisterDrainOutboundAndCloseTransport() {
     RecordingTransportClient transportClient = new RecordingTransportClient();
     RegistrationService registrationService = new CompletingRegistrationService(transportClient, 75);
     ControlPlaneLifecycle sut =
-        new ControlPlaneLifecycle("agent-a", transportClient, registrationService, List.of());
+        new ControlPlaneLifecycle(IDENTITY, transportClient, registrationService, List.of());
 
     sut.publishGraphBatch(GraphBatch.newBuilder().setAgentName("agent-a").setObservedAtEpochMs(1L).build());
     sut.run();
@@ -39,7 +42,7 @@ class ControlPlaneLifecycleTest {
   void closeShouldReleaseAwait() {
     RecordingTransportClient transportClient = new RecordingTransportClient();
     ControlPlaneLifecycle sut =
-        new ControlPlaneLifecycle("agent-a", transportClient, new RegistrationService(), List.of());
+        new ControlPlaneLifecycle(IDENTITY, transportClient, new RegistrationService(), List.of());
 
     sut.close();
     sut.await();
@@ -57,8 +60,8 @@ class ControlPlaneLifecycleTest {
     }
 
     @Override
-    public void sendRegister(String agentName, StreamObserver<AgentRegisterRequestedEvent> observer) {
-      super.sendRegister(agentName, observer);
+    public void sendRegister(AgentIdentity identity, StreamObserver<AgentRegisterRequestedEvent> observer) {
+      super.sendRegister(identity, observer);
       Thread.ofVirtual().start(() -> {
         try {
           Thread.sleep(delayMs);

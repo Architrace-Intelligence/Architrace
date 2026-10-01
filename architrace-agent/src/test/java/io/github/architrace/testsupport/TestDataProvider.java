@@ -52,7 +52,9 @@ public final class TestDataProvider {
         new AgentConfig.Agent(agentName),
         new AgentConfig.ControlPlane(new AgentConfig.Bootstrap(endpoint)),
         4319,
-        5L);
+        5L,
+        "DEV",
+        "demo");
   }
 
   public static ExportTraceServiceRequest createSingleSpanRequest(String spanName) {

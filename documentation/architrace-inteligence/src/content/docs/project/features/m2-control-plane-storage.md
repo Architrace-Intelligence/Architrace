@@ -3,7 +3,7 @@ title: M2. Control plane ingestion and storage
 description: Snapshots from every agent are validated, persisted and merged into a current graph per environment.
 ---
 
-Status: in progress (PR 1 of 3 delivered: schema and stores) · Order: 3 · Requirements: F5, F6, N3, N4, N7
+Status: in progress (PR 2 of 3 delivered: schema, stores, ingestion) · Order: 3 · Requirements: F5, F6, N3, N4, N7
 
 ## Goal
 
@@ -59,16 +59,30 @@ join. Where the project value comes from on the agent side is an open point of t
 ### Ingestion
 
 ```
-gRPC AgentStreamService ──► IngestionService.ingest(agent, GraphBatch)
-   validate (environment, window, ids) ──► map to Snapshot/Node/Edge records
-   ──► SnapshotRepository.save (one transaction) ──► AgentRegistry.touch ──► Ack
+gRPC AgentStreamService ──► AgentConnection (one per stream)
+   register ──► IngestionService.register ──► AgentStore ──► ConfigUpdate
+   snapshot ──► IngestionService.ingest(agent, GraphSnapshot)
+      SnapshotMapper: window, typed nodes, edge kinds, metrics, unique ids, known endpoints
+      ──► SnapshotStore.save (one transaction) ──► AgentStore.touch ──► SnapshotAck
+   heartbeat ──► AgentStore.touch
 ```
 
-- Registration creates or updates the `agent` row; heartbeats update `last_seen_at`;
-  liveness is `now - last_seen_at < 3 × heartbeat interval`.
-- Invalid batches are rejected with a gRPC `INVALID_ARGUMENT` and counted; the stream stays open.
-- `ConfigUpdate` is sent once after registration with the server-side snapshot interval so the
-  control plane can tune agents later.
+- Registration creates or updates the `agent` row for the scope-qualified identity
+  (name, project, environment, cluster); heartbeats and snapshots update `last_seen_at`;
+  liveness (`AgentLiveness`) is `now - last_seen_at < 3 × heartbeat interval`.
+- An invalid snapshot is answered with `SnapshotRejected` (reason) and counted; the stream
+  stays open. A bidirectional stream cannot carry a gRPC status without closing, so the
+  status codes are reserved for conversations that cannot continue: `INVALID_ARGUMENT` for a
+  blank registration, `FAILED_PRECONDITION` for messages before registration or a second
+  registration.
+- `ConfigUpdate` is sent once after registration with `snapshot.interval-seconds` and
+  `heartbeat.interval-seconds` (`architrace.ingestion.*`, defaults 60 s and 30 s).
+- Metrics: `architrace.snapshots.ingested`, `architrace.snapshots.rejected`,
+  `architrace.agents.connected`.
+- The contract was extended additively in ARCHI-28 (`snapshot`, `heartbeat`, scope fields on
+  `register`, `snapshot_ack`, `snapshot_rejected`); `graph_batch` is deprecated and rejected,
+  and is removed together with the agent's old publisher in M1. See the
+  [gRPC contract](../../../reference/grpc-contract/).
 
 ### Current graph
 
@@ -100,8 +114,8 @@ stay well under 100 ms.
 
 1. GA baseline, PostgreSQL, Liquibase, first schema, Testcontainers wiring, compose service
    (ARCHI-26, delivered).
-2. Protobuf v1 redesign, agent registry, gRPC stream service, ingestion with validation and
-   persistence.
+2. Protobuf v1 extended, agent registry, gRPC stream service, ingestion with validation and
+   persistence, agent registers with its scope (ARCHI-28, delivered).
 3. Current graph and scope queries, retention job, metrics, architecture page update.
 
 ## Risks and open points

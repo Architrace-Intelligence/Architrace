@@ -16,7 +16,9 @@ public record AgentConfig(
     @JsonProperty("otlp-receiver-port")
     @JsonAlias("oltp-receiver-port")
     Integer otlpReceiverPort,
-    @JsonProperty("control-plane-retry-seconds") Long controlPlaneRetrySeconds) {
+    @JsonProperty("control-plane-retry-seconds") Long controlPlaneRetrySeconds,
+    String environment,
+    String project) {
 
   public enum Environment {
     DEV,

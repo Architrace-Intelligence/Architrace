@@ -47,6 +47,10 @@ public final class AgentConfigLoader {
       throw new IllegalArgumentException("Missing required config field: clusterId");
     }
 
+    if (isBlank(config.environment())) {
+      throw new IllegalArgumentException("Missing required config field: environment");
+    }
+
     if (config.agent() == null || isBlank(config.agent().name())) {
       throw new IllegalArgumentException("Missing required config field: agent.name");
     }

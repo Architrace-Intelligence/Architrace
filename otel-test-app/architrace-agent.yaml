@@ -1,4 +1,5 @@
 environment: DEV
+project: demo
 clusterId: otel-test
 
 domainId: demo

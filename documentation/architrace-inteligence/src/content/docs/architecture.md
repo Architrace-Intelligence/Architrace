@@ -27,15 +27,18 @@ flowchart LR
   App[Services with OTel SDK] -->|OTLP gRPC| Collector[OTel Collector]
   Collector -->|OTLP gRPC 4319| Agent[Agent]
   Agent -->|in-memory graph| Agent
-  Agent -. GraphBatch is empty today .-> CP[Control plane]
-  CP -->|hard-coded ConfigUpdate| Agent
+  Agent -->|register with scope| CP[Control plane]
+  Agent -. GraphSnapshot: not sent yet .-> CP
+  CP -->|ConfigUpdate: intervals| Agent
+  CP --- DB[(PostgreSQL)]
 ```
 
 - The agent receives OTLP traces, builds nodes and edges in memory and keeps edge metrics
-  that are never populated. The batch sent to the control plane carries no data.
-- The control plane answers registrations with a fixed config update and discards batches.
-  It owns a PostgreSQL schema (agents, snapshots, nodes, edges; Liquibase) and stores behind
-  it, but nothing writes to them yet. No HTTP API, no UI.
+  that are never populated. It registers with its scope (project, environment, cluster) but
+  sends no `GraphSnapshot` until the pipeline is completed (M1).
+- The control plane registers agents, validates and stores `GraphSnapshot` messages in
+  PostgreSQL (agents, snapshots, nodes, edges; Liquibase), answers with acknowledgements and
+  tracks liveness through heartbeats. No HTTP API, no UI.
 - Details and defects: [Requirements §3](../project/requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 
 ## Target architecture (MVP)

@@ -14,16 +14,78 @@ service ControlPlaneService {
 message AgentRegisterRequestedEvent {
   oneof payload {
     AgentRegister register = 1;
-    GraphBatch graph_batch = 2;
+    GraphBatch graph_batch = 2 [deprecated = true];
+    GraphSnapshot snapshot = 3;
+    Heartbeat heartbeat = 4;
   }
 }
 
 message AgentRegister {
   string agent_name = 1;
   string cluster_id = 2;
+  string agent_version = 3;
+  string project = 4;
+  string environment = 5;
+}
+
+message Heartbeat {
+  int64 sent_at_epoch_ms = 1;
+}
+
+message GraphSnapshot {
+  int64 window_start_epoch_ms = 1;
+  int64 window_end_epoch_ms = 2;
+  repeated SnapshotNode nodes = 3;
+  repeated SnapshotEdge edges = 4;
+}
+
+enum NodeType {
+  NODE_TYPE_UNSPECIFIED = 0;
+  NODE_TYPE_SERVICE = 1;
+  NODE_TYPE_DATABASE = 2;
+  NODE_TYPE_TOPIC = 3;
+  NODE_TYPE_EXTERNAL = 4;
+}
+
+enum EdgeKind {
+  EDGE_KIND_UNSPECIFIED = 0;
+  EDGE_KIND_SYNC = 1;
+  EDGE_KIND_PUBLISH = 2;
+  EDGE_KIND_CONSUME = 3;
+}
+
+message SnapshotNode {
+  string id = 1;
+  NodeType type = 2;
+  string name = 3;
+  repeated string versions = 4;
+  repeated Deployment deployments = 5;
+  map<string, string> labels = 6;
+}
+
+message Deployment {
+  string cluster = 1;
+  string namespace = 2;
+}
+
+message SnapshotEdge {
+  string source_id = 1;
+  string target_id = 2;
+  EdgeKind kind = 3;
+  EdgeMetrics metrics = 4;
+}
+
+message EdgeMetrics {
+  int64 calls = 1;
+  int64 errors = 2;
+  int64 p50_millis = 3;
+  int64 p95_millis = 4;
+  int64 p99_millis = 5;
+  int64 max_millis = 6;
 }
 
 message GraphBatch {
+  option deprecated = true;
   string agent_name = 1;
   int64 observed_at_epoch_ms = 2;
   repeated GraphNode nodes = 3;
@@ -31,12 +93,14 @@ message GraphBatch {
 }
 
 message GraphNode {
+  option deprecated = true;
   string id = 1;
   string type = 2;
   string name = 3;
 }
 
 message GraphEdge {
+  option deprecated = true;
   string source_node_id = 1;
   string target_node_id = 2;
   string operation = 3;
@@ -46,12 +110,24 @@ message GraphEdge {
 message ControlPlaneCommand {
   oneof payload {
     ConfigUpdate config_update = 1;
+    SnapshotAck snapshot_ack = 2;
+    SnapshotRejected snapshot_rejected = 3;
   }
 }
 
 message ConfigUpdate {
   string version = 1;
   map<string, string> config = 2;
+}
+
+message SnapshotAck {
+  int64 window_end_epoch_ms = 1;
+  int64 snapshot_id = 2;
+}
+
+message SnapshotRejected {
+  int64 window_end_epoch_ms = 1;
+  string reason = 2;
 }
 
 message AgentHealthRequest {

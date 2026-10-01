@@ -26,10 +26,10 @@ public class ControlPlaneClientFactory {
     this.registrationService = registrationService;
   }
 
-  public ControlPlaneLifecycle create(String server, String agentName) {
+  public ControlPlaneLifecycle create(String server, AgentIdentity identity) {
     var channel = ControlPlaneTransportConfig.createChannel(server);
     var transportClient = new ControlPlaneClient(channel);
 
-    return new ControlPlaneLifecycle(agentName, transportClient, registrationService, handlers);
+    return new ControlPlaneLifecycle(identity, transportClient, registrationService, handlers);
   }
 }
