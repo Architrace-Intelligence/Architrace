@@ -1,10 +1,13 @@
-# Architrace requirements
+---
+title: Requirements
+description: What exists, what is needed, and the proposed MVP scope.
+---
 
 Status: **draft for maintainer review**. This document records what the project is for, what
 exists today, what is missing, and a proposed MVP scope. Once the MVP scope is agreed the
 "Agreed MVP" section becomes the contract for the design stage.
 
-Related: `docs/progress.md`, `docs/github-access.md`, `AGENTS.md`.
+Related: [Progress](../progress/), [GitHub setup](../github-access/), [Current state](../state/), [AGENTS.md](https://github.com/Architrace-Intelligence/Architrace/blob/main/AGENTS.md).
 
 ---
 
@@ -175,7 +178,7 @@ Gaps and defects found:
 | P3 | PR pipeline: format, compile, unit + integration tests, coverage gate, static analysis, security scans, AI code review. |
 | P4 | Main pipeline: everything above plus build, version, tag, publish images and docs. |
 | P5 | ADRs for every architectural decision, written only after agreement. |
-| P6 | Living docs: requirements, progress, architecture, feature docs, README, docs site. |
+| P6 | Living docs on the documentation site: requirements, progress, current state, architecture, ADRs, feature docs; README for the repository front page. |
 | P7 | No documentation comments in code. |
 
 ## 5. Proposed engineering platform
@@ -244,16 +247,26 @@ ruleset. If the maintainer prefers an in-workflow step, PR-Agent with a Gemini k
 
 ### 5.6 Documentation layout
 
+Everything a reader needs lives on the documentation site (Astro Starlight, published to GitHub
+Pages from `main`). Source folder: `documentation/architrace-inteligence/src/content/docs/`.
+
 ```
-AGENTS.md                      agent / contributor operating rules
-README.md                      user-facing overview
-docs/requirements.md           this file
-docs/progress.md               stage and feature tracking
-docs/architecture.md           current architecture, updated after each implementation PR
-docs/adr/NNNN-title.md         decisions (after agreement)
-docs/features/<name>.md        one document per feature
-documentation/…                published docs site (user guides, reference)
+index.mdx                      what Architrace is and why
+getting-started.md             install and run
+architecture.md                current architecture, updated after every implementation PR
+guides/                        how-to guides
+reference/                     CLI, configuration, contracts, modules
+project/state.md               current state and next step (context hand-over)
+project/requirements.md        this page
+project/progress.md            stage and feature tracking
+project/contributing.md        how work is done (summary of AGENTS.md)
+project/github-access.md       repository access and setup
+project/adr/NNNN-title.md      decisions (after agreement)
+project/features/<name>.md     one page per feature
 ```
+
+`AGENTS.md` at the repository root holds the operating rules for agents and is the only
+process document outside the site.
 
 ## 6. Proposed MVP scope
 
@@ -281,6 +294,8 @@ architecture value from within a day?
   C16 auth, Helm chart, native image (preview-feature risk with GraalVM).
 
 ### Open questions for the maintainer
+
+Answers are recorded in §7 once given.
 
 1. Agree the "in scope" list, or move items (for example, M6 out, or C12 in).
 2. UI stack preference: React + TypeScript SPA served by the control plane (recommended for an

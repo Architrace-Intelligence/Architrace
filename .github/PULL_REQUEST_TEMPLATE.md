@@ -9,7 +9,7 @@ The title becomes the squash commit on main and drives the next version number.
 <!-- One paragraph: what problem this PR solves and why now. Link the feature doc if one exists. -->
 
 Task: ARCHI-
-Feature doc: `docs/features/<name>.md`
+Feature page: `project/features/<name>` on the documentation site
 
 ## Type of change
 
@@ -39,8 +39,8 @@ Feature doc: `docs/features/<name>.md`
 ## Architecture impact
 
 - [ ] No structural change
-- [ ] `docs/architecture.md` updated
-- [ ] ADR added or updated: `docs/adr/`
+- [ ] Architecture page updated
+- [ ] ADR added or updated under `project/adr/`
 - [ ] Public API / protobuf contract changed
 - [ ] New dependency added (name, reason)
 
@@ -55,9 +55,10 @@ Feature doc: `docs/features/<name>.md`
 
 ## Documentation
 
-- [ ] `docs/progress.md` updated
-- [ ] Feature doc updated
-- [ ] README / docs site updated (if user-facing)
+- [ ] Progress page updated
+- [ ] Current state page updated
+- [ ] Feature page updated
+- [ ] README / user-facing pages updated (if applicable)
 
 ## Notes for the reviewer
 

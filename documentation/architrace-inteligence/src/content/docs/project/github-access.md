@@ -1,7 +1,10 @@
-# GitHub access and repository setup
+---
+title: GitHub setup
+description: Repository access, automation permissions and the maintainer checklist.
+---
 
 What the automation needs to operate the repository, what it already has, and what only the
-maintainer can do. Written for `Architrace-Intelligence/Architrace`.
+maintainer can do. Written for `Architrace-Intelligence/Architrace`. Companion of [Requirements](../requirements/).
 
 ## 1. Current state (observed 2026-10-01)
 
@@ -71,7 +74,7 @@ Decision pending from the maintainer. Option A is assumed in the CI/CD plan.
 ## 6. Setup checklist for the maintainer
 
 - [ ] Decide §4 (review identity).
-- [ ] Choose the AI reviewer (requirements §5.4) and install it if it is a GitHub App.
+- [ ] Choose the AI reviewer ([Requirements §5.4](../requirements/#54-ai-code-review-second-agent-in-the-pr-pipeline)) and install it if it is a GitHub App.
 - [ ] Confirm SonarCloud project key: the build still uses `Architrace-Intelligence_Architrace-agent`;
       the project in SonarCloud must have *Automatic Analysis* switched off because analysis is
       CI-driven.
@@ -85,6 +88,10 @@ Decision pending from the maintainer. Option A is assumed in the CI/CD plan.
 A fine-grained personal access token, owned by the maintainer, is used by the automation for
 API operations (the CLI token in §1 stays untouched; git pushes keep using SSH). The token is
 stored outside the repository with owner-only file permissions and is never committed.
+
+Verified on 2026-10-01: a token with the settings below passed every read and write probe
+(contents, pull requests, issues, actions, administration, secrets, variables, pages,
+environments). The maintainer issued it with a 30-day expiry (2026-10-31); rotate before then.
 
 Organisation policy: fine-grained tokens with a lifetime over **366 days are rejected** by the
 organisation, so the token must expire within a year and be rotated.
