@@ -20,17 +20,12 @@ Last updated: **2026-10-01**
   "Architrace UI", the [UI design](../features/ui-design/) page, sources under `design/`.
   The visual direction (dark-first "calm control room") was chosen without a brief and still
   needs the maintainer's confirmation or redirection.
-- M2 PR 1 (ARCHI-26, PR #31) is delivered: control plane on Maven Central only, PostgreSQL
-  schema through Liquibase, Spring Data JDBC stores for agents and snapshots, Testcontainers
-  tests, `postgres` service in the demo compose file.
-- Dependency locking (ARCHI-27, PR #32): every module carries a `gradle.lockfile`; a dependency
-  change must rewrite it with `--write-locks`. This closed the SonarCloud finding that failed
-  the quality gate of PR #31 (new security rating).
-- M2 PR 2 (ARCHI-28) is in review on top of it: the contract carries the scope on
-  registration and `GraphSnapshot` with typed nodes, edge kinds and metrics; the control plane
-  ingests snapshots, acknowledges or rejects them, tracks liveness; the agent registers with
-  its scope (`project`, `environment`, `clusterId`). The agent coverage ratchet is now
-  52 / 31 / 50 % and rises until M1 restores 85 %.
+- M2 is complete once ARCHI-29 merges: PostgreSQL schema and Spring Data JDBC stores
+  (ARCHI-26, #31), ingestion over the extended gRPC contract with liveness and metrics
+  (ARCHI-28, #33), and `TopologyQuery` (current graph per scope at time T, `ScopeSummary` per
+  scope), `RetentionJob` and Actuator health and metrics (ARCHI-29, in review). Every module
+  carries a `gradle.lockfile` (ARCHI-27, #32); a dependency change must rewrite it with
+  `--write-locks`. The agent coverage ratchet is 52 / 31 / 50 % until M1 restores 85 %.
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
 
 ## Decisions
@@ -51,19 +46,17 @@ only).
 
 ## Next step
 
-M2 PR 2 (ARCHI-28) is open for review; it was rebased on #32 and the lockfiles already cover
-its only new test dependency (`grpc-inprocess`). Merge it first (one PR at a time), then rebase
-and update this page.
+M2 PR 3 (ARCHI-29) is open for review. Merge it first (one PR at a time), then rebase and
+update this page.
 
 Vertical slices towards the two screens, one PR each, in this order:
 
-1. ARCHI-29: current graph per scope at time T (latest snapshot per agent, merged), scope
-   list with counts and liveness, retention job (M2 PR 3).
-2. ARCHI-30: OpenAPI document and generator, scopes and agents endpoints, problem details
-   (M3 PR 1); ARCHI-31: graph and services endpoints (M3 PR 2).
-3. ARCHI-32: `architrace-ui` scaffold served from the control plane jar (M4 PR 1);
+1. ARCHI-30: OpenAPI document and generator, scopes and agents endpoints on top of
+   `TopologyQuery.scopes()` and `AgentStore`, problem details (M3 PR 1); ARCHI-31: graph and
+   services endpoints on top of `TopologyQuery.currentGraph` (M3 PR 2).
+2. ARCHI-32: `architrace-ui` scaffold served from the control plane jar (M4 PR 1);
    ARCHI-33: Projects list page; ARCHI-34: Service map page; ARCHI-35: lenses, URL state, polish.
-4. M1 (agent pipeline) follows so the demo stack feeds real data; until then a fixture loader
+3. M1 (agent pipeline) follows so the demo stack feeds real data; until then a fixture loader
    seeds snapshots for development.
 
 ## How to resume

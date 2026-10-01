@@ -4,6 +4,8 @@
  */
 package io.github.architrace.control.plane.topology;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface SnapshotStore {
@@ -11,4 +13,8 @@ public interface SnapshotStore {
   SnapshotId save(Snapshot snapshot);
 
   Optional<Snapshot> find(SnapshotId id);
+
+  List<Snapshot> latestPerAgent(Scope scope, Instant at);
+
+  int deleteOlderThan(Instant cutoff, int limit);
 }

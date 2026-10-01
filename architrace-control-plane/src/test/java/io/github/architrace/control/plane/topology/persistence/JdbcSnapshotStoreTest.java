@@ -107,6 +107,65 @@ class JdbcSnapshotStoreTest extends JdbcStoreTest {
     assertThat(snapshots.find(new SnapshotId(Long.MAX_VALUE))).isEmpty();
   }
 
+  @Test
+  void latestPerAgentPicksTheNewestWindowOfEachAgentAtOrBeforeTheInstant() {
+    Agent a = agents.register(new AgentRegistration("latest-a", "0.4.0", SCOPE), NOW);
+    Agent b = agents.register(new AgentRegistration("latest-b", "0.4.0", SCOPE), NOW);
+    Scope dev = new Scope("webshop", "DEV", "k8s-dev");
+    Agent elsewhere = agents.register(new AgentRegistration("latest-c", "0.4.0", dev), NOW);
+    Instant at = NOW.minusSeconds(30);
+    snapshots.save(emptySnapshot(a, at.minusSeconds(180), at.minusSeconds(120)));
+    Snapshot latestA = emptySnapshot(a, at.minusSeconds(120), at.minusSeconds(60));
+    snapshots.save(latestA);
+    Snapshot latestB = emptySnapshot(b, at.minusSeconds(60), at);
+    snapshots.save(latestB);
+    snapshots.save(emptySnapshot(b, at, at.plusSeconds(60)));
+    snapshots.save(
+        new Snapshot(
+            elsewhere.id(), dev, new TimeWindow(at.minusSeconds(60), at), at, List.of(), List.of()));
+
+    List<Snapshot> latest = snapshots.latestPerAgent(SCOPE, at);
+
+    assertThat(latest).containsExactly(latestA, latestB);
+  }
+
+  @Test
+  void deleteOlderThanRemovesExpiredSnapshotsWithTheirRowsInBatches() {
+    Agent agent = agents.register(new AgentRegistration("retention", "0.4.0", SCOPE), NOW);
+    Instant cutoff = NOW.minusSeconds(3600);
+    SnapshotId oldest = snapshots.save(snapshotWithNode(agent, cutoff.minusSeconds(120), "service:old-1"));
+    SnapshotId older = snapshots.save(snapshotWithNode(agent, cutoff.minusSeconds(60), "service:old-2"));
+    SnapshotId boundary = snapshots.save(emptySnapshot(agent, cutoff.minusSeconds(60), cutoff));
+    SnapshotId recent = snapshots.save(emptySnapshot(agent, NOW.minusSeconds(60), NOW));
+
+    int firstBatch = snapshots.deleteOlderThan(cutoff, 1);
+    int secondBatch = snapshots.deleteOlderThan(cutoff, 1);
+    int nothingLeft = snapshots.deleteOlderThan(cutoff, 1);
+
+    assertThat(firstBatch).isEqualTo(1);
+    assertThat(secondBatch).isEqualTo(1);
+    assertThat(nothingLeft).isZero();
+    assertThat(snapshots.find(oldest)).isEmpty();
+    assertThat(snapshots.find(older)).isEmpty();
+    assertThat(snapshots.find(boundary)).isPresent();
+    assertThat(snapshots.find(recent)).isPresent();
+    Integer orphanNodes =
+        jdbc.sql("select count(*) from snapshot_node where node_id like 'service:old-%'")
+            .query(Integer.class)
+            .single();
+    assertThat(orphanNodes).isZero();
+  }
+
+  private static Snapshot snapshotWithNode(Agent agent, Instant end, String nodeId) {
+    return new Snapshot(
+        agent.id(),
+        SCOPE,
+        new TimeWindow(end.minusSeconds(60), end),
+        end,
+        List.of(new TopologyNode(nodeId, NodeType.SERVICE, "old", NodeAttributes.none())),
+        List.of());
+  }
+
   private static Snapshot emptySnapshot(Agent agent, Instant start, Instant end) {
     return new Snapshot(agent.id(), SCOPE, new TimeWindow(start, end), end, List.of(), List.of());
   }

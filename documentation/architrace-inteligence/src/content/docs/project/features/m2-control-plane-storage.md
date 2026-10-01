@@ -3,7 +3,7 @@ title: M2. Control plane ingestion and storage
 description: Snapshots from every agent are validated, persisted and merged into a current graph per environment.
 ---
 
-Status: in progress (PR 2 of 3 delivered: schema, stores, ingestion) · Order: 3 · Requirements: F5, F6, N3, N4, N7
+Status: delivered in three PRs (schema and stores, ingestion, current graph and retention) · Order: 3 · Requirements: F5, F6, N3, N4, N7
 
 ## Goal
 
@@ -86,22 +86,47 @@ gRPC AgentStreamService ──► AgentConnection (one per stream)
 
 ### Current graph
 
-`TopologyQuery.currentGraph(environment, at)`:
+`TopologyQuery.currentGraph(scope, at)`:
 
-1. For each agent of the environment, select the latest snapshot with `window_end ≤ at`.
-2. Load nodes and edges of those snapshots.
-3. Merge: same node id → union of attributes (versions, deployments); same edge key → sum of
-   calls and errors, max of latencies.
-4. Return an immutable `TopologyGraph(environment, at, nodes, edges)`.
+1. Select the latest snapshot per agent of the scope with `window_end ≤ at`
+   (`select distinct on (agent_id) … order by agent_id, window_end desc, id desc`), nodes and
+   edges included.
+2. Merge in Java (`GraphMerger`): same node id → union of versions, deployments and labels (the
+   first agent wins on a conflicting label value); same edge key `(source, target, kind)` → sum
+   of calls and errors, max of every latency.
+3. Return an immutable `TopologyGraph(scope, at, nodes, edges)` with nodes sorted by id and
+   edges by key.
 
-The query runs in SQL for selection and in Java for merging; graphs of a few thousand nodes
-stay well under 100 ms.
+`TopologyQuery.scopes()` lists every scope with a registered agent as a `ScopeSummary`: agents
+and live agents (`AgentLiveness`), services, data streams (topics), namespaces (taken from the
+deployments of the current graph) and the end of the newest snapshot window. The Projects list
+of the initial UI release shows one row per summary.
+
+Selection runs in SQL on the scope and window indexes, merging in Java; graphs of a few
+thousand nodes stay well under 100 ms. The timer `architrace.topology.query` records it.
 
 ### Retention and metrics
 
-- `topology.retention-days` (default 30); a daily job deletes older snapshots in batches.
-- Metrics: `snapshots_ingested`, `snapshots_rejected`, `agents_connected`,
-  `topology_query_seconds`; Actuator health includes the database.
+- `RetentionJob` deletes snapshots whose window ended before `now - period`, in batches, and
+  the cascading foreign keys remove their nodes and edges. Properties under
+  `architrace.topology.retention`: `period` (default `30d`), `batch-size` (default `1000`),
+  `cron` (default `0 0 3 * * *`, UTC).
+- Metrics: `architrace.snapshots.ingested`, `architrace.snapshots.rejected`,
+  `architrace.snapshots.deleted`, `architrace.agents.connected`, timer
+  `architrace.topology.query`. Actuator exposes `/actuator/health` (database included) and
+  `/actuator/metrics`.
+
+### Code shape (PR 3)
+
+- `topology`: `TopologyGraph`, `ScopeSummary`, the pure `GraphMerger`, the service
+  `TopologyQuery`, the Micrometer facade `TopologyMetrics` and `TopologyConfiguration` (clock,
+  scheduling, retention properties). `SnapshotStore` gains `latestPerAgent` and
+  `deleteOlderThan`.
+- `topology.retention`: `RetentionProperties` and the scheduled `RetentionJob`.
+- Tests: `GraphMergerTest`, `TopologyQueryTest` and `RetentionJobTest` on the in-memory stores;
+  `JdbcSnapshotStoreTest` for the two new queries; `TopologyIntegrationTest` (full context,
+  fixed clock, PostgreSQL in Testcontainers): two agents produce one merged graph and retention
+  keeps the recent history.
 
 ## Acceptance criteria
 
@@ -116,7 +141,8 @@ stay well under 100 ms.
    (ARCHI-26, delivered).
 2. Protobuf v1 extended, agent registry, gRPC stream service, ingestion with validation and
    persistence, agent registers with its scope (ARCHI-28, delivered).
-3. Current graph and scope queries, retention job, metrics, architecture page update.
+3. Current graph and scope queries, retention job, metrics, architecture page update
+   (ARCHI-29, delivered).
 
 ## Risks and open points
 

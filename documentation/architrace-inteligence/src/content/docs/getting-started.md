@@ -42,6 +42,9 @@ Default ports:
 - gRPC: `9090`
 - PostgreSQL: `5432`
 
+Health and metrics are on Actuator: `http://localhost:8085/actuator/health` and
+`http://localhost:8085/actuator/metrics`.
+
 The integration tests of the control plane start their own PostgreSQL through Testcontainers, so
 `./gradlew test` needs a running Docker daemon.
 
