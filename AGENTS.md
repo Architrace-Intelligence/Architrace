@@ -104,6 +104,9 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
 - Principles in order of precedence: correctness, KISS, YAGNI, SOLID, clean code,
   data-oriented programming (records, sealed interfaces, pattern matching, immutable data,
   behaviour separated from data).
+- Collection processing uses the Stream API (`map`, `filter`, `flatMap`, `Collectors.toMap` with
+  a merge function, `groupingBy`, `IntStream.range` for index ranges). Explicit loops are
+  reserved for control flow that is not a collection pipeline: polling, retries, batched I/O.
 - **No documentation comments in code.** No Javadoc, no explanatory comments. Names, types
   and structure carry the meaning. The only allowed header is the SPDX license header enforced
   by Spotless; the copyright holder is `Dmytro Hryshchenko`.

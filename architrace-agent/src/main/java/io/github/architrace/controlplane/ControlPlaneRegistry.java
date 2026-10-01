@@ -58,16 +58,14 @@ public class ControlPlaneRegistry {
 
   public void tick() {
     long now = System.currentTimeMillis();
-    for (Map.Entry<String, AgentSession> entry : sessions.entrySet()) {
-      String agentName = entry.getKey();
-      AgentSession session = entry.getValue();
-      sendConfig(
-          ConfigUpdate.newBuilder()
-              .setVersion(nextVersion(agentName))
-              .putConfig("control.updatedAtEpochMs", Long.toString(now))
-              .build(),
-          session.responseObserver);
-    }
+    sessions.forEach(
+        (agentName, session) ->
+            sendConfig(
+                ConfigUpdate.newBuilder()
+                    .setVersion(nextVersion(agentName))
+                    .putConfig("control.updatedAtEpochMs", Long.toString(now))
+                    .build(),
+                session.responseObserver));
   }
 
   private String nextVersion(String agentName) {

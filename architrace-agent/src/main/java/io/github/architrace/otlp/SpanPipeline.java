@@ -17,10 +17,6 @@ public class SpanPipeline {
   }
 
   public void process(List<InternalSpan> spans) {
-    for (SpanProcessor spanProcessor : spanProcessors) {
-      for (InternalSpan span : spans) {
-        spanProcessor.onSpan(span);
-      }
-    }
+    spanProcessors.forEach(processor -> spans.forEach(processor::onSpan));
   }
 }

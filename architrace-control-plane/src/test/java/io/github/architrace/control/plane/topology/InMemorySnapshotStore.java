@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class InMemorySnapshotStore implements SnapshotStore {
 
@@ -35,17 +38,19 @@ public final class InMemorySnapshotStore implements SnapshotStore {
 
   @Override
   public List<Snapshot> latestPerAgent(Scope scope, Instant at) {
-    Map<Long, Map.Entry<Long, Snapshot>> latest = new TreeMap<>();
-    for (Map.Entry<Long, Snapshot> entry : snapshots.entrySet()) {
-      Snapshot snapshot = entry.getValue();
-      if (snapshot.scope().equals(scope) && !snapshot.window().end().isAfter(at)) {
-        latest.merge(
-            snapshot.agentId().value(),
-            entry,
-            (a, b) -> BY_WINDOW_END_THEN_ID.compare(a, b) >= 0 ? a : b);
-      }
-    }
-    return latest.values().stream().map(Map.Entry::getValue).toList();
+    return snapshots.entrySet().stream()
+        .filter(e -> e.getValue().scope().equals(scope))
+        .filter(e -> !e.getValue().window().end().isAfter(at))
+        .collect(
+            Collectors.toMap(
+                e -> e.getValue().agentId().value(),
+                Function.identity(),
+                BinaryOperator.maxBy(BY_WINDOW_END_THEN_ID),
+                TreeMap::new))
+        .values()
+        .stream()
+        .map(Map.Entry::getValue)
+        .toList();
   }
 
   @Override

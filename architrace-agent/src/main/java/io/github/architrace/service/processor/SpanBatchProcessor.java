@@ -23,9 +23,7 @@ public class SpanBatchProcessor {
   }
 
   public void submit(List<InternalSpan> spans) {
-    for (InternalSpan span : spans) {
-      ringBuffer.publish(span);
-    }
+    spans.forEach(ringBuffer::publish);
   }
 
   public Void run() {

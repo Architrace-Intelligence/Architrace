@@ -18,6 +18,7 @@ import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.trace.v1.Span;
 import java.util.List;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -51,12 +52,7 @@ public class SpanExtractor {
   }
 
   private static String toHex(ByteString bytes) {
-    byte[] raw = bytes.toByteArray();
-    StringBuilder sb = new StringBuilder(raw.length * 2);
-    for (byte b : raw) {
-      sb.append(String.format("%02x", b));
-    }
-    return sb.toString();
+    return HexFormat.of().formatHex(bytes.toByteArray());
   }
 
   private InternalSpan mapSpan(Span span, Map<String, String> resourceAttrs) {
