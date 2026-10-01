@@ -3,7 +3,7 @@ title: M0. Engineering platform
 description: Green gates on every PR, automatic versioning and publishing on main.
 ---
 
-Status: design proposed · Order: 1 · Requirements: P1–P7, §5.1–5.5
+Status: design agreed · Order: 1 · Requirements: P1–P7, §5.1–5.5
 
 ## Goal
 

@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: design proposed · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: design agreed · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 

@@ -3,7 +3,7 @@ title: M4. Service map UI
 description: An interactive per-environment map of services, data stores, topics and external dependencies.
 ---
 
-Status: design proposed · Order: 5 · Requirements: F8
+Status: design agreed · Order: 5 · Requirements: F8
 
 ## Goal
 

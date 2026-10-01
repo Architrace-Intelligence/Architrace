@@ -3,7 +3,7 @@ title: M7. Packaging and demo
 description: Container images, a one-command demo with two environments, and guides to run Architrace for real.
 ---
 
-Status: design proposed · Order: 8 (images started in M0, demo stack usable from M2) · Requirements: F12, N8
+Status: design agreed · Order: 8 (images started in M0, demo stack usable from M2) · Requirements: F12, N8
 
 ## Goal
 

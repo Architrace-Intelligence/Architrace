@@ -3,7 +3,7 @@ title: M3. Query API
 description: A versioned REST API, described by OpenAPI, that the UI and scripts use to read topology, snapshots, diffs and findings.
 ---
 
-Status: design proposed · Order: 4 · Requirements: F7, N4
+Status: design agreed · Order: 4 · Requirements: F7, N4
 
 ## Goal
 

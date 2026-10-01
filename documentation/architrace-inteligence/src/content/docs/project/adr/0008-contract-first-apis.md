@@ -3,7 +3,7 @@ title: "0008. Contract-first APIs: protobuf for agents, OpenAPI for the Query AP
 description: Both contracts are authored by hand in architrace-api and all server and client code is generated from them.
 ---
 
-Status: proposed
+Status: accepted
 Date: 2026-10-01
 
 ## Context

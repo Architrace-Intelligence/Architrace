@@ -3,7 +3,7 @@ title: 0006. Semantic versioning from Conventional Commits and the release flow
 description: Versions are computed from git tags and commit types; main merges release automatically.
 ---
 
-Status: proposed
+Status: accepted
 Date: 2026-10-01
 
 ## Context

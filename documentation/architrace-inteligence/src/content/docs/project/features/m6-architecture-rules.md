@@ -3,7 +3,7 @@ title: M6. Architecture rules
 description: Deterministic checks that turn a topology into findings with severity and evidence.
 ---
 
-Status: design proposed · Order: 7 · Requirements: F10
+Status: design agreed · Order: 7 · Requirements: F10
 
 ## Goal
 

@@ -3,7 +3,7 @@ title: M5. Drift
 description: What differs between two environments, or between two points in time of one environment.
 ---
 
-Status: design proposed · Order: 6 · Requirements: F9
+Status: design agreed · Order: 6 · Requirements: F9
 
 ## Goal
 

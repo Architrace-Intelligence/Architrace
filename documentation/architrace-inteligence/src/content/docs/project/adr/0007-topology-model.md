@@ -3,7 +3,7 @@ title: "0007. Topology model: identity, snapshots and time"
 description: How nodes and edges are identified across environments, what a snapshot is, and how "the graph at time T" is defined.
 ---
 
-Status: proposed
+Status: accepted
 Date: 2026-10-01
 
 ## Context

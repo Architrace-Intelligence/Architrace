@@ -3,7 +3,7 @@ title: 0009. Spring Data JDBC for control plane persistence
 description: Aggregates are immutable records mapped with Spring Data JDBC; complex reads use explicit SQL.
 ---
 
-Status: proposed
+Status: accepted
 Date: 2026-10-01
 
 ## Context

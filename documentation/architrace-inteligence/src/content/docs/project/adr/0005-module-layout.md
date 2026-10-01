@@ -3,7 +3,7 @@ title: 0005. Monorepo module layout and dependency rules
 description: Which modules exist, what each may depend on, and how packages are shaped inside them.
 ---
 
-Status: proposed
+Status: accepted
 Date: 2026-10-01
 
 ## Context

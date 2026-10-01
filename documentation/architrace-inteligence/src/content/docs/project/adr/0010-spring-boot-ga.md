@@ -3,7 +3,7 @@ title: 0010. Pin Spring Boot and Spring gRPC to GA releases
 description: Only released versions from Maven Central; no milestone or snapshot repositories.
 ---
 
-Status: proposed
+Status: accepted
 Date: 2026-10-01
 
 ## Context

@@ -3,7 +3,7 @@ title: M2. Control plane ingestion and storage
 description: Snapshots from every agent are validated, persisted and merged into a current graph per environment.
 ---
 
-Status: design proposed · Order: 3 · Requirements: F5, F6, N3, N4, N7
+Status: design agreed · Order: 3 · Requirements: F5, F6, N3, N4, N7
 
 ## Goal
 
