@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import { type Mock, vi } from "vitest";
 
 export function respondWithJson(body: unknown, status = 200, contentType = "application/json") {

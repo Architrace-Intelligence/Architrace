@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.control.plane.topology;
 
 import io.github.architrace.control.plane.topology.retention.RetentionProperties;
@@ -16,8 +17,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableConfigurationProperties(RetentionProperties.class)
 public class TopologyConfiguration {
 
-  @Bean
-  Clock clock() {
-    return Clock.systemUTC();
-  }
+    @Bean
+    Clock clock() {
+        return Clock.systemUTC();
+    }
 }

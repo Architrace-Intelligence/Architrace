@@ -2,8 +2,11 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.grpc;
 
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.architrace.controlplane.ControlPlaneRegistry;
 import io.github.architrace.grpc.proto.AgentHealthRequest;
@@ -11,14 +14,11 @@ import io.github.architrace.grpc.proto.AgentHealthResponse;
 import io.github.architrace.grpc.proto.AgentRegister;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.testsupport.RecordingObserver;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ControlPlaneServiceImplTest {
 
@@ -51,14 +51,14 @@ class ControlPlaneServiceImplTest {
             .setRegister(AgentRegister.newBuilder().setAgentName(AGENT_A).build())
             .build());
 
-    assertThat(responseObserver.values.stream().anyMatch(ControlPlaneCommand::hasConfigUpdate)).isTrue();
+    assertThat(responseObserver.values().stream().anyMatch(ControlPlaneCommand::hasConfigUpdate)).isTrue();
 
     ControlPlaneRegistry.HealthState health = registry.health(AGENT_A, HEALTH_LIVE_THRESHOLD_MS);
     assertThat(health.live()).isTrue();
     assertThat(health.lastSeenEpochMs()).isPositive();
 
     requestObserver.onCompleted();
-    assertThat(responseObserver.completed).isTrue();
+    assertThat(responseObserver.isCompleted()).isTrue();
     assertThat(registry.health(AGENT_A, HEALTH_LIVE_THRESHOLD_MS).live()).isFalse();
   }
 
@@ -98,30 +98,10 @@ class ControlPlaneServiceImplTest {
 
     sut.getAgentHealth(request, responseObserver);
 
-    assertThat(responseObserver.values).hasSize(1);
-    AgentHealthResponse response = responseObserver.values.get(0);
+    assertThat(responseObserver.values()).hasSize(1);
+    AgentHealthResponse response = responseObserver.values().get(0);
     assertThat(response.getLive()).isTrue();
     assertThat(response.getLastSeenEpochMs()).isPositive();
-    assertThat(responseObserver.completed).isTrue();
-  }
-
-  private static final class RecordingObserver<T> implements StreamObserver<T> {
-    private final List<T> values = new ArrayList<>();
-    private boolean completed;
-
-    @Override
-    public void onNext(T value) {
-      values.add(value);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-      // No-op for tests; failure path is asserted through registry state.
-    }
-
-    @Override
-    public void onCompleted() {
-      this.completed = true;
-    }
+    assertThat(responseObserver.isCompleted()).isTrue();
   }
 }

@@ -2,8 +2,8 @@ import com.github.gradle.node.npm.task.NpmTask
 
 plugins {
     base
-    alias(libs.plugins.node)
-    alias(libs.plugins.spotless)
+    id("com.github.node-gradle.node")
+    id("com.diffplug.spotless")
 }
 
 description = "Architrace web UI"

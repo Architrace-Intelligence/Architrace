@@ -2,9 +2,11 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace;
 
 import com.google.inject.Guice;
+import io.github.architrace.cli.BuildVersionProvider;
 import io.github.architrace.cli.DryRunCommand;
 import io.github.architrace.cli.RunCommand;
 import io.github.architrace.cli.VersionCommand;
@@ -20,7 +22,7 @@ import picocli.CommandLine.Command;
 @Command(
     name = "architrace",
     mixinStandardHelpOptions = true,
-    version = "Architrace 0.1.0",
+    versionProvider = BuildVersionProvider.class,
     description = "Architecture Intelligence CLI",
     subcommands = {
         VersionCommand.class,

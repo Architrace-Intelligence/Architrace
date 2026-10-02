@@ -1,10 +1,13 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
+    id("architrace.java")
     application
-    alias(libs.plugins.shadow)
-    alias(libs.plugins.protobuf)
+    id("com.gradleup.shadow")
+    id("com.google.protobuf")
 }
+
+description = "Architrace agent"
 
 dependencies {
     annotationProcessor(libs.picocli.codegen)
@@ -22,7 +25,7 @@ dependencies {
     implementation(libs.picocli)
     implementation(libs.protobuf.java)
     implementation(libs.slf4j.api)
-    implementation(project(":api"))
+    implementation(project(":architrace-api"))
 
     runtimeOnly(libs.logback.classic)
 
@@ -31,25 +34,18 @@ dependencies {
 
 application {
     mainClass.set("io.github.architrace.MainApp")
+    applicationDefaultJvmArgs = listOf("--enable-preview")
 }
 
 tasks.withType<JavaCompile> {
-    options.compilerArgs.addAll(listOf(
-        "-Aproject=${project.group}/${project.name}"
-    ))
-}
-
-tasks.withType<JavaExec> {
-    jvmArgs("--enable-preview")
+    options.compilerArgs.addAll(listOf("-Aproject=${project.group}/${project.name}"))
 }
 
 tasks.named<ShadowJar>("shadowJar") {
     archiveClassifier.set("all")
     mergeServiceFiles()
     manifest {
-        attributes(
-            "Main-Class" to application.mainClass.get()
-        )
+        attributes("Main-Class" to application.mainClass.get())
     }
 }
 

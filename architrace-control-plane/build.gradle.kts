@@ -1,8 +1,7 @@
 plugins {
-    alias(libs.plugins.spring.boot)
-    alias(libs.plugins.spring.dependency.management)
-    alias(libs.plugins.protobuf)
-    alias(libs.plugins.openapi.generator)
+    id("architrace.spring-boot")
+    id("com.google.protobuf")
+    id("org.openapi.generator")
 }
 
 description = "Architrace control plane"
@@ -22,17 +21,13 @@ val uiBundle: Configuration by configurations.creating {
     isCanBeResolved = true
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     annotationProcessor(libs.spring.boot.configuration.processor)
 
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.grpc.services)
-    implementation(project(":api"))
+    implementation(project(":architrace-api"))
     implementation(libs.swagger.ui)
     implementation(libs.webjars.locator.lite)
     implementation(libs.spring.grpc.spring.boot.starter)
@@ -41,7 +36,7 @@ dependencies {
 
     implementation(libs.postgresql)
 
-    uiBundle(project(path = ":ui", configuration = "bundle"))
+    uiBundle(project(path = ":architrace-ui", configuration = "bundle"))
 
     testImplementation(libs.spring.boot.starter.actuator.test)
     testImplementation(libs.spring.boot.starter.webmvc.test)
@@ -78,10 +73,6 @@ protobuf {
             }
         }
     }
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
 }
 
 openApiValidate {

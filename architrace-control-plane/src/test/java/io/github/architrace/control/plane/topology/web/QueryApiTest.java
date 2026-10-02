@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.control.plane.topology.web;
 
 import static io.github.architrace.control.plane.topology.TestTopology.NOW;
@@ -45,65 +46,66 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-@WebMvcTest(
-    controllers = {ScopesController.class, AgentsController.class, SnapshotsController.class})
+@WebMvcTest(controllers = {ScopesController.class, AgentsController.class, SnapshotsController.class})
 @Import(QueryApiTest.Fixture.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class QueryApiTest {
 
-  private static final String PROD = "/api/v1/scopes/webshop/PROD/k8s-prod-eu1";
+    private static final String PROD = "/api/v1/scopes/webshop/PROD/k8s-prod-eu1";
 
-  @TestConfiguration(proxyBeanMethods = false)
-  static class Fixture {
+    @TestConfiguration(proxyBeanMethods = false)
+    static class Fixture {
 
-    @Bean
-    InMemoryAgentStore agentStore() {
-      return new InMemoryAgentStore();
+        @Bean
+        InMemoryAgentStore agentStore() {
+            return new InMemoryAgentStore();
+        }
+
+        @Bean
+        InMemorySnapshotStore snapshotStore() {
+            return new InMemorySnapshotStore();
+        }
+
+        @Bean
+        Clock clock() {
+            return Clock.fixed(NOW, ZoneOffset.UTC);
+        }
+
+        @Bean
+        TopologyQuery topologyQuery(InMemoryAgentStore agents, InMemorySnapshotStore snapshots, Clock clock) {
+            return new TopologyQuery(
+                    agents,
+                    snapshots,
+                    new AgentLiveness(Duration.ofSeconds(30)),
+                    new TopologyMetrics(new SimpleMeterRegistry()),
+                    clock);
+        }
     }
 
-    @Bean
-    InMemorySnapshotStore snapshotStore() {
-      return new InMemorySnapshotStore();
-    }
+    @Autowired
+    MockMvcTester mvc;
 
-    @Bean
-    Clock clock() {
-      return Clock.fixed(NOW, ZoneOffset.UTC);
-    }
+    @Autowired
+    InMemoryAgentStore agents;
 
-    @Bean
-    TopologyQuery topologyQuery(
-        InMemoryAgentStore agents, InMemorySnapshotStore snapshots, Clock clock) {
-      return new TopologyQuery(
-          agents,
-          snapshots,
-          new AgentLiveness(Duration.ofSeconds(30)),
-          new TopologyMetrics(new SimpleMeterRegistry()),
-          clock);
-    }
-  }
+    @Autowired
+    InMemorySnapshotStore snapshots;
 
-  @Autowired MockMvcTester mvc;
-  @Autowired InMemoryAgentStore agents;
-  @Autowired InMemorySnapshotStore snapshots;
+    @Test
+    void listsScopeSummariesAsJson() {
+        Agent live = register("prod-eu1-a", SCOPE, NOW);
+        register("prod-eu1-b", SCOPE, NOW.minus(Duration.ofMinutes(5)));
+        snapshots.save(snapshot(
+                live.id(),
+                NOW.minusSeconds(60),
+                List.of(service("orders", "2.8.1", "orders"), database("orders"), topic("order-events")),
+                List.of()));
 
-  @Test
-  void listsScopeSummariesAsJson() {
-    Agent live = register("prod-eu1-a", SCOPE, NOW);
-    register("prod-eu1-b", SCOPE, NOW.minus(Duration.ofMinutes(5)));
-    snapshots.save(
-        snapshot(
-            live.id(),
-            NOW.minusSeconds(60),
-            List.of(service("orders", "2.8.1", "orders"), database("orders"), topic("order-events")),
-            List.of()));
-
-    assertThat(mvc.get().uri("/api/v1/scopes"))
-        .hasStatusOk()
-        .hasContentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-        .bodyJson()
-        .isStrictlyEqualTo(
-            """
+        assertThat(mvc.get().uri("/api/v1/scopes"))
+                .hasStatusOk()
+                .hasContentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+                .bodyJson()
+                .isStrictlyEqualTo("""
             [
               {
                 "scope": {"project": "webshop", "environment": "PROD", "cluster": "k8s-prod-eu1"},
@@ -116,20 +118,16 @@ class QueryApiTest {
               }
             ]
             """);
-  }
+    }
 
-  @Test
-  void listsAgentsOrderedByScopeAndNameWithLiveness() {
-    Scope dev = new Scope("webshop", "DEV", "k8s-dev");
-    register("prod-eu1-b", SCOPE, NOW.minusSeconds(100));
-    agents.register(new AgentRegistration("prod-eu1-a", "0.4.1", SCOPE), NOW);
-    agents.register(new AgentRegistration("dev-a", "dev", dev), NOW.minusSeconds(10));
+    @Test
+    void listsAgentsOrderedByScopeAndNameWithLiveness() {
+        Scope dev = new Scope("webshop", "DEV", "k8s-dev");
+        register("prod-eu1-b", SCOPE, NOW.minusSeconds(100));
+        agents.register(new AgentRegistration("prod-eu1-a", "0.4.1", SCOPE), NOW);
+        agents.register(new AgentRegistration("dev-a", "dev", dev), NOW.minusSeconds(10));
 
-    assertThat(mvc.get().uri("/api/v1/agents"))
-        .hasStatusOk()
-        .bodyJson()
-        .isStrictlyEqualTo(
-            """
+        assertThat(mvc.get().uri("/api/v1/agents")).hasStatusOk().bodyJson().isStrictlyEqualTo("""
             [
               {
                 "id": 3, "name": "dev-a", "version": "dev",
@@ -151,36 +149,32 @@ class QueryApiTest {
               }
             ]
             """);
-  }
+    }
 
-  @Test
-  void servesTheCurrentGraphOfAScopeAtAPointInTime() {
-    Agent agent = register("prod-eu1-a", SCOPE, NOW);
-    TopologyNode orders =
-        new TopologyNode(
-            "service:orders",
-            NodeType.SERVICE,
-            "orders",
-            new NodeAttributes(
-                Set.of("2.8.1", "2.8.0"),
-                Set.of(new Deployment("k8s-prod-eu1", "orders")),
-                Map.of("team", "orders")));
-    TopologyNode db = database("orders");
-    snapshots.save(
-        snapshot(
-            agent.id(),
-            NOW.minusSeconds(60),
-            List.of(orders, db),
-            List.of(edge(orders, db, EdgeKind.SYNC, 24000))));
-    snapshots.save(
-        snapshot(agent.id(), NOW, List.of(service("later", "1.0", "later")), List.of()));
+    @Test
+    void servesTheCurrentGraphOfAScopeAtAPointInTime() {
+        Agent agent = register("prod-eu1-a", SCOPE, NOW);
+        TopologyNode orders = new TopologyNode(
+                "service:orders",
+                NodeType.SERVICE,
+                "orders",
+                new NodeAttributes(
+                        Set.of("2.8.1", "2.8.0"),
+                        Set.of(new Deployment("k8s-prod-eu1", "orders")),
+                        Map.of("team", "orders")));
+        TopologyNode db = database("orders");
+        snapshots.save(snapshot(
+                agent.id(),
+                NOW.minusSeconds(60),
+                List.of(orders, db),
+                List.of(edge(orders, db, EdgeKind.SYNC, 24000))));
+        snapshots.save(snapshot(agent.id(), NOW, List.of(service("later", "1.0", "later")), List.of()));
 
-    assertThat(mvc.get().uri(PROD + "/graph").queryParam("at", "2026-10-01T11:59:30Z"))
-        .hasStatusOk()
-        .hasContentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-        .bodyJson()
-        .isStrictlyEqualTo(
-            """
+        assertThat(mvc.get().uri(PROD + "/graph").queryParam("at", "2026-10-01T11:59:30Z"))
+                .hasStatusOk()
+                .hasContentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+                .bodyJson()
+                .isStrictlyEqualTo("""
             {
               "scope": {"project": "webshop", "environment": "PROD", "cluster": "k8s-prod-eu1"},
               "at": "2026-10-01T11:59:30Z",
@@ -199,80 +193,79 @@ class QueryApiTest {
               ]
             }
             """);
-  }
+    }
 
-  @Test
-  void graphDefaultsToNow() {
-    Agent agent = register("prod-eu1-a", SCOPE, NOW);
-    snapshots.save(
-        snapshot(agent.id(), NOW, List.of(service("orders", "2.8.1", "orders")), List.of()));
+    @Test
+    void graphDefaultsToNow() {
+        Agent agent = register("prod-eu1-a", SCOPE, NOW);
+        snapshots.save(snapshot(agent.id(), NOW, List.of(service("orders", "2.8.1", "orders")), List.of()));
 
-    MvcTestResult result = mvc.get().uri(PROD + "/graph").exchange();
+        MvcTestResult result = mvc.get().uri(PROD + "/graph").exchange();
 
-    assertThat(result).hasStatusOk();
-    assertThat(result).bodyJson().extractingPath("$.at").isEqualTo("2026-10-01T12:00:00Z");
-    assertThat(result).bodyJson().extractingPath("$.nodes[0].id").isEqualTo("service:orders");
-  }
+        assertThat(result).hasStatusOk();
+        assertThat(result).bodyJson().extractingPath("$.at").isEqualTo("2026-10-01T12:00:00Z");
+        assertThat(result).bodyJson().extractingPath("$.nodes[0].id").isEqualTo("service:orders");
+    }
 
-  @Test
-  void servesServicesWithTheirDependencies() {
-    Agent agent = register("prod-eu1-a", SCOPE, NOW);
-    TopologyNode checkout = service("checkout", "4.1.0", "checkout");
-    TopologyNode orders = service("orders", "2.8.1", "orders");
-    TopologyNode db = database("orders");
-    TopologyNode events = topic("order-events");
-    snapshots.save(
-        snapshot(
-            agent.id(),
-            NOW,
-            List.of(checkout, orders, db, events),
-            List.of(
-                edge(checkout, orders, EdgeKind.SYNC, 100),
-                edge(orders, db, EdgeKind.SYNC, 200),
-                edge(orders, events, EdgeKind.PUBLISH, 10),
-                edge(events, checkout, EdgeKind.CONSUME, 10))));
+    @Test
+    void servesServicesWithTheirDependencies() {
+        Agent agent = register("prod-eu1-a", SCOPE, NOW);
+        TopologyNode checkout = service("checkout", "4.1.0", "checkout");
+        TopologyNode orders = service("orders", "2.8.1", "orders");
+        TopologyNode db = database("orders");
+        TopologyNode events = topic("order-events");
+        snapshots.save(snapshot(
+                agent.id(),
+                NOW,
+                List.of(checkout, orders, db, events),
+                List.of(
+                        edge(checkout, orders, EdgeKind.SYNC, 100),
+                        edge(orders, db, EdgeKind.SYNC, 200),
+                        edge(orders, events, EdgeKind.PUBLISH, 10),
+                        edge(events, checkout, EdgeKind.CONSUME, 10))));
 
-    MvcTestResult result = mvc.get().uri(PROD + "/services").exchange();
+        MvcTestResult result = mvc.get().uri(PROD + "/services").exchange();
 
-    assertThat(result).hasStatusOk().hasContentTypeCompatibleWith(MediaType.APPLICATION_JSON);
-    assertThat(result).bodyJson().extractingPath("$.length()").isEqualTo(2);
-    assertThat(result).bodyJson().extractingPath("$[0].node.id").isEqualTo("service:checkout");
-    assertThat(result)
-        .bodyJson()
-        .extractingPath("$[0].inbound[0].node.id")
-        .isEqualTo("topic:kafka/order-events");
-    assertThat(result).bodyJson().extractingPath("$[0].inbound[0].edge.kind").isEqualTo("CONSUME");
-    assertThat(result)
-        .bodyJson()
-        .extractingPath("$[0].outbound[0].node.id")
-        .isEqualTo("service:orders");
-    assertThat(result).bodyJson().extractingPath("$[1].node.id").isEqualTo("service:orders");
-    assertThat(result)
-        .bodyJson()
-        .extractingPath("$[1].inbound[0].edge.sourceId")
-        .isEqualTo("service:checkout");
-    assertThat(result).bodyJson().extractingPath("$[1].outbound[0].node.type").isEqualTo("DATABASE");
-    assertThat(result).bodyJson().extractingPath("$[1].outbound[1].edge.kind").isEqualTo("PUBLISH");
-    assertThat(result).bodyJson().extractingPath("$[1].outbound[1].edge.metrics.calls").isEqualTo(10);
-  }
+        assertThat(result).hasStatusOk().hasContentTypeCompatibleWith(MediaType.APPLICATION_JSON);
+        assertThat(result).bodyJson().extractingPath("$.length()").isEqualTo(2);
+        assertThat(result).bodyJson().extractingPath("$[0].node.id").isEqualTo("service:checkout");
+        assertThat(result).bodyJson().extractingPath("$[0].inbound[0].node.id").isEqualTo("topic:kafka/order-events");
+        assertThat(result)
+                .bodyJson()
+                .extractingPath("$[0].inbound[0].edge.kind")
+                .isEqualTo("CONSUME");
+        assertThat(result).bodyJson().extractingPath("$[0].outbound[0].node.id").isEqualTo("service:orders");
+        assertThat(result).bodyJson().extractingPath("$[1].node.id").isEqualTo("service:orders");
+        assertThat(result)
+                .bodyJson()
+                .extractingPath("$[1].inbound[0].edge.sourceId")
+                .isEqualTo("service:checkout");
+        assertThat(result)
+                .bodyJson()
+                .extractingPath("$[1].outbound[0].node.type")
+                .isEqualTo("DATABASE");
+        assertThat(result)
+                .bodyJson()
+                .extractingPath("$[1].outbound[1].edge.kind")
+                .isEqualTo("PUBLISH");
+        assertThat(result)
+                .bodyJson()
+                .extractingPath("$[1].outbound[1].edge.metrics.calls")
+                .isEqualTo(10);
+    }
 
-  @Test
-  void listsTheSnapshotHistoryOfAScopeNewestFirstInPages() {
-    Agent agent = register("prod-eu1-a", SCOPE, NOW);
-    snapshots.save(
-        snapshot(
-            agent.id(),
-            NOW.minusSeconds(180),
-            List.of(service("orders", "1.0", "orders")),
-            List.of()));
-    snapshots.save(snapshot(agent.id(), NOW.minusSeconds(120), List.of(), List.of()));
-    snapshots.save(snapshot(agent.id(), NOW.minusSeconds(60), List.of(), List.of()));
+    @Test
+    void listsTheSnapshotHistoryOfAScopeNewestFirstInPages() {
+        Agent agent = register("prod-eu1-a", SCOPE, NOW);
+        snapshots.save(
+                snapshot(agent.id(), NOW.minusSeconds(180), List.of(service("orders", "1.0", "orders")), List.of()));
+        snapshots.save(snapshot(agent.id(), NOW.minusSeconds(120), List.of(), List.of()));
+        snapshots.save(snapshot(agent.id(), NOW.minusSeconds(60), List.of(), List.of()));
 
-    assertThat(mvc.get().uri(PROD + "/snapshots").queryParam("size", "2"))
-        .hasStatusOk()
-        .bodyJson()
-        .isStrictlyEqualTo(
-            """
+        assertThat(mvc.get().uri(PROD + "/snapshots").queryParam("size", "2"))
+                .hasStatusOk()
+                .bodyJson()
+                .isStrictlyEqualTo("""
             {
               "items": [
                 {"id": 3, "agentId": 1,
@@ -288,37 +281,31 @@ class QueryApiTest {
             }
             """);
 
-    MvcTestResult bounded =
-        mvc.get()
-            .uri(PROD + "/snapshots")
-            .queryParam("from", "2026-10-01T11:56:30Z")
-            .queryParam("to", "2026-10-01T11:57:30Z")
-            .exchange();
+        MvcTestResult bounded = mvc.get()
+                .uri(PROD + "/snapshots")
+                .queryParam("from", "2026-10-01T11:56:30Z")
+                .queryParam("to", "2026-10-01T11:57:30Z")
+                .exchange();
 
-    assertThat(bounded).hasStatusOk();
-    assertThat(bounded).bodyJson().extractingPath("$.items[0].id").isEqualTo(1);
-    assertThat(bounded).bodyJson().extractingPath("$.items[0].nodeCount").isEqualTo(1);
-    assertThat(bounded).bodyJson().extractingPath("$.totalItems").isEqualTo(1);
-    assertThat(bounded).bodyJson().extractingPath("$.size").isEqualTo(50);
-  }
+        assertThat(bounded).hasStatusOk();
+        assertThat(bounded).bodyJson().extractingPath("$.items[0].id").isEqualTo(1);
+        assertThat(bounded).bodyJson().extractingPath("$.items[0].nodeCount").isEqualTo(1);
+        assertThat(bounded).bodyJson().extractingPath("$.totalItems").isEqualTo(1);
+        assertThat(bounded).bodyJson().extractingPath("$.size").isEqualTo(50);
+    }
 
-  @Test
-  void servesOneSnapshotWithItsNodesAndEdges() {
-    Agent agent = register("prod-eu1-a", SCOPE, NOW);
-    TopologyNode orders = service("orders", "2.8.1", "orders");
-    TopologyNode events = topic("order-events");
-    snapshots.save(
-        snapshot(
-            agent.id(),
-            NOW,
-            List.of(orders, events),
-            List.of(edge(orders, events, EdgeKind.PUBLISH, 8700))));
+    @Test
+    void servesOneSnapshotWithItsNodesAndEdges() {
+        Agent agent = register("prod-eu1-a", SCOPE, NOW);
+        TopologyNode orders = service("orders", "2.8.1", "orders");
+        TopologyNode events = topic("order-events");
+        snapshots.save(snapshot(
+                agent.id(), NOW, List.of(orders, events), List.of(edge(orders, events, EdgeKind.PUBLISH, 8700))));
 
-    assertThat(mvc.get().uri("/api/v1/snapshots/1"))
-        .hasStatusOk()
-        .bodyJson()
-        .isStrictlyEqualTo(
-            """
+        assertThat(mvc.get().uri("/api/v1/snapshots/1"))
+                .hasStatusOk()
+                .bodyJson()
+                .isStrictlyEqualTo("""
             {
               "id": 1, "agentId": 1,
               "scope": {"project": "webshop", "environment": "PROD", "cluster": "k8s-prod-eu1"},
@@ -338,16 +325,15 @@ class QueryApiTest {
               ]
             }
             """);
-  }
+    }
 
-  @Test
-  void unknownScopeAndSnapshotAnswerWithTypedProblems() {
-    assertThat(mvc.get().uri("/api/v1/scopes/webshop/PROD/k8s-prod-eu2/graph"))
-        .hasStatus(404)
-        .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
-        .bodyJson()
-        .isStrictlyEqualTo(
-            """
+    @Test
+    void unknownScopeAndSnapshotAnswerWithTypedProblems() {
+        assertThat(mvc.get().uri("/api/v1/scopes/webshop/PROD/k8s-prod-eu2/graph"))
+                .hasStatus(404)
+                .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson()
+                .isStrictlyEqualTo("""
             {
               "type": "urn:architrace:problem:scope-not-found",
               "title": "Scope not found",
@@ -356,24 +342,23 @@ class QueryApiTest {
               "instance": "/api/v1/scopes/webshop/PROD/k8s-prod-eu2/graph"
             }
             """);
-    assertThat(mvc.get().uri("/api/v1/snapshots/7"))
-        .hasStatus(404)
-        .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
-        .bodyJson()
-        .extractingPath("$.type")
-        .isEqualTo("urn:architrace:problem:snapshot-not-found");
-  }
+        assertThat(mvc.get().uri("/api/v1/snapshots/7"))
+                .hasStatus(404)
+                .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson()
+                .extractingPath("$.type")
+                .isEqualTo("urn:architrace:problem:snapshot-not-found");
+    }
 
-  @Test
-  void invalidQueriesAnswerWithBadRequest() {
-    register("prod-eu1-a", SCOPE, NOW);
+    @Test
+    void invalidQueriesAnswerWithBadRequest() {
+        register("prod-eu1-a", SCOPE, NOW);
 
-    assertThat(mvc.get().uri(PROD + "/snapshots").queryParam("size", "0"))
-        .hasStatus(400)
-        .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
-        .bodyJson()
-        .isStrictlyEqualTo(
-            """
+        assertThat(mvc.get().uri(PROD + "/snapshots").queryParam("size", "0"))
+                .hasStatus(400)
+                .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson()
+                .isStrictlyEqualTo("""
             {
               "type": "urn:architrace:problem:invalid-query",
               "title": "Invalid query",
@@ -382,34 +367,33 @@ class QueryApiTest {
               "instance": "/api/v1/scopes/webshop/PROD/k8s-prod-eu1/snapshots"
             }
             """);
-    assertThat(
-            mvc.get()
-                .uri(PROD + "/snapshots")
-                .queryParam("from", "2026-10-01T12:00:00Z")
-                .queryParam("to", "2026-10-01T11:00:00Z"))
-        .hasStatus(400)
-        .bodyJson()
-        .extractingPath("$.detail")
-        .isEqualTo("from 2026-10-01T12:00:00Z must not be after to 2026-10-01T11:00:00Z");
-    assertThat(mvc.get().uri(PROD + "/graph").queryParam("at", "yesterday"))
-        .hasStatus(400)
-        .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
-        .bodyJson()
-        .extractingPath("$.title")
-        .isEqualTo("Bad Request");
-  }
+        assertThat(mvc.get()
+                        .uri(PROD + "/snapshots")
+                        .queryParam("from", "2026-10-01T12:00:00Z")
+                        .queryParam("to", "2026-10-01T11:00:00Z"))
+                .hasStatus(400)
+                .bodyJson()
+                .extractingPath("$.detail")
+                .isEqualTo("from 2026-10-01T12:00:00Z must not be after to 2026-10-01T11:00:00Z");
+        assertThat(mvc.get().uri(PROD + "/graph").queryParam("at", "yesterday"))
+                .hasStatus(400)
+                .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson()
+                .extractingPath("$.title")
+                .isEqualTo("Bad Request");
+    }
 
-  @Test
-  void unknownPathsAnswerWithProblemDetails() {
-    assertThat(mvc.get().uri("/api/v1/nothing"))
-        .hasStatus(404)
-        .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
-        .bodyJson()
-        .extractingPath("$.status")
-        .isEqualTo(404);
-  }
+    @Test
+    void unknownPathsAnswerWithProblemDetails() {
+        assertThat(mvc.get().uri("/api/v1/nothing"))
+                .hasStatus(404)
+                .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson()
+                .extractingPath("$.status")
+                .isEqualTo(404);
+    }
 
-  private Agent register(String name, Scope scope, Instant lastSeen) {
-    return agents.register(new AgentRegistration(name, "0.4.0", scope), lastSeen);
-  }
+    private Agent register(String name, Scope scope, Instant lastSeen) {
+        return agents.register(new AgentRegistration(name, "0.4.0", scope), lastSeen);
+    }
 }

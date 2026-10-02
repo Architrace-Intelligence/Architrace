@@ -2,10 +2,11 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.otlp;
 
-import io.github.architrace.service.graph.SpanExtractor;
 import io.github.architrace.model.InternalSpan;
+import io.github.architrace.service.graph.SpanExtractor;
 import io.github.architrace.service.processor.SpanBatchProcessor;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
 import java.util.List;

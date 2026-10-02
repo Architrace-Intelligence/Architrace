@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.outbound;
 
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
@@ -35,11 +36,8 @@ public class OutboundDispatcher {
   }
 
   private void dropOldestAndPutNew(AgentRegisterRequestedEvent msg) {
-    if (!queue.offer(msg)) {
+    while (!queue.offer(msg)) {
       queue.poll();
-      if (!queue.offer(msg)) {
-        // Queue was filled concurrently; message is dropped by overflow policy.
-      }
     }
   }
 

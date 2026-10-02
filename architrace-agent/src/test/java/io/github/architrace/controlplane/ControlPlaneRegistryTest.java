@@ -2,19 +2,19 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.controlplane;
 
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
-import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
+import io.github.architrace.testsupport.RecordingObserver;
 import java.util.List;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class ControlPlaneRegistryTest {
@@ -37,7 +37,7 @@ class ControlPlaneRegistryTest {
 
     sut.register(AGENT_NAME, responseObserver);
 
-    List<ControlPlaneCommand> events = responseObserver.values;
+    List<ControlPlaneCommand> events = responseObserver.values();
     ControlPlaneCommand firstEvent = events.get(FIRST_EVENT_INDEX);
     assertThat(firstEvent.hasConfigUpdate()).isTrue();
     assertThat(firstEvent.getConfigUpdate().getVersion()).isEqualTo(INITIAL_CONFIG_VERSION);
@@ -60,7 +60,7 @@ class ControlPlaneRegistryTest {
     sut.tick();
 
     long configUpdateCount =
-        responseObserver.values.stream().filter(ControlPlaneCommand::hasConfigUpdate).count();
+        responseObserver.values().stream().filter(ControlPlaneCommand::hasConfigUpdate).count();
 
     assertThat(configUpdateCount).isGreaterThanOrEqualTo(MIN_CONFIG_EVENTS);
   }
@@ -91,24 +91,5 @@ class ControlPlaneRegistryTest {
 
     assertThat(health.live()).isFalse();
     assertThat(health.lastSeenEpochMs()).isEqualTo(EXPECTED_EMPTY_LAST_SEEN);
-  }
-
-  private static final class RecordingObserver<T> implements StreamObserver<T> {
-    private final List<T> values = new ArrayList<>();
-
-    @Override
-    public void onNext(T value) {
-      values.add(value);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-      // No-op for tests; events are asserted via recorded onNext values.
-    }
-
-    @Override
-    public void onCompleted() {
-      // No-op for tests; completion state is not relevant for registry assertions.
-    }
   }
 }

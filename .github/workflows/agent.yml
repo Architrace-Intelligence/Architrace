@@ -42,8 +42,8 @@ jobs:
             exit 1
           fi
 
-      - name: Run spotless and unit tests
-        run: ./gradlew --no-daemon spotlessCheck test jacocoTestReport
+      - name: Run the quality gates
+        run: ./gradlew --no-daemon check jacocoTestReport
 
       - name: SonarCloud analysis for PR
         env:
@@ -60,7 +60,7 @@ jobs:
           -Dsonar.coverage.jacoco.xmlReportPaths=**/build/reports/jacoco/test/jacocoTestReport.xml
 
       - name: Build jar artifact
-        run: ./gradlew --no-daemon :agent:shadowJar
+        run: ./gradlew --no-daemon :architrace-agent:shadowJar
 
       - name: Upload PR jar artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

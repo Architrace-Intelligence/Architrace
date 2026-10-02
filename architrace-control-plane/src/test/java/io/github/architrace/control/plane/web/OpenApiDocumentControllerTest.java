@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.control.plane.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,18 +16,19 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 @WebMvcTest(OpenApiDocumentController.class)
 class OpenApiDocumentControllerTest {
 
-  @Autowired MockMvcTester mvc;
+    @Autowired
+    MockMvcTester mvc;
 
-  @Test
-  void servesTheContractDocumentAsYaml() {
-    assertThat(mvc.get().uri("/api/v1/openapi.yaml"))
-        .hasStatusOk()
-        .hasContentTypeCompatibleWith(MediaType.parseMediaType("application/yaml"))
-        .bodyText()
-        .contains("openapi: 3.1.0")
-        .contains("/scopes:")
-        .contains("/scopes/{project}/{environment}/{cluster}/graph:")
-        .contains("/snapshots/{snapshotId}:")
-        .contains("/agents:");
-  }
+    @Test
+    void servesTheContractDocumentAsYaml() {
+        assertThat(mvc.get().uri("/api/v1/openapi.yaml"))
+                .hasStatusOk()
+                .hasContentTypeCompatibleWith(MediaType.parseMediaType("application/yaml"))
+                .bodyText()
+                .contains("openapi: 3.1.0")
+                .contains("/scopes:")
+                .contains("/scopes/{project}/{environment}/{cluster}/graph:")
+                .contains("/snapshots/{snapshotId}:")
+                .contains("/agents:");
+    }
 }

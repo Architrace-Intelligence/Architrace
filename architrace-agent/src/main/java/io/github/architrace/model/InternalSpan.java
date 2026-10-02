@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.model;
 
 public record InternalSpan(
@@ -31,15 +32,15 @@ public record InternalSpan(
     return new LogicalServiceId(environment, domainId, serviceName);
   }
 
-  public boolean isDbSystem(){
+  public boolean isDbSystem() {
     return dbSystem != null;
   }
 
-  public boolean isMessaging(){
+  public boolean isMessaging() {
     return messagingDestination != null;
   }
 
-  public boolean isExternalService(){
+  public boolean isExternalService() {
     return httpHost != null && kind == SpanKind.CLIENT;
   }
 

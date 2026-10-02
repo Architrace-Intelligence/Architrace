@@ -1,7 +1,9 @@
 plugins {
-    `java-library`
-    alias(libs.plugins.protobuf)
+    id("architrace.java")
+    id("com.google.protobuf")
 }
+
+description = "Architrace contracts: protobuf for agents, OpenAPI for the Query API"
 
 dependencies {
     api(libs.grpc.stub)

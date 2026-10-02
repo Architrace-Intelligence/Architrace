@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.control.plane.ingestion.grpc;
 
 import static io.github.architrace.control.plane.ingestion.SnapshotProtos.ordersSnapshot;
@@ -37,70 +38,77 @@ import org.springframework.context.annotation.Import;
 @Import(PostgresTestcontainers.class)
 class AgentStreamIntegrationTest {
 
-  @Autowired AgentStreamService service;
-  @Autowired AgentStore agents;
-  @Autowired SnapshotStore snapshots;
+    @Autowired
+    AgentStreamService service;
 
-  private Server server;
-  private ManagedChannel channel;
+    @Autowired
+    AgentStore agents;
 
-  @BeforeEach
-  void startInProcessServer() throws IOException {
-    String name = InProcessServerBuilder.generateName();
-    server = InProcessServerBuilder.forName(name).directExecutor().addService(service).build().start();
-    channel = InProcessChannelBuilder.forName(name).directExecutor().build();
-  }
+    @Autowired
+    SnapshotStore snapshots;
 
-  @AfterEach
-  void stop() {
-    channel.shutdownNow();
-    server.shutdownNow();
-  }
+    private Server server;
+    private ManagedChannel channel;
 
-  @Test
-  void agentRegistersAndItsSnapshotLandsInPostgres() throws InterruptedException {
-    List<ControlPlaneCommand> commands = new CopyOnWriteArrayList<>();
-    CountDownLatch done = new CountDownLatch(1);
-    StreamObserver<AgentRegisterRequestedEvent> requests =
-        ControlPlaneServiceGrpc.newStub(channel)
-            .connect(
-                new StreamObserver<>() {
-                  @Override
-                  public void onNext(ControlPlaneCommand value) {
-                    commands.add(value);
-                  }
+    @BeforeEach
+    void startInProcessServer() throws IOException {
+        String name = InProcessServerBuilder.generateName();
+        server = InProcessServerBuilder.forName(name)
+                .directExecutor()
+                .addService(service)
+                .build()
+                .start();
+        channel = InProcessChannelBuilder.forName(name).directExecutor().build();
+    }
 
-                  @Override
-                  public void onError(Throwable t) {
-                    done.countDown();
-                  }
+    @AfterEach
+    void stop() {
+        channel.shutdownNow();
+        server.shutdownNow();
+    }
 
-                  @Override
-                  public void onCompleted() {
-                    done.countDown();
-                  }
+    @Test
+    void agentRegistersAndItsSnapshotLandsInPostgres() throws InterruptedException {
+        List<ControlPlaneCommand> commands = new CopyOnWriteArrayList<>();
+        CountDownLatch done = new CountDownLatch(1);
+        StreamObserver<AgentRegisterRequestedEvent> requests = ControlPlaneServiceGrpc.newStub(channel)
+                .connect(new StreamObserver<>() {
+                    @Override
+                    public void onNext(ControlPlaneCommand value) {
+                        commands.add(value);
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        done.countDown();
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        done.countDown();
+                    }
                 });
 
-    requests.onNext(
-        AgentRegisterRequestedEvent.newBuilder()
-            .setRegister(
-                AgentRegister.newBuilder()
-                    .setAgentName("it-agent")
-                    .setAgentVersion("0.4.0")
-                    .setProject("webshop")
-                    .setEnvironment("PROD")
-                    .setClusterId("k8s-prod-eu1"))
-            .build());
-    requests.onNext(AgentRegisterRequestedEvent.newBuilder().setSnapshot(ordersSnapshot()).build());
-    requests.onCompleted();
+        requests.onNext(AgentRegisterRequestedEvent.newBuilder()
+                .setRegister(AgentRegister.newBuilder()
+                        .setAgentName("it-agent")
+                        .setAgentVersion("0.4.0")
+                        .setProject("webshop")
+                        .setEnvironment("PROD")
+                        .setClusterId("k8s-prod-eu1"))
+                .build());
+        requests.onNext(AgentRegisterRequestedEvent.newBuilder()
+                .setSnapshot(ordersSnapshot())
+                .build());
+        requests.onCompleted();
 
-    assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
-    assertThat(commands).hasSize(2);
-    assertThat(commands.getFirst().hasConfigUpdate()).isTrue();
-    long snapshotId = commands.get(1).getSnapshotAck().getSnapshotId();
-    Snapshot stored = snapshots.find(new SnapshotId(snapshotId)).orElseThrow();
-    assertThat(stored.nodes()).hasSize(3);
-    assertThat(stored.edges()).hasSize(2);
-    assertThat(agents.all()).anySatisfy(a -> assertThat(a.name()).isEqualTo("it-agent"));
-  }
+        assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
+        assertThat(commands).hasSize(2);
+        assertThat(commands.getFirst().hasConfigUpdate()).isTrue();
+        long snapshotId = commands.get(1).getSnapshotAck().getSnapshotId();
+        Snapshot stored = snapshots.find(new SnapshotId(snapshotId)).orElseThrow();
+        assertThat(stored.nodes()).hasSize(3);
+        assertThat(stored.edges()).hasSize(2);
+        assertThat(agents.all()).anySatisfy(a -> assertThat(a.name()).isEqualTo("it-agent"));
+    }
 }

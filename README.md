@@ -19,10 +19,10 @@
 
 ## Quick Start
 
-Run quality gates + tests:
+Run the quality gates (formatting, Checkstyle, tests with coverage, UI gate):
 
 ```bash
-./gradlew spotlessCheck classes test jacocoTestReport
+./gradlew spotlessApply check
 ```
 
 Build all modules:
@@ -34,13 +34,19 @@ Build all modules:
 Run control-plane locally:
 
 ```bash
-./gradlew :control-plane:bootRun
+./gradlew :architrace-control-plane:bootRun
 ```
 
 Build runnable agent fat jar:
 
 ```bash
-./gradlew :agent:shadowJar
+./gradlew :architrace-agent:shadowJar
+```
+
+Print the version the build computes from git tags and Conventional Commits:
+
+```bash
+./gradlew printVersion printReleaseVersion
 ```
 
 ---
@@ -53,7 +59,8 @@ Build runnable agent fat jar:
 - **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract: scopes, agents, the graph and services of a scope at a point in time, snapshot history; Swagger UI at `/swagger-ui`
 - **Web UI** - React + TypeScript single-page application served by the control plane at `/`, talking to the Query API through a client typed from the same contract
 - **Structured Concurrency** - Runtime built on Java 25 concurrency primitives
-- **Modular Monorepo** - Separate modules for runtime agent, control-plane, and shared API contracts
+- **Modular Monorepo** - Separate modules for runtime agent, control-plane, shared API contracts and the UI, with shared build conventions in `build-logic`
+- **Versioned from git** - the version is computed from the last `v*` tag and the Conventional Commits since it; the CLI reports it from the jar manifest
 
 ---
 
@@ -63,6 +70,7 @@ Build runnable agent fat jar:
 - **[`architrace-control-plane`](./architrace-control-plane)** - Spring Boot service (HTTP + gRPC)
 - **[`architrace-api`](./architrace-api)** - Shared protobuf and OpenAPI contracts and generated classes
 - **[`architrace-ui`](./architrace-ui)** - Web UI (Vite, React, TypeScript), built by Gradle and bundled into the control plane jar
+- **[`build-logic`](./build-logic)** - Gradle convention plugins: Java toolchain and quality gates, Spring Boot defaults, versioning from git
 - **[`otel-test-app`](./otel-test-app)** - End-to-end demo stack (Python services + collector + Architrace)
 
 ---
@@ -115,27 +123,27 @@ Format all modules:
 Run only agent tests:
 
 ```bash
-./gradlew :agent:test
+./gradlew :architrace-agent:test
 ```
 
 Run only control-plane tests:
 
 ```bash
-./gradlew :control-plane:test
+./gradlew :architrace-control-plane:test
 ```
 
 Generate protobuf classes:
 
 ```bash
-./gradlew :agent:generateProto :control-plane:generateProto :api:generateProto
+./gradlew :architrace-agent:generateProto :architrace-control-plane:generateProto :architrace-api:generateProto
 ```
 
 Run the UI quality gate (types, lint, formatting, tests) or build its bundle; Gradle downloads the
 pinned Node.js on first use:
 
 ```bash
-./gradlew :ui:test
-./gradlew :ui:npmBuild
+./gradlew :architrace-ui:test
+./gradlew :architrace-ui:npmBuild
 ```
 
 Develop the UI against a running control plane (Node.js 22.12+, requests to `/api` are proxied
@@ -151,8 +159,8 @@ npm run dev
 
 ## CI
 
-Pull requests run [`PR Checks`](./.github/workflows/agent.yml): Spotless, compilation, tests with
-JaCoCo coverage, the UI gate (`:ui:test`), SonarCloud analysis and a jar build. Merges to `main` run
+Pull requests run [`PR Checks`](./.github/workflows/agent.yml): `./gradlew check` (Spotless,
+Checkstyle, tests with the JaCoCo coverage gate, the UI gate), SonarCloud analysis and a jar build. Merges to `main` run
 [`Merge CI/CD`](./.github/workflows/ci-cd.yml), which adds Snyk monitoring and publishes release
 artifacts on `v*` tags. Both pipelines are being replaced by the gated flow described in the
 [M0 design](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/).

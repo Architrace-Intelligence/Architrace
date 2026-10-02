@@ -50,7 +50,7 @@ Feature page: `project/features/<name>` on the documentation site
 
 - [ ] Unit tests added / updated
 - [ ] Integration tests added / updated
-- [ ] `./gradlew spotlessApply classes test jacocoTestReport jacocoTestCoverageVerification` green
+- [ ] `./gradlew spotlessApply check` green
 - [ ] Manual verification (describe)
 
 ## Documentation

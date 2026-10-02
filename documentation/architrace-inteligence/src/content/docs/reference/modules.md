@@ -3,6 +3,17 @@ title: Modules
 description: Monorepo module responsibilities.
 ---
 
+## `build-logic`
+
+- Gradle included build with the convention plugins every module applies.
+- `architrace.java`: JDK 25 toolchain with preview features, Spotless (palantir-java-format and
+  the SPDX header), Checkstyle, JaCoCo with the coverage gate, JUnit platform, manifest
+  `Implementation-Version`.
+- `architrace.spring-boot`: Spring Boot and dependency management on top of `architrace.java`,
+  build info, no plain jar.
+- `architrace.versioning`: version from git tags and Conventional Commits through axion-release;
+  tasks `printVersion`, `printReleaseVersion`, `releaseNotes`.
+
 ## `architrace-agent`
 
 - CLI entrypoint (`architrace`).
@@ -26,7 +37,7 @@ description: Monorepo module responsibilities.
 
 - Web UI: Vite, React, TypeScript, TanStack Query.
 - Client typed from the OpenAPI document (`openapi-typescript`, `openapi-fetch`).
-- Built by Gradle (`:ui:npmBuild`), tested by `:ui:test`; the bundle is a consumable Gradle
+- Built by Gradle (`:architrace-ui:npmBuild`), tested by `:architrace-ui:test`; the bundle is a consumable Gradle
   configuration that the control plane packs under `static/`.
 
 ## `otel-test-app`

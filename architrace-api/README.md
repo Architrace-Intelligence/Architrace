@@ -24,17 +24,17 @@ The module exports (`api(...)`) key dependencies used by consumers:
 ## Build and Test
 Compile:
 ```bash
-./gradlew :api:classes
+./gradlew :architrace-api:classes
 ```
 
 Tests:
 ```bash
-./gradlew :api:test
+./gradlew :architrace-api:test
 ```
 
 Coverage:
 ```bash
-./gradlew :api:jacocoTestReport :api:jacocoTestCoverageVerification
+./gradlew :architrace-api:jacocoTestReport :architrace-api:jacocoTestCoverageVerification
 ```
 
 ## Intended Direction
@@ -51,7 +51,7 @@ flowchart LR
 ```
 
 ## Troubleshooting
-1. No visible output artifacts from `:api:build`
+1. No visible output artifacts from `:architrace-api:build`
    - This module mainly provides shared dependencies/contracts for consumers.
 
 2. Expecting OpenAPI content but file is empty

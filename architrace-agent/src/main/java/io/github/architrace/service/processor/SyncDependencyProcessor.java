@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.service.processor;
 
 import io.github.architrace.model.InternalSpan;
@@ -18,7 +19,7 @@ public class SyncDependencyProcessor implements SpanProcessor {
 
   @Override
   public void onSpan(InternalSpan span) {
-    if(span.spanType() == SpanType.SYNC){
+    if (span.spanType() == SpanType.SYNC) {
       resolver.onSpan(span);
     }
   }

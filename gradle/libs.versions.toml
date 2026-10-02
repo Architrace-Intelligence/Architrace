@@ -7,14 +7,13 @@ guice = "7.0.0"
 logback = "1.5.32"
 jackson = "2.20.2"
 mockito = "5.14.2"
-spotless = "6.25.0"
+spotless = "8.10.3"
 shadow = "9.3.0"
 guava = "33.2.1-jre"
 grpc = "1.77.1"
 protobuf = "4.33.4"
 otel-proto = "1.9.0-alpha"
 sonarqube = "7.1.0.6387"
-graalvm-native = "0.10.2"
 protobuf-gradle-plugin = "0.9.5"
 javax-annotation = "1.3.2"
 assertj = "3.27.4"
@@ -26,6 +25,11 @@ swagger = "2.2.21"
 jakarta-validation = "3.1.1"
 openapi-generator = "7.14.0"
 node-gradle = "7.1.0"
+axion-release = "1.21.4"
+checkstyle = "14.3.0"
+palantir-java-format = "2.101.0"
+jgit = "7.8.0.202609011348-r"
+java-semver = "0.10.2"
 
 [libraries]
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
@@ -73,14 +77,16 @@ swagger-ui = { group = "org.webjars", name = "swagger-ui", version.ref = "swagge
 webjars-locator-lite = { group = "org.webjars", name = "webjars-locator-lite" }
 postgresql = { group = "org.postgresql", name = "postgresql" }
 spring-grpc-bom = { group = "org.springframework.grpc", name = "spring-grpc-dependencies", version.ref = "spring-grpc" }
+jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
+java-semver = { group = "com.github.zafarkhaja", name = "java-semver", version.ref = "java-semver" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
-graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf-gradle-plugin" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }
 node = { id = "com.github.node-gradle.node", version.ref = "node-gradle" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }

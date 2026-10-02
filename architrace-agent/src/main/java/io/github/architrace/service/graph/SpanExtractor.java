@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.service.graph;
 
 import static io.github.architrace.otlp.AttributeDictionary.DB_NAME;
@@ -17,8 +18,8 @@ import io.github.architrace.model.SpanKind;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.trace.v1.Span;
-import java.util.List;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 

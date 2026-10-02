@@ -16,9 +16,9 @@ Subcommands:
 ## Examples
 
 ```bash
-java -jar architrace-agent/build/libs/agent-0.1.0-all.jar version
-java -jar architrace-agent/build/libs/agent-0.1.0-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
-java -jar architrace-agent/build/libs/agent-0.1.0-all.jar run --config ./otel-test-app/architrace-agent.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar version
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./otel-test-app/architrace-agent.yaml
 ```
 
 ## Notes

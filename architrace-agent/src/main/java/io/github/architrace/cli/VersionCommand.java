@@ -2,22 +2,21 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.cli;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.github.architrace.core.BuildVersion;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec;
 
-@Command(
-    name = "version",
-    description = "Print version information"
-)
+@Command(name = "version", description = "Print the version of this build")
 public class VersionCommand implements Runnable {
 
-  private static final Logger log = LoggerFactory.getLogger(VersionCommand.class);
+  @Spec CommandSpec spec;
 
   @Override
   public void run() {
-    log.info("Architrace version 0.1.0");
+    spec.commandLine().getOut().println(BuildVersion.describe());
   }
 }

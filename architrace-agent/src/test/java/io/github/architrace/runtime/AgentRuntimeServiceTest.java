@@ -2,8 +2,12 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.runtime;
 
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.architrace.controlplane.AgentIdentity;
 import io.github.architrace.controlplane.ControlPlaneBootstrapService;
@@ -14,12 +18,12 @@ import io.github.architrace.core.config.AgentConfigLoader;
 import io.github.architrace.grpc.TransportClient;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.otlp.GraphSnapshot;
 import io.github.architrace.otlp.SpanPipeline;
 import io.github.architrace.otlp.SpanReceiver;
 import io.github.architrace.otlp.SpanRingBuffer;
 import io.github.architrace.service.graph.SpanExtractor;
 import io.github.architrace.service.processor.SpanBatchProcessor;
-import io.github.architrace.otlp.GraphSnapshot;
 import io.github.architrace.service.runtime.AgentRuntimeService;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
@@ -29,11 +33,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.io.TempDir;
 
 class AgentRuntimeServiceTest {
 

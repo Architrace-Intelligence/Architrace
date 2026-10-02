@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.controlplane;
 
 import io.github.architrace.config.ControlPlaneClientWiringConfig;
@@ -12,13 +13,12 @@ import io.github.architrace.grpc.proto.GraphBatch;
 import io.github.architrace.inbound.ControlMessageHandler;
 import io.github.architrace.session.ControlPlaneSession;
 import io.grpc.stub.StreamObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ExecutionException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ControlPlaneLifecycle implements AutoCloseable {
 
@@ -89,18 +89,12 @@ public final class ControlPlaneLifecycle implements AutoCloseable {
     }
   }
 
-  /**
-   * Waits until stream ends.
-   */
   private Void grpcBlockingTask() throws InterruptedException, ExecutionException {
     streamClosed.get();
 
     return null;
   }
 
-  /**
-   * Sends outbound messages from queue to gRPC stream.
-   */
   private Void outboundWriterTask(StreamObserver<AgentRegisterRequestedEvent> observer) throws InterruptedException {
     while (!termination.isDone()) {
       var event = session.pollOutbound(200);
