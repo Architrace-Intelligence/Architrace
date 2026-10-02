@@ -36,6 +36,18 @@ updates:
     commit-message:
       prefix: "build(deps)"
 
+  - package-ecosystem: npm
+    directory: /architrace-ui
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      ui-dependencies:
+        patterns: ["*"]
+    labels: [chore]
+    commit-message:
+      prefix: "build(deps)"
+
   - package-ecosystem: pip
     directory: /otel-test-app
     schedule:

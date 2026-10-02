@@ -17,6 +17,11 @@ configurations {
     }
 }
 
+val uiBundle: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 repositories {
     mavenCentral()
 }
@@ -35,6 +40,8 @@ dependencies {
     implementation(libs.spring.boot.starter.liquibase)
 
     implementation(libs.postgresql)
+
+    uiBundle(project(path = ":ui", configuration = "bundle"))
 
     testImplementation(libs.spring.boot.starter.actuator.test)
     testImplementation(libs.spring.boot.starter.webmvc.test)
@@ -114,6 +121,12 @@ sourceSets {
 
 tasks.compileJava {
     dependsOn(tasks.openApiGenerate)
+}
+
+tasks.processResources {
+    from(uiBundle) {
+        into("static")
+    }
 }
 
 tasks.named("check") {

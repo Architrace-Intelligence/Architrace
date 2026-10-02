@@ -20,7 +20,7 @@ Target to Current.
 - **Standard OpenTelemetry.** Identity and context come from OTel semantic conventions, with
   configurable fallbacks for legacy attribute names.
 
-## Current state (as of 2026-10-01)
+## Current state (as of 2026-10-02)
 
 ```mermaid
 flowchart LR
@@ -31,6 +31,7 @@ flowchart LR
   Agent -. GraphSnapshot: not sent yet .-> CP
   CP -->|ConfigUpdate: intervals| Agent
   CP --- DB[(PostgreSQL)]
+  Browser[Web UI in the browser] -->|REST /api/v1| CP
 ```
 
 - The agent receives OTLP traces, builds nodes and edges in memory and keeps edge metrics
@@ -44,7 +45,15 @@ flowchart LR
   scheduled job removes snapshots older than the retention period. The Query API under
   `/api/v1` exposes scopes, agents, graph, services, snapshot history and single snapshots,
   with domain errors as typed RFC 9457 problems; the control plane serves its OpenAPI document
-  and Swagger UI. Health and metrics are on Actuator. No UI yet (M4).
+  and Swagger UI. Health and metrics are on Actuator.
+- The UI module `architrace-ui` (Vite, React, TypeScript) is built by Gradle, which downloads
+  the pinned Node.js, and its bundle is packed into the control plane jar under `static/`. The
+  control plane serves it at `/` with a single-page fallback: unknown paths outside `/api`,
+  `/actuator`, `/swagger-ui` and `/webjars` whose last segment has no extension answer
+  `index.html`; everything else keeps its 404. The client is typed from the OpenAPI document
+  (`openapi-typescript`, `openapi-fetch`) with TanStack Query for server state. The first screen
+  is a walking skeleton that shows how many scopes the control plane reports (M4 PR 1); the
+  Projects list and the Service map follow.
 - Details and defects: [Requirements §3](../project/requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 
 ## Target architecture (MVP)
@@ -123,7 +132,7 @@ Packages are organised by feature, each with the same inner shape:
 | `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent`, `NodeView`, `Page` | store, current graph, node views, history, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`: controllers, model mapping, problem details) |
 | `drift` | `TopologyDiff` | environment diff, timeline diff | REST |
 | `rules` | `ArchitectureRule`, `Finding` | engine, scheduling after ingest | repository, REST |
-| `web` | | | OpenAPI document, Swagger UI, SPA serving (M4) |
+| `web` | | | OpenAPI document, Swagger UI, UI bundle with single-page fallback |
 
 Design detail: [M2](../project/features/m2-control-plane-storage/), [M3](../project/features/m3-query-api/),
 [M5](../project/features/m5-drift/), [M6](../project/features/m6-architecture-rules/).

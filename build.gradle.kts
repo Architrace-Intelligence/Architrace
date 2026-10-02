@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependency.management) apply false
     alias(libs.plugins.openapi.generator) apply false
+    alias(libs.plugins.node) apply false
 }
 
 allprojects {
@@ -30,7 +31,9 @@ allprojects {
 fun Project.coverageMinimum(counter: String): java.math.BigDecimal =
     (findProperty("coverage.minimum.${counter.lowercase()}") ?: "0.85").toString().toBigDecimal()
 
-subprojects {
+val javaProjects = subprojects.filter { it.name != "ui" }
+
+configure(javaProjects) {
     apply(plugin = "java-library")
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "jacoco")

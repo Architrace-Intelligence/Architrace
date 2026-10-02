@@ -1,0 +1,64 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
+ * SPDX-License-Identifier: Apache-2.0
+ */
+:root {
+  color-scheme: dark;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --bg: #0b0f17;
+  --bg-2: #0e131c;
+  --surface: #131a26;
+  --surface-2: #1a2232;
+  --line: #222d3e;
+  --line-2: #2d3a50;
+  --grid: #1b2535;
+  --ink: #e8ecf3;
+  --ink-2: #aeb8c8;
+  --ink-3: #8491a6;
+  --accent: #38bdf8;
+  --accent-ink: #082f49;
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --svc: #8b9cff;
+  --db: #f2b33d;
+  --topic: #f28ac1;
+  --ext: #9aa7b8;
+  --sev-high: #ff6b6b;
+  --sev-med: #f5a524;
+  --sev-low: #7fa3c8;
+  --ok: #3dd68c;
+  --added: #3dd68c;
+  --removed: #ff6b6b;
+  --changed: #f5a524;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f5f8;
+  --bg-2: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --line: #dde3ec;
+  --line-2: #c9d2df;
+  --grid: #e3e8f0;
+  --ink: #0f172a;
+  --ink-2: #3f4b5f;
+  --ink-3: #5f6b80;
+  --accent: #0369a1;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(3, 105, 161, 0.12);
+  --svc: #4f63d2;
+  --db: #b7791f;
+  --topic: #c2418f;
+  --ext: #5f6b80;
+  --sev-high: #b42626;
+  --sev-med: #8a5a10;
+  --sev-low: #2f5e8e;
+  --ok: #176e42;
+  --added: #176e42;
+  --removed: #b42626;
+  --changed: #8a5a10;
+  --shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
