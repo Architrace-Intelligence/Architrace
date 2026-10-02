@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package io.github.architrace.build
+package io.github.architrace.conventions
 
 import java.io.File
 import java.io.IOException

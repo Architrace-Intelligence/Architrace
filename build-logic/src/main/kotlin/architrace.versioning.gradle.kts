@@ -1,6 +1,6 @@
-import io.github.architrace.build.ConventionalCommitsIncrementer
-import io.github.architrace.build.GitHistory
-import io.github.architrace.build.ReleaseNotes
+import io.github.architrace.conventions.ConventionalCommitsIncrementer
+import io.github.architrace.conventions.GitHistory
+import io.github.architrace.conventions.ReleaseNotes
 import pl.allegro.tech.build.axion.release.domain.properties.VersionProperties
 
 plugins {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package io.github.architrace.build
+package io.github.architrace.conventions
 
 import com.github.zafarkhaja.semver.Version
 import pl.allegro.tech.build.axion.release.domain.VersionIncrementerContext

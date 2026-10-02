@@ -156,4 +156,8 @@ What landed and the decisions behind it:
   context for the version (removed from `.dockerignore`); PR 4 switches the images to prebuilt
   jars.
 - Checkstyle does not analyse `build-logic` (Kotlin); its sources carry the SPDX header through
-  Spotless and are covered by their own tests.
+  Spotless and are covered by their own tests. Its package is `io.github.architrace.conventions`:
+  a package segment named `build` is swallowed by the `**/build` ignore patterns of Docker and
+  git, which broke the first in-container build.
+- The Kotlin compiler embedded in Gradle 9.3 emits JVM 24 bytecode at most, so `build-logic`
+  pins both Java and Kotlin tasks to 24; drop the pin when Gradle's Kotlin supports 25.

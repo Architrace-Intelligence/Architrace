@@ -11,14 +11,13 @@ import io.github.architrace.controlplane.ControlPlaneRegistry;
 import io.github.architrace.grpc.proto.AgentRegister;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.testsupport.RecordingObserver;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +46,7 @@ class ControlPlaneClientTest {
 
     ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", port).usePlaintext().build();
     try (ControlPlaneClient sut = new ControlPlaneClient(channel)) {
-      RecordingObserver inbound = new RecordingObserver();
+      RecordingObserver<ControlPlaneCommand> inbound = new RecordingObserver<>();
       StreamObserver<AgentRegisterRequestedEvent> requestObserver = sut.open(inbound);
 
       requestObserver.onNext(
@@ -55,8 +54,8 @@ class ControlPlaneClientTest {
               .setRegister(AgentRegister.newBuilder().setAgentName("agent-a").build())
               .build());
 
-      waitUntil(() -> !inbound.values.isEmpty(), 2_000);
-      assertThat(inbound.values.stream().anyMatch(ControlPlaneCommand::hasConfigUpdate)).isTrue();
+      waitUntil(() -> !inbound.values().isEmpty(), 2_000);
+      assertThat(inbound.values().stream().anyMatch(ControlPlaneCommand::hasConfigUpdate)).isTrue();
     }
   }
 
@@ -70,22 +69,5 @@ class ControlPlaneClientTest {
   @FunctionalInterface
   private interface BooleanSupplier {
     boolean getAsBoolean();
-  }
-
-  private static final class RecordingObserver implements StreamObserver<ControlPlaneCommand> {
-    private final List<ControlPlaneCommand> values = new ArrayList<>();
-
-    @Override
-    public void onNext(ControlPlaneCommand value) {
-      values.add(value);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-    }
-
-    @Override
-    public void onCompleted() {
-    }
   }
 }

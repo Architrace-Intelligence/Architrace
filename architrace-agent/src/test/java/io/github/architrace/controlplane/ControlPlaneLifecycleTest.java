@@ -12,8 +12,8 @@ import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.github.architrace.grpc.proto.GraphBatch;
 import io.github.architrace.otlp.GraphSnapshot;
+import io.github.architrace.testsupport.RecordingObserver;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,8 +35,9 @@ class ControlPlaneLifecycleTest {
     sut.run();
 
     assertThat(transportClient.closed.get()).isTrue();
-    assertThat(transportClient.outboundEvents.stream().anyMatch(AgentRegisterRequestedEvent::hasRegister)).isTrue();
-    assertThat(transportClient.outboundEvents.stream().anyMatch(AgentRegisterRequestedEvent::hasGraphBatch)).isTrue();
+    List<AgentRegisterRequestedEvent> outbound = transportClient.outbound.values();
+    assertThat(outbound.stream().anyMatch(AgentRegisterRequestedEvent::hasRegister)).isTrue();
+    assertThat(outbound.stream().anyMatch(AgentRegisterRequestedEvent::hasGraphBatch)).isTrue();
   }
 
   @Test
@@ -79,27 +80,14 @@ class ControlPlaneLifecycleTest {
 
   private static final class RecordingTransportClient implements TransportClient {
     private final AtomicReference<StreamObserver<ControlPlaneCommand>> inboundObserver = new AtomicReference<>();
-    private final List<AgentRegisterRequestedEvent> outboundEvents = new ArrayList<>();
+    private final RecordingObserver<AgentRegisterRequestedEvent> outbound = new RecordingObserver<>();
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     @Override
     public StreamObserver<AgentRegisterRequestedEvent> open(
         StreamObserver<ControlPlaneCommand> inboundObserver) {
       this.inboundObserver.set(inboundObserver);
-      return new StreamObserver<>() {
-        @Override
-        public void onNext(AgentRegisterRequestedEvent value) {
-          outboundEvents.add(value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-        }
-
-        @Override
-        public void onCompleted() {
-        }
-      };
+      return outbound;
     }
 
     @Override
