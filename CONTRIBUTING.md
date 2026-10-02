@@ -22,7 +22,7 @@ Operating rules for AI agents and contributors are in [`AGENTS.md`](./AGENTS.md)
 3. Run the quality gates locally with JDK 25:
 
    ```bash
-   ./gradlew spotlessApply classes test jacocoTestReport jacocoTestCoverageVerification
+   ./gradlew spotlessApply check
    ```
 
 4. Open a pull request titled `<type>(ARCHI-<n>): <Imperative subject>` and fill in the

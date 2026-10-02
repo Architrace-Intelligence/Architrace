@@ -2,13 +2,13 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.otlp;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.health.v1.HealthCheckResponse;
 import io.grpc.protobuf.services.HealthStatusManager;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -36,10 +36,6 @@ public class OtlpTraceReceiverServer implements AutoCloseable {
     }
   }
 
-  /**
-   * Blocks until server is terminated.
-   * Responds correctly to interruption (used by StructuredTaskScope).
-   */
   public void await() throws InterruptedException {
     try {
       server.awaitTermination();

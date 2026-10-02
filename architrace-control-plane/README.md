@@ -18,22 +18,22 @@ From `control-plane/src/main/resources/application.yaml`:
 ## Build and Run
 Compile:
 ```bash
-./gradlew :control-plane:classes
+./gradlew :architrace-control-plane:classes
 ```
 
 Run locally:
 ```bash
-./gradlew :control-plane:bootRun
+./gradlew :architrace-control-plane:bootRun
 ```
 
 Run tests:
 ```bash
-./gradlew :control-plane:test
+./gradlew :architrace-control-plane:test
 ```
 
 Coverage:
 ```bash
-./gradlew :control-plane:jacocoTestReport :control-plane:jacocoTestCoverageVerification
+./gradlew :architrace-control-plane:jacocoTestReport :architrace-control-plane:jacocoTestCoverageVerification
 ```
 
 ## gRPC Contract
@@ -65,7 +65,7 @@ flowchart LR
 2. Service starts but expected endpoints are missing
    - Verify app launched with module task:
      ```bash
-     ./gradlew :control-plane:bootRun
+     ./gradlew :architrace-control-plane:bootRun
      ```
 
 3. Health RPC returns unimplemented/default behavior

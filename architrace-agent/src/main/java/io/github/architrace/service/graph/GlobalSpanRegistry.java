@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.service.graph;
 
 import io.github.architrace.model.InternalSpan;
@@ -13,7 +14,7 @@ public class GlobalSpanRegistry {
 
   private final ConcurrentMap<TraceSpanKey, InternalSpan> spanIndex = new ConcurrentHashMap<>();
 
-  public boolean registerIfAbsent(InternalSpan span){
+  public boolean registerIfAbsent(InternalSpan span) {
     var key = new TraceSpanKey(span.traceId(), span.spanId());
 
     return spanIndex.putIfAbsent(key, span) == null;

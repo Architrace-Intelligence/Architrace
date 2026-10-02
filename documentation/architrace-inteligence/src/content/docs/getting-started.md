@@ -21,12 +21,15 @@ description: Build and run Architrace locally.
 ## Build all modules
 
 ```bash
-./gradlew spotlessCheck classes test jacocoTestReport
+./gradlew spotlessApply check
 ./gradlew build
 ```
 
-The first build downloads Node.js and the UI packages; `test` includes the UI gate (`:ui:test`:
-types, lint, formatting, unit tests) and `build` packs the UI bundle into the control plane jar.
+`check` runs Spotless, Checkstyle, the tests with the JaCoCo coverage gate, the UI gate
+(`:architrace-ui:test`: types, lint, formatting, unit tests) and the tests of the build logic.
+The first build downloads Node.js and the UI packages; `build` packs the UI bundle into the
+control plane jar. The version of every artifact comes from git (`./gradlew printVersion`):
+`X.Y.Z` on a release tag, `X.Y.Z-<sha>-SNAPSHOT` anywhere else.
 
 ## Run control-plane locally
 
@@ -34,7 +37,7 @@ The control plane needs PostgreSQL. The demo stack ships one; start it first:
 
 ```bash
 docker compose -f otel-test-app/docker-compose.yml up -d postgres
-./gradlew :control-plane:bootRun
+./gradlew :architrace-control-plane:bootRun
 ```
 
 Liquibase applies the schema on start-up. Connection settings default to
@@ -63,13 +66,13 @@ The integration tests of the control plane start their own PostgreSQL through Te
 Build fat jar:
 
 ```bash
-./gradlew :agent:shadowJar
+./gradlew :architrace-agent:shadowJar
 ```
 
-Run with config:
+Run with config (the jar name carries the computed version):
 
 ```bash
-java -jar architrace-agent/build/libs/agent-0.1.0-all.jar run --config ./otel-test-app/architrace-agent.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./otel-test-app/architrace-agent.yaml
 ```
 
 Agent OTLP receiver listens on `otlp-receiver-port` from config (demo uses `4319`).
@@ -85,7 +88,7 @@ npm ci
 npm run dev
 ```
 
-`npm run check` runs the same gate as `./gradlew :ui:test`; `npm run generate` refreshes the
+`npm run check` runs the same gate as `./gradlew :architrace-ui:test`; `npm run generate` refreshes the
 TypeScript types from the OpenAPI document (it runs automatically before `dev`, `build` and
 `check`). Node.js 22.12+ is required; the Gradle build keeps its own copy under `.gradle/nodejs/` at
 the repository root.

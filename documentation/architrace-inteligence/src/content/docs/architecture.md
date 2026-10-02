@@ -54,6 +54,12 @@ flowchart LR
   (`openapi-typescript`, `openapi-fetch`) with TanStack Query for server state. The first screen
   is a walking skeleton that shows how many scopes the control plane reports (M4 PR 1); the
   Projects list and the Service map follow.
+- The build is governed by the convention plugins of the included build `build-logic`
+  (`architrace.java`, `architrace.spring-boot`, `architrace.versioning`): one place for the
+  toolchain, formatting, Checkstyle, coverage gates and versioning. Gradle project paths equal
+  directory names. The version is computed from git tags and Conventional Commits
+  ([ADR 0006](../project/adr/0006-versioning-and-release-flow/)) and reaches the CLI and the
+  agent registration through the jar manifest.
 - Details and defects: [Requirements §3](../project/requirements/#3-what-exists-today-inventory-of-main-2026-10-01).
 
 ## Target architecture (MVP)
@@ -193,16 +199,17 @@ pipeline. Kubernetes manifests and a Helm chart are post-MVP.
 
 ### Module layout
 
-| Module | Type | Depends on |
-|--------|------|------------|
-| `build-logic` | Gradle included build, convention plugins | |
-| `architrace-api` | protobuf + OpenAPI + generated code | |
-| `architrace-agent` | application | `architrace-api` |
-| `architrace-control-plane` | Spring Boot application | `architrace-api`, UI bundle |
-| `architrace-ui` | Vite project driven from Gradle | `architrace-api` (OpenAPI document) |
-| `demo` | docker compose, sample services | published images |
+| Module | Type | Depends on | State |
+|--------|------|------------|-------|
+| `build-logic` | Gradle included build, convention plugins | | current |
+| `architrace-api` | protobuf + OpenAPI + generated code | | current |
+| `architrace-agent` | application | `architrace-api` | current |
+| `architrace-control-plane` | Spring Boot application | `architrace-api`, UI bundle | current |
+| `architrace-ui` | Vite project driven from Gradle | `architrace-api` (OpenAPI document) | current |
+| `demo` | docker compose, sample services | published images | target (today `otel-test-app`) |
 
-Rules: [ADR 0005](../project/adr/0005-module-layout/).
+Rules: [ADR 0005](../project/adr/0005-module-layout/). Project paths equal directory names since
+M0 PR 2.
 
 ## Maintenance
 

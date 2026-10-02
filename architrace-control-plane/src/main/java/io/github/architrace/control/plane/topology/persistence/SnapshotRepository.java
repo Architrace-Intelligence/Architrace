@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.control.plane.topology.persistence;
 
 import java.time.Instant;
@@ -13,8 +14,7 @@ import org.springframework.data.repository.query.Param;
 
 interface SnapshotRepository extends CrudRepository<SnapshotRow, Long> {
 
-  @Query(
-      """
+    @Query("""
       select distinct on (agent_id) *
       from snapshot
       where project = :project
@@ -23,14 +23,13 @@ interface SnapshotRepository extends CrudRepository<SnapshotRow, Long> {
         and window_end <= :at
       order by agent_id, window_end desc, id desc
       """)
-  List<SnapshotRow> findLatestPerAgent(
-      @Param("project") String project,
-      @Param("environment") String environment,
-      @Param("cluster") String cluster,
-      @Param("at") Instant at);
+    List<SnapshotRow> findLatestPerAgent(
+            @Param("project") String project,
+            @Param("environment") String environment,
+            @Param("cluster") String cluster,
+            @Param("at") Instant at);
 
-  @Query(
-      """
+    @Query("""
       select id, agent_id, project, environment, cluster, window_start, window_end,
              received_at, node_count, edge_count
       from snapshot
@@ -42,17 +41,16 @@ interface SnapshotRepository extends CrudRepository<SnapshotRow, Long> {
       order by window_end desc, id desc
       limit :limit offset :offset
       """)
-  List<SnapshotSummaryRow> findSummaries(
-      @Param("project") String project,
-      @Param("environment") String environment,
-      @Param("cluster") String cluster,
-      @Param("from") Instant from,
-      @Param("to") Instant to,
-      @Param("limit") int limit,
-      @Param("offset") long offset);
+    List<SnapshotSummaryRow> findSummaries(
+            @Param("project") String project,
+            @Param("environment") String environment,
+            @Param("cluster") String cluster,
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            @Param("limit") int limit,
+            @Param("offset") long offset);
 
-  @Query(
-      """
+    @Query("""
       select count(*)
       from snapshot
       where project = :project
@@ -61,16 +59,15 @@ interface SnapshotRepository extends CrudRepository<SnapshotRow, Long> {
         and (cast(:from as timestamptz) is null or window_end >= :from)
         and (cast(:to as timestamptz) is null or window_end <= :to)
       """)
-  long countSummaries(
-      @Param("project") String project,
-      @Param("environment") String environment,
-      @Param("cluster") String cluster,
-      @Param("from") Instant from,
-      @Param("to") Instant to);
+    long countSummaries(
+            @Param("project") String project,
+            @Param("environment") String environment,
+            @Param("cluster") String cluster,
+            @Param("from") Instant from,
+            @Param("to") Instant to);
 
-  @Modifying
-  @Query(
-      """
+    @Modifying
+    @Query("""
       delete from snapshot
       where id in (
         select id from snapshot
@@ -78,5 +75,5 @@ interface SnapshotRepository extends CrudRepository<SnapshotRow, Long> {
         order by window_end, id
         limit :limit)
       """)
-  int deleteOlderThan(@Param("cutoff") Instant cutoff, @Param("limit") int limit);
+    int deleteOlderThan(@Param("cutoff") Instant cutoff, @Param("limit") int limit);
 }

@@ -2,19 +2,20 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.core.config;
 
 
-import io.github.architrace.testsupport.TestDataProvider;
-import java.nio.file.Path;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import io.github.architrace.testsupport.TestDataProvider;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AgentConfigLoaderTest {
@@ -85,7 +86,8 @@ class AgentConfigLoaderTest {
   }
 
   private void assertMissingField(String resourcePath, String expectedMessage) throws Exception {
-    Path configPath = TestDataProvider.copyResourceToTemp(tempDir, resourcePath, Path.of(resourcePath).getFileName().toString());
+    String fileName = Path.of(resourcePath).getFileName().toString();
+    Path configPath = TestDataProvider.copyResourceToTemp(tempDir, resourcePath, fileName);
 
     assertThatThrownBy(() -> sut.load(configPath))
         .isInstanceOf(IllegalArgumentException.class)

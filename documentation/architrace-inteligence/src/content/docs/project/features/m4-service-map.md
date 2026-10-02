@@ -68,10 +68,15 @@ URL carries environment, filters and time so a view can be shared.
 The initial release is the two screens agreed on 2026-10-01 ([UI design](../ui-design/#initial-release)):
 the Projects list and the Service map of a scope.
 
-1. ARCHI-32: module scaffold, Gradle integration, SPA serving, typed client, UI quality gate.
-2. ARCHI-33: Projects list on `GET /scopes` with filters and grouping.
-3. ARCHI-34: Service map on `…/graph` and `…/services` with ELK layout (library decision).
-4. ARCHI-35: lenses, node and dependency panels, time selector, URL state, polish.
+1. ARCHI-32 (merged as #39): module scaffold, Gradle integration, SPA serving, typed client,
+   UI quality gate.
+2. Projects list on `GET /scopes` with filters and grouping, with the shell (navigation rail,
+   top bar).
+3. Service map on `…/graph` and `…/services` with ELK layout (library decision).
+4. Lenses, node and dependency panels, time selector, URL state, polish.
+
+Ticket numbers are assigned when a branch is created (next free `ARCHI-<n>`); the remaining M0
+pull requests and M1 come first (maintainer, 2026-10-02).
 
 ### PR 1: scaffold (ARCHI-32)
 
@@ -112,7 +117,7 @@ What landed and the decisions behind it:
 - **SonarCloud** analyses `architrace-ui/src` with the Vitest `lcov` report; Dependabot watches
   `architrace-ui/package.json` weekly.
 - **Walking skeleton.** The first screen shows the `Projects` heading and how many scopes the
-  control plane reports (or the problem it answered); ARCHI-33 replaces it with the list.
+  control plane reports (or the problem it answered); PR 2 replaces it with the list.
 
 ## Risks and open points
 

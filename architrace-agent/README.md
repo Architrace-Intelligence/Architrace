@@ -11,7 +11,7 @@ Runtime Architrace agent CLI.
 ## Build
 Create fat jar:
 ```bash
-./gradlew :agent:shadowJar
+./gradlew :architrace-agent:shadowJar
 ```
 
 Artifact:
@@ -20,22 +20,22 @@ Artifact:
 ## Run
 Help:
 ```bash
-java -jar agent/build/libs/agent-0.1.0-all.jar --help
+java -jar architrace-agent/build/libs/architrace-agent-*-all.jar --help
 ```
 
 Version:
 ```bash
-java -jar agent/build/libs/agent-0.1.0-all.jar version
+java -jar architrace-agent/build/libs/architrace-agent-*-all.jar version
 ```
 
 Dry-run:
 ```bash
-java -jar agent/build/libs/agent-0.1.0-all.jar dry-run --config ./architrace.yaml
+java -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./architrace.yaml
 ```
 
 Run runtime:
 ```bash
-java -jar agent/build/libs/agent-0.1.0-all.jar run --config ./architrace.yaml
+java -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./architrace.yaml
 ```
 
 ## Config Schema
@@ -87,17 +87,17 @@ sequenceDiagram
 ## Testing
 All tests:
 ```bash
-./gradlew :agent:test
+./gradlew :architrace-agent:test
 ```
 
 Integration-style tests by pattern:
 ```bash
-./gradlew :agent:test --tests '*IntegrationTest'
+./gradlew :architrace-agent:test --tests '*IntegrationTest'
 ```
 
 Coverage:
 ```bash
-./gradlew :agent:jacocoTestReport :agent:jacocoTestCoverageVerification
+./gradlew :architrace-agent:jacocoTestReport :architrace-agent:jacocoTestCoverageVerification
 ```
 
 ## Notes

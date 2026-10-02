@@ -2,13 +2,13 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.grpc;
 
 import com.google.inject.Inject;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.github.architrace.grpc.proto.ControlPlaneServiceGrpc;
-import io.github.architrace.otlp.GraphNode;
 import io.github.architrace.otlp.GraphSnapshot;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
@@ -51,39 +51,9 @@ public class ControlPlaneClient implements TransportClient {
     }
 
     AgentRegisterRequestedEvent event = AgentRegisterRequestedEvent.newBuilder()
-//        .setGraphSnapshot(toProto(snapshot))
         .build();
 
     outboundObserver.onNext(event);
   }
 
-//  private GraphSnapshotEvent toProto(GraphSnapshot snapshot) {
-//
-//    GraphSnapshotEvent.Builder builder = GraphSnapshotEvent.newBuilder();
-//
-//    for (GraphNode node : snapshot.nodes()) {
-//      builder.addNodes(
-//          GraphNodeEvent.newBuilder()
-//              .setId(node.id())
-//              .setType(node.type().name())
-//              .setName(node.name())
-//              .build()
-//      );
-//    }
-//
-//    snapshot.edges().forEach((key, metrics) -> {
-//
-//      builder.addEdges(
-//          GraphEdgeEvent.newBuilder()
-//              .setFrom(key.from())
-//              .setTo(key.to())
-//              .setRps(metrics.getRps())
-//              .setErrorRate(metrics.getErrorRate())
-//              .build()
-//      );
-//
-//    });
-//
-//    return builder.build();
-//  }
 }

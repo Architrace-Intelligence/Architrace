@@ -2,8 +2,11 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.grpc;
 
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.architrace.controlplane.ControlPlaneRegistry;
 import io.github.architrace.grpc.proto.AgentHealthRequest;
@@ -17,8 +20,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ControlPlaneServiceImplTest {
 
@@ -116,7 +117,6 @@ class ControlPlaneServiceImplTest {
 
     @Override
     public void onError(Throwable throwable) {
-      // No-op for tests; failure path is asserted through registry state.
     }
 
     @Override

@@ -2,16 +2,17 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.cli;
 
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.architrace.core.config.AgentConfigLoader;
 import io.github.architrace.service.runtime.AgentRuntimeService;
 import java.io.File;
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RunCommandTest {
 

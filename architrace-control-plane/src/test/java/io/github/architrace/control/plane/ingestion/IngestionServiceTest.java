@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.control.plane.ingestion;
 
 import static io.github.architrace.control.plane.ingestion.SnapshotProtos.WINDOW_END;
@@ -24,51 +25,52 @@ import org.junit.jupiter.api.Test;
 
 class IngestionServiceTest {
 
-  private static final Instant NOW = WINDOW_END.plusSeconds(5);
-  private static final AgentRegistration REGISTRATION =
-      new AgentRegistration("prod-eu1-a", "0.4.0", new Scope("webshop", "PROD", "k8s-prod-eu1"));
+    private static final Instant NOW = WINDOW_END.plusSeconds(5);
+    private static final AgentRegistration REGISTRATION =
+            new AgentRegistration("prod-eu1-a", "0.4.0", new Scope("webshop", "PROD", "k8s-prod-eu1"));
 
-  private final InMemoryAgentStore agents = new InMemoryAgentStore();
-  private final InMemorySnapshotStore snapshots = new InMemorySnapshotStore();
-  private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
-  private final IngestionService service =
-      new IngestionService(
-          agents,
-          snapshots,
-          new IngestionMetrics(registry),
-          Clock.fixed(NOW, ZoneOffset.UTC));
+    private final InMemoryAgentStore agents = new InMemoryAgentStore();
+    private final InMemorySnapshotStore snapshots = new InMemorySnapshotStore();
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+    private final IngestionService service =
+            new IngestionService(agents, snapshots, new IngestionMetrics(registry), Clock.fixed(NOW, ZoneOffset.UTC));
 
-  @Test
-  void registersWithTheClockTime() {
-    Agent agent = service.register(REGISTRATION);
+    @Test
+    void registersWithTheClockTime() {
+        Agent agent = service.register(REGISTRATION);
 
-    assertThat(agent.firstSeenAt()).isEqualTo(NOW);
-    assertThat(agents.find(agent.id())).isPresent();
-  }
+        assertThat(agent.firstSeenAt()).isEqualTo(NOW);
+        assertThat(agents.find(agent.id())).isPresent();
+    }
 
-  @Test
-  void ingestStoresTouchesAndCounts() {
-    Agent agent = service.register(REGISTRATION);
-    service.heartbeat(agent.id());
+    @Test
+    void ingestStoresTouchesAndCounts() {
+        Agent agent = service.register(REGISTRATION);
+        service.heartbeat(agent.id());
 
-    SnapshotId id = service.ingest(agent, ordersSnapshot());
+        SnapshotId id = service.ingest(agent, ordersSnapshot());
 
-    assertThat(snapshots.find(id)).get().satisfies(s -> assertThat(s.nodes()).hasSize(3));
-    assertThat(agents.find(agent.id())).get().satisfies(a -> assertThat(a.lastSeenAt()).isEqualTo(NOW));
-    assertThat(registry.counter("architrace.snapshots.ingested").count()).isEqualTo(1.0);
-    assertThat(registry.counter("architrace.snapshots.rejected").count()).isZero();
-  }
+        assertThat(snapshots.find(id))
+                .get()
+                .satisfies(s -> assertThat(s.nodes()).hasSize(3));
+        assertThat(agents.find(agent.id()))
+                .get()
+                .satisfies(a -> assertThat(a.lastSeenAt()).isEqualTo(NOW));
+        assertThat(registry.counter("architrace.snapshots.ingested").count()).isEqualTo(1.0);
+        assertThat(registry.counter("architrace.snapshots.rejected").count()).isZero();
+    }
 
-  @Test
-  void invalidSnapshotIsCountedAndNotStored() {
-    Agent agent = service.register(REGISTRATION);
-    GraphSnapshot invalid =
-        GraphSnapshot.newBuilder().setWindowStartEpochMs(1).setWindowEndEpochMs(1).build();
+    @Test
+    void invalidSnapshotIsCountedAndNotStored() {
+        Agent agent = service.register(REGISTRATION);
+        GraphSnapshot invalid = GraphSnapshot.newBuilder()
+                .setWindowStartEpochMs(1)
+                .setWindowEndEpochMs(1)
+                .build();
 
-    assertThatThrownBy(() -> service.ingest(agent, invalid))
-        .isInstanceOf(InvalidSnapshotException.class);
+        assertThatThrownBy(() -> service.ingest(agent, invalid)).isInstanceOf(InvalidSnapshotException.class);
 
-    assertThat(snapshots.all()).isEmpty();
-    assertThat(registry.counter("architrace.snapshots.rejected").count()).isEqualTo(1.0);
-  }
+        assertThat(snapshots.all()).isEmpty();
+        assertThat(registry.counter("architrace.snapshots.rejected").count()).isEqualTo(1.0);
+    }
 }

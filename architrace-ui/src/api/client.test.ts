@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { problem, requestOf, respondWithJson, respondWithText, scopeSummary } from "../test/http";
 import { listScopes, ProblemError } from "./client";

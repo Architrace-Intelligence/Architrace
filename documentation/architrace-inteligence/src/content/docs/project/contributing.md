@@ -15,7 +15,7 @@ repository root. This page is the short human version.
 2. Work is tested locally with all quality gates green:
 
    ```bash
-   ./gradlew spotlessApply classes test jacocoTestReport jacocoTestCoverageVerification
+   ./gradlew spotlessApply check
    ```
 
 3. A pull request is opened with the repository template filled in: summary, what was done,

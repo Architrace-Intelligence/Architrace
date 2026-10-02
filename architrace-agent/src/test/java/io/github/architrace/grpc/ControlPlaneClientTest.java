@@ -2,25 +2,26 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.grpc;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.architrace.controlplane.ControlPlaneRegistry;
 import io.github.architrace.grpc.proto.AgentRegister;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
+import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import io.github.architrace.testsupport.TestDataProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ControlPlaneClientTest {
 
@@ -81,12 +82,10 @@ class ControlPlaneClientTest {
 
     @Override
     public void onError(Throwable throwable) {
-      // No-op for test observer.
     }
 
     @Override
     public void onCompleted() {
-      // No-op for test observer.
     }
   }
 }

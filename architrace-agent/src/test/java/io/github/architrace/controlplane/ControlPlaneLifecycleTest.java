@@ -2,7 +2,10 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.controlplane;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.architrace.grpc.TransportClient;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
@@ -15,8 +18,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ControlPlaneLifecycleTest {
 
@@ -93,12 +94,10 @@ class ControlPlaneLifecycleTest {
 
         @Override
         public void onError(Throwable throwable) {
-          // No-op for test observer.
         }
 
         @Override
         public void onCompleted() {
-          // No-op for test observer.
         }
       };
     }

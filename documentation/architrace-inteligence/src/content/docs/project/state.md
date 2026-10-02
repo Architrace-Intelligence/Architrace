@@ -11,31 +11,23 @@ Last updated: **2026-10-02**
 
 ## Where we are
 
-- Stages 0–2 are done. Stage 3 (implementation) is open. M0 PR 1 (hygiene, ARCHI-24) is merged
-  as #26; the remaining M0 PRs (build-logic, pipelines, release, ruleset) are deferred behind
-  the feature slices the maintainer asked for on 2026-10-01: the Projects list and the Service
-  map with their backend, step by step.
-- The UI design (ARCHI-25) is merged as #30: eight interactive prototypes plus the canvas
-  `MVP-frames` (initial release: Projects list and Service map) in the Claude Design project
-  "Architrace UI", the [UI design](../features/ui-design/) page, sources under `design/`.
-  The visual direction (dark-first "calm control room") was chosen without a brief and still
-  needs the maintainer's confirmation or redirection; the tokens now live in
-  `architrace-ui/src/styles/tokens.css`, so a redirection is a token edit.
-- M2 (#31, #33, #35) and M3 (#36, #38) are complete: PostgreSQL schema and stores, ingestion,
-  `TopologyQuery`, retention, Actuator, the OpenAPI 3.1 contract with generated server
-  interfaces, every Query API resource, typed problem details, Swagger UI, the
-  [Query API](../../reference/query-api/) reference. Every Java module carries a
-  `gradle.lockfile`; a dependency change must rewrite them with `--write-locks`. The agent
-  coverage ratchet is 52 / 31 / 50 % until M1 restores 85 %.
-- M4 PR 1 (ARCHI-32, in review): module `architrace-ui` (Vite, React 19, TypeScript 5.9,
-  TanStack Query, `openapi-fetch` with types from `openapi-typescript`), built by Gradle through
-  the node plugin with a downloaded Node (`nodeVersion` in `gradle.properties`, installed under
-  `.gradle/nodejs/`), bundle handed to the control plane as the consumable configuration
-  `bundle` and served at `/` with `SpaFallbackResourceResolver` (HTML-accepting requests for
-  extension-less paths outside `/api`, `/actuator`, `/swagger-ui`, `/webjars` get `index.html`).
-  `npm run check` is the UI gate and runs as `:ui:test`; Spotless puts SPDX headers on the UI
-  sources; Sonar and Dependabot cover the module. The first screen is a walking skeleton
-  (scope count). Details on the [M4](../features/m4-service-map/) page.
+- Stages 0–2 are done. Stage 3 (implementation) is open. On 2026-10-02 the maintainer asked to
+  finish **M0 first and then continue in order** (M1, then M4 PR 2 onwards, M5, M6, M7); the
+  vertical UI slices are paused after M4 PR 1.
+- Merged: M0 PR 1 (hygiene, #26), the UI design (#30), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1
+  (#39: `architrace-ui` scaffold, SPA serving, typed client, UI gate). The UI direction (dark-first
+  "calm control room", tokens in `architrace-ui/src/styles/tokens.css`) still awaits the
+  maintainer's confirmation.
+- **M0 PR 2 (ARCHI-33, in review)**: included build `build-logic` with `architrace.java`,
+  `architrace.spring-boot` and `architrace.versioning`; project paths equal directory names
+  (`:architrace-agent`, …) and artifacts are named after them; version from git tags and
+  Conventional Commits through axion-release (`printVersion`, `printReleaseVersion`,
+  `releaseNotes`; no version in `gradle.properties`); the CLI and the agent registration read
+  the version from the jar manifest (`core.BuildVersion`); palantir-java-format (4 spaces, 120
+  columns) and Checkstyle 14 (`config/checkstyle/checkstyle.xml`, comments forbidden) run inside
+  `check`; the gate command is `./gradlew spotlessApply check`. The agent keeps
+  `java.format.enabled=false` and the coverage ratchet 52 / 31 / 50 % until M1. Details on the
+  [M0](../features/m0-engineering-platform/) page.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
   rule in `AGENTS.md` §4).
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
@@ -44,7 +36,8 @@ Last updated: **2026-10-02**
 
 Agreed and recorded (Requirements §7–8, ADR 0001–0010): PostgreSQL + Liquibase, CodeRabbit,
 maintainer-authored PRs with a zero-approval ruleset, React + TypeScript UI, sequential
-`ARCHI-<n>`, copyright holder. MVP scope M0–M7; design agreed on 2026-10-01.
+`ARCHI-<n>`, copyright holder. MVP scope M0–M7; design agreed on 2026-10-01. Order of work
+since 2026-10-02: M0 to completion, then M1, M4, M5, M6, M7.
 
 The initial UI release is narrowed to two screens (maintainer, 2026-10-01): a Projects list
 filtered by project, environment and cluster, and the Service map of the chosen scope with
@@ -54,11 +47,16 @@ Query API conventions since ARCHI-31: domain errors carry `urn:architrace:proble
 types, framework errors none; the services list embeds the dependencies of every service
 instead of a per-id resource; the snapshot history filters on window end, inclusive.
 
-UI conventions since ARCHI-32: feature folders under `src/` (`app`, `api`, later `projects`,
-`map`); server state only through `queryOptions` factories in `src/api/queries.ts`; the
-generated `src/api/schema.d.ts` is never committed; tests stub `fetch` with the helpers in
-`src/test/http.ts`; TypeScript stays on 5.x until `openapi-typescript` and `typescript-eslint`
-support 6 and 7.
+UI conventions since ARCHI-32: feature folders under `src/`; server state only through
+`queryOptions` factories; the generated `src/api/schema.d.ts` is never committed; tests stub
+`fetch` with the helpers in `src/test/http.ts`; TypeScript stays on 5.x until
+`openapi-typescript` and `typescript-eslint` support 6 and 7.
+
+Build conventions since ARCHI-33: new Java modules apply `architrace.java` (or
+`architrace.spring-boot`); third-party plugins are applied by id, their versions live in the
+catalog and on the `build-logic` classpath; switches stay exhaustive instead of carrying a
+`default`; the first release tag `v0.1.0` is created manually by the maintainer, everything
+after it is computed.
 
 Working assumption since ARCHI-26: a **scope** is project × environment × cluster, reported by
 the agent at registration and stored on every snapshot. Pending: where the project value comes
@@ -68,24 +66,27 @@ only).
 
 ## Next step
 
-M4 PR 1 (ARCHI-32) is open for review. Merge it first (one PR at a time), then rebase and
+M0 PR 2 (ARCHI-33) is open for review. Merge it first (one PR at a time), then rebase and
 update this page.
 
-Vertical slices towards the two screens, one PR each, in this order:
+Then, in order (one PR each, next free ticket number):
 
-1. ARCHI-33: Projects list page on `GET /scopes` (frames 1–2 of `MVP-frames`: rows grouped by
-   project, filter chips for environment and cluster, group-by control, URL state); the shell
-   (navigation rail, top bar) comes with it.
-2. ARCHI-34: Service map page on `…/graph` and `…/services` (React Flow + ELK, library decision
-   with a 300-node fixture); ARCHI-35: lenses, panels, time selector, polish.
-3. M1 (agent pipeline) follows so the demo stack feeds real data; until then a fixture loader
-   seeds snapshots for development.
+1. M0 PR 3: `pr.yml` with `build → quality → security` jobs and the title check, `codeql.yml`,
+   composite action for JDK + Gradle, Snyk / OWASP Dependency-Check / Gitleaks configuration,
+   removal of `agent.yml` and `ci-cd.yml` once `main.yml` exists.
+2. M0 PR 4: `main.yml` with release (tag + GitHub release from `releaseNotes` when
+   `printReleaseVersion` differs from the latest tag) and images (Dockerfiles that copy prebuilt
+   jars, Trivy, GHCR); the maintainer seeds `v0.1.0` beforehand.
+3. M0 PR 5: `main` ruleset (ADR 0003), repository settings, `.coderabbit.yaml`, site pages.
+4. M1 agent pipeline (restores 85 % coverage and the formatter in the agent), then M4 PR 2
+   (Projects list), M4 PR 3–4, M5, M6, M7.
 
 ## How to resume
 
 ```bash
 git fetch --all --prune && git status --short && git branch --show-current
 gh pr list --state open
+./gradlew printVersion
 ```
 
 Then read [Progress](../progress/) and the feature page of whatever is in flight. Local

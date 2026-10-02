@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.service.runtime;
 
 import com.google.inject.Inject;
@@ -50,7 +51,7 @@ public final class AgentRuntimeService {
     var syncResolver = new SyncDependencyResolver(registry);
     var asyncResolver = new AsyncDependencyResolver();
     NodeRegistry nodeRegistry = new NodeRegistry();
-    GraphAggregator aggregator = new GraphAggregator(nodeRegistry, syncResolver );
+    GraphAggregator aggregator = new GraphAggregator(nodeRegistry, syncResolver);
 
     SpanRingBuffer ringBuffer = new SpanRingBuffer(1 << 16);
     SpanPipeline pipeline = new SpanPipeline(

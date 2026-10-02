@@ -2,14 +2,15 @@
  * SPDX-FileCopyrightText: Copyright (c) 2026 Dmytro Hryshchenko
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package io.github.architrace.grpc;
 
 
-import java.net.InetSocketAddress;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.net.InetSocketAddress;
+import org.junit.jupiter.api.Test;
 
 class GrpcAddressParserTest {
 

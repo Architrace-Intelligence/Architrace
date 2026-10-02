@@ -3,7 +3,7 @@ title: M0. Engineering platform
 description: Green gates on every PR, automatic versioning and publishing on main.
 ---
 
-Status: design agreed · Order: 1 · Requirements: P1–P7, §5.1–5.5
+Status: in progress (PR 2 of 5 in review, ARCHI-33) · Order: 1 · Requirements: P1–P7, §5.1–5.5
 
 ## Goal
 
@@ -90,11 +90,61 @@ main.yml  build ──► quality ──► security ──► release ──►
 
 ## Delivery plan
 
-1. Hygiene: green build on `main`, stale files removed, templates and labels fixed.
-2. `build-logic` conventions and versioning; CLI version from manifest.
+1. Hygiene: green build on `main`, stale files removed, templates and labels fixed (ARCHI-24, #26).
+2. `build-logic` conventions and versioning; CLI version from manifest (ARCHI-33).
 3. `pr.yml`, `codeql.yml`, composite action, scanner configuration, Dependabot.
 4. `main.yml` with release and images; Dockerfiles for agent and control plane (shared with M7).
 5. Ruleset, repository settings, `.coderabbit.yaml`, site pages (contributing, getting started).
+
+### PR 2: build conventions and versioning (ARCHI-33)
+
+What landed and the decisions behind it:
+
+- **Included build `build-logic`** with three precompiled script plugins. `architrace.java`
+  (toolchain from `javaVersion`, `--enable-preview`, test dependencies from the catalog,
+  Spotless, Checkstyle, JaCoCo report and gate wired into `check`, manifest
+  `Implementation-Title` / `Implementation-Version`), `architrace.spring-boot` (Boot and
+  dependency management on top of `architrace.java`, build info without the timestamp, plain jar
+  disabled), `architrace.versioning` (axion-release with the Conventional Commits incrementer).
+  Third-party plugin versions stay in `gradle/libs.versions.toml`; `build-logic` puts the plugins
+  on the classpath, so module build files apply them by id without versions. The root build
+  script shrank to the lifecycle wiring and the Sonar properties.
+- **Project paths equal directory names** (`:architrace-agent`, …) as ADR 0005 requires, so
+  artifacts are named `architrace-agent-<version>-all.jar` and
+  `architrace-control-plane-<version>.jar`. Every command in the docs, the workflows and the
+  demo Dockerfiles moved with them.
+- **Versioning** ([ADR 0006](../../adr/0006-versioning-and-release-flow/)): axion-release finds
+  the last `v*` tag; `ConventionalCommitsIncrementer` reads the commits since that tag through
+  JGit and applies the highest bump (`!` or `BREAKING CHANGE` → major, `feat` → minor, `fix`,
+  `perf`, `refactor`, `build` → patch, anything else → none). Between tags the version is
+  `X.Y.Z-<sha>-SNAPSHOT`, on the tag `X.Y.Z`; without any tag it stays `0.1.0-<sha>-SNAPSHOT`
+  until the maintainer seeds `v0.1.0`. Tasks: `printVersion`, `printReleaseVersion`,
+  `releaseNotes` (Markdown grouped by type, scope in bold, `#NN` linked to the pull request,
+  `-PreleaseNotes.since=<tag>` to pick the base). `gradle.properties` carries no version; the
+  CLI (`version`, `--version`) and the agent registration read `Implementation-Version` from
+  the manifest through `core.BuildVersion`. The parsing and the git reading are unit-tested in
+  `build-logic` with JUnit and a temporary JGit repository; root `test` and `check` run them.
+- **Formatting**: palantir-java-format through Spotless 8 (4-space indentation, 120 columns;
+  `.editorconfig` follows). google-java-format was tried first and does not start under JDK 25
+  without extra JVM exports. The reflow touched the control plane and the API module. The agent
+  keeps `java.format.enabled=false` next to its coverage ratchet: reformatting its ~50 %-covered
+  legacy code would turn every line into "new code" for the SonarCloud pull-request gate; M1
+  rewrites the module and removes both exceptions. Until then Spotless only orders the agent's
+  imports. The SPDX header is now followed by a blank line in every language.
+- **Checkstyle 14** with `config/checkstyle/checkstyle.xml`: Google style minus everything the
+  formatter owns (indentation) and everything Javadoc-related, plus rules the project needs:
+  no `//` or `/**` comments (P7), no unused imports or local variables, `_` allowed as an unnamed
+  catch or lambda parameter, single-line `{}` bodies allowed, no `default` branch requirement
+  (switches are exhaustive by construction). Running it on the existing code found commented-out
+  dead code and three empty test shells in the agent, which were removed, and a few spacing
+  slips that were fixed by hand.
+- **One gate command**: `./gradlew spotlessApply check`. `check` now runs Spotless, Checkstyle,
+  the tests with the JaCoCo gate, the UI gate and the build-logic tests; the legacy workflows
+  call `check` until PR 3 replaces them. Jobs that build artifacts fetch the full history so the
+  version resolves.
+- **Dropped**: the GraalVM native plugin (out of scope for the MVP, and it broke the OpenAPI
+  generator's YAML parser), the root `runArchitrace` and `buildRuntime` tasks, the plain
+  control plane jar (it collided with the `*.jar` glob of the demo Dockerfile).
 
 ## Risks and open points
 
@@ -102,3 +152,8 @@ main.yml  build ──► quality ──► security ──► release ──►
   is Sonar + Error Prone for bug patterns.
 - OWASP Dependency-Check without an NVD API key is slow; the maintainer creates the key.
 - Sonar project key is still the old `…_Architrace-agent`; rename in SonarCloud or keep.
+- The demo Dockerfiles build inside the container and therefore need `.git` in the build
+  context for the version (removed from `.dockerignore`); PR 4 switches the images to prebuilt
+  jars.
+- Checkstyle does not analyse `build-logic` (Kotlin); its sources carry the SPDX header through
+  Spotless and are covered by their own tests.
