@@ -179,6 +179,9 @@ What landed and the decisions behind it:
 - **CodeQL** (`codeql.yml`, advanced setup) on pull requests, pushes to `main` and weekly:
   `java-kotlin` in manual build mode (`./gradlew --no-daemon --no-build-cache compileJava`, so the
   tracer sees every javac invocation), `javascript-typescript` and `actions` without a build.
+  `build-logic` is compiled by a plain `./gradlew help` before `codeql init`: under the tracer the
+  Kotlin compile daemon receives the CodeQL Kotlin extractor and ran out of its default heap, and
+  the convention plugins are not analysis targets anyway.
   `.github/codeql/codeql-config.yml` keeps generated sources, bundles and `node_modules` out of the
   results. Default setup is not enabled on the repository, so the workflow is the only analysis.
 - **Snyk** tests every manifest it finds (`--all-projects`) except the Python demo and
@@ -199,9 +202,9 @@ What landed and the decisions behind it:
 
 ## Risks and open points
 
-- CodeQL support for Java 25 preview sources shows on the first run of `codeql.yml`; the
-  fallback is `build-mode: none`. SpotBugs stays out: Sonar and CodeQL cover bug and security
-  patterns.
+- CodeQL extracted the Java 25 sources in manual build mode on the first run of PR 3; the
+  fallback, should a preview construct break the extractor later, is `build-mode: none`. SpotBugs
+  stays out: Sonar and CodeQL cover bug and security patterns.
 - Dependency-Check 13.0.0 cannot update without an NVD API key (upstream issue 8715 sends an
   empty key); the step is skipped with a warning until the maintainer stores the key as the
   repository secret `NVD_API_KEY`, and as a Dependabot secret so Dependabot pull requests are
