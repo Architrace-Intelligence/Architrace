@@ -159,11 +159,15 @@ npm run dev
 
 ## CI
 
-Pull requests run [`PR Checks`](./.github/workflows/agent.yml): `./gradlew check` (Spotless,
-Checkstyle, tests with the JaCoCo coverage gate, the UI gate), SonarCloud analysis and a jar build. Merges to `main` run
-[`Merge CI/CD`](./.github/workflows/ci-cd.yml), which adds Snyk monitoring and publishes release
-artifacts on `v*` tags. Both pipelines are being replaced by the gated flow described in the
-[M0 design](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/).
+Pull requests run [`PR`](./.github/workflows/pr.yml): `build` (`./gradlew build`: Spotless,
+Checkstyle, tests with the JaCoCo coverage gate, the UI gate, jars), `quality` (SonarCloud with
+the quality gate on new code), `security` (Snyk, OWASP Dependency-Check, gitleaks) and `docs`
+(site build). [`PR title`](./.github/workflows/pr-title.yml) checks the title convention and
+[`CodeQL`](./.github/workflows/codeql.yml) analyses the Java and TypeScript sources and the
+workflows. Merges to `main` still run the legacy [`Merge CI/CD`](./.github/workflows/ci-cd.yml)
+until the release pipeline of the
+[M0 design](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/)
+replaces it.
 
 ---
 

@@ -1,0 +1,6 @@
+name: Architrace CodeQL configuration
+
+paths-ignore:
+  - "**/build/**"
+  - "**/dist/**"
+  - "**/node_modules/**"

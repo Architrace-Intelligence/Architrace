@@ -177,5 +177,8 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
 - Local toolchain: JDK 25 lives at `~/.jdks/jdk-25.0.3+9` (default `java` is 21); run Gradle
   with `JAVA_HOME` pointing at JDK 25. `gradlew` is not executable in git, use `sh ./gradlew`
   or `chmod +x gradlew`.
-- Pipelines: `agent.yml` (PR checks) and `ci-cd.yml` (main) are the legacy workflows; M0 PR 3
-  replaces them with the gated `pr.yml` / `main.yml` flow described on the M0 feature page.
+- Pipelines: `pr.yml` (`build → quality → security`, `docs`), `pr-title.yml` and `codeql.yml`
+  check pull requests; the composite action `.github/actions/setup-build` installs the toolchains
+  from `gradle.properties`; actions are pinned by commit SHA. `ci-cd.yml` is the legacy main
+  workflow until M0 PR 4 replaces it with `main.yml`; `docs-deploy.yml` publishes the site from
+  `main`.

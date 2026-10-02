@@ -2,6 +2,7 @@ plugins {
     base
     id("architrace.versioning")
     alias(libs.plugins.sonarqube)
+    alias(libs.plugins.dependency.check)
 }
 
 allprojects {
@@ -52,4 +53,13 @@ sonar {
         )
         property("sonar.exclusions", "**/build/generated/**")
     }
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7.0f
+    scanConfigurations = listOf("runtimeClasspath")
+    formats = listOf("HTML", "SARIF")
+    outputDirectory = layout.buildDirectory.dir("reports/dependency-check")
+    suppressionFile = "config/dependency-check/suppressions.xml"
+    nvd.apiKey = providers.environmentVariable("NVD_API_KEY").orNull
 }

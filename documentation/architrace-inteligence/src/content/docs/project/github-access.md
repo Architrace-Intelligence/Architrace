@@ -66,8 +66,9 @@ Options:
 
 - Restrict deletions, block force pushes, require linear history.
 - Require a pull request before merging; squash merge only; `delete_branch_on_merge` on.
-- Required status checks: `build`, `quality`, `security` (names fixed in the CI design). The AI
-  review gate is *required conversation resolution*, not a status check.
+- Required status checks: `build`, `quality`, `security`, `docs`, `title` and the CodeQL analyses
+  (the job names of `pr.yml`, `pr-title.yml` and `codeql.yml`). The AI review gate is *required
+  conversation resolution*, not a status check.
 - Require conversation resolution before merge.
 - No bypass actors.
 
@@ -80,6 +81,11 @@ Options:
       the project in SonarCloud must have *Automatic Analysis* switched off because analysis is
       CI-driven.
 - [ ] Confirm the Snyk organisation slug (`SNYK_ORG`).
+- [ ] Rotate `SNYK_TOKEN`: the stored token is rejected with 401 (first run of `security`, PR #44).
+- [ ] Request an [NVD API key](https://nvd.nist.gov/developers/request-an-api-key) and store it as
+      the repository secret `NVD_API_KEY`; OWASP Dependency-Check is skipped until it exists.
+- [ ] Add `NVD_API_KEY` and `SNYK_TOKEN` as Dependabot secrets too (Settings → Secrets and
+      variables → Dependabot), so Dependabot pull requests get the same scanners.
 
 - [x] Ticket numbering: `ARCHI-<n>` sequential.
 - [x] Copyright holder: `Dmytro Hryshchenko`; header fixed in the hygiene feature.

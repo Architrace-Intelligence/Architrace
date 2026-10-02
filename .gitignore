@@ -43,3 +43,6 @@ __pycache__/
 ### Tooling output ###
 .playwright-mcp/
 design/ui-prototype/project/
+
+# Kotlin compiler session data
+.kotlin/

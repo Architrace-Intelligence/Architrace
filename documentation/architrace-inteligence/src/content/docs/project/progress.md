@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | in progress | M2, M3 and M4 PR 1 done; M0 PR 2 (build conventions, ARCHI-33) in review |
+| 3 | Implementation (feature by feature)     | in progress | M2, M3 and M4 PR 1 done; M0 PR 2 merged; M0 PR 3 (PR pipeline, ARCHI-34) in review |
 | 4 | Testing, hardening, release 1.0         | todo        |                                                        |
 
 ## Process foundation
@@ -27,10 +27,10 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | GitHub access and setup checklist                 | done  | PR #20, [GitHub setup](../github-access/)   |
 | Pull request template                             | done  | PR #20                                     |
 | Documentation moved to the site, current-state page | done  | PR #21                                   |
-| Commit convention and automated versioning        | review | ADR 0006; `architrace.versioning` in M0 PR 2 (ARCHI-33) |
-| CI: single PR pipeline with quality gates         | todo  | needs agreement (requirements §5.2)         |
+| Commit convention and automated versioning        | done  | ADR 0006; `architrace.versioning` (ARCHI-33, #42) |
+| CI: single PR pipeline with quality gates         | review | `pr.yml`, `pr-title.yml`, composite action (ARCHI-34) |
 | CI: AI code review                                | todo  | CodeRabbit (ADR 0002); app install pending  |
-| CI: security scanning (Snyk, OWASP, CodeQL, …)    | todo  | needs agreement (requirements §5.5)         |
+| CI: security scanning (Snyk, OWASP, CodeQL, …)    | review | Snyk, Dependency-Check, gitleaks in `pr.yml`; `codeql.yml` (ARCHI-34) |
 | CD: main pipeline, release, images                | todo  | needs agreement (requirements §5.2)         |
 | Branch ruleset on `main`                          | todo  | shape agreed in ADR 0003; applied in M0     |
 | ADR folder and first ADRs                         | done  | ADR 0001–0010 accepted                      |
@@ -43,7 +43,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 
 | Feature | State | Design | PR | Notes |
 |---------|-------|--------|----|-------|
-| [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | ARCHI-24, ARCHI-33 | PR 1 (hygiene) merged as #26; PR 2 (`build-logic`, versioning, Checkstyle, project paths) in review |
+| [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | ARCHI-24, ARCHI-33, ARCHI-34 | PR 1 (hygiene, #26) and PR 2 (`build-logic`, versioning, Checkstyle, #42) merged; PR 3 (PR pipeline, CodeQL, scanners) in review |
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | todo | agreed | | |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
@@ -76,3 +76,5 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-02 | M4 PR 1: `architrace-ui` module (Vite, React, TypeScript) built by Gradle with a downloaded Node, bundle served by the control plane with a single-page fallback, client typed from the OpenAPI document, UI quality gate in the pipelines (ARCHI-32) |
 | 2026-10-02 | Maintainer: finish M0 first, then continue in order (M1, M4, M5, M6, M7) |
 | 2026-10-02 | M0 PR 2: `build-logic` convention plugins, version from git tags and Conventional Commits, CLI version from the manifest, palantir-java-format and Checkstyle, project paths equal directory names (ARCHI-33) |
+| 2026-10-02 | M0 PR 2 merged (#42) |
+| 2026-10-02 | M0 PR 3: `pr.yml` with `build → quality → security` and `docs`, title check, CodeQL for Java, TypeScript and workflows, Snyk, OWASP Dependency-Check, gitleaks, composite setup action (ARCHI-34) |
