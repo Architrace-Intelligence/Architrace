@@ -10,11 +10,7 @@ export function ControlPlaneStatus() {
   const scopes = useQuery(scopesQuery());
 
   if (scopes.isPending) {
-    return (
-      <p className="status" role="status">
-        Connecting to the control plane…
-      </p>
-    );
+    return <output className="status">Connecting to the control plane…</output>;
   }
   if (scopes.isError) {
     return (
@@ -24,9 +20,7 @@ export function ControlPlaneStatus() {
     );
   }
   return (
-    <p className="status" role="status">
-      {formatScopeCount(scopes.data.length)} reported by agents.
-    </p>
+    <output className="status">{formatScopeCount(scopes.data.length)} reported by agents.</output>
   );
 }
 

@@ -19,7 +19,7 @@ final class SpaFallbackResourceResolver extends PathResourceResolver {
   private final List<String> serverRoutes;
 
   SpaFallbackResourceResolver(List<String> serverRoutes) {
-    this.serverRoutes = List.copyOf(serverRoutes);
+    this.serverRoutes = serverRoutes.stream().map(SpaFallbackResourceResolver::asRequestPath).toList();
   }
 
   @Override
@@ -36,8 +36,7 @@ final class SpaFallbackResourceResolver extends PathResourceResolver {
   }
 
   boolean isApplicationRoute(String requestPath) {
-    String path = "/" + requestPath;
-    return serverRoutes.stream().noneMatch(route -> isUnder(path, route))
+    return serverRoutes.stream().noneMatch(route -> isUnder(requestPath, route))
         && !lastSegment(requestPath).contains(".");
   }
 
@@ -49,8 +48,12 @@ final class SpaFallbackResourceResolver extends PathResourceResolver {
     return accepted.isEmpty() || accepted.stream().anyMatch(type -> type.includes(MediaType.TEXT_HTML));
   }
 
-  private static boolean isUnder(String path, String route) {
-    return path.equals(route) || path.startsWith(route + "/");
+  private static String asRequestPath(String route) {
+    return route.charAt(0) == '/' ? route.substring(1) : route;
+  }
+
+  private static boolean isUnder(String requestPath, String route) {
+    return requestPath.equals(route) || requestPath.startsWith(route + '/');
   }
 
   private static String lastSegment(String path) {
