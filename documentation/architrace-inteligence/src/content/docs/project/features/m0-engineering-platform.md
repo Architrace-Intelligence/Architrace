@@ -206,7 +206,9 @@ What landed and the decisions behind it:
   empty key); the step is skipped with a warning until the maintainer stores the key as the
   repository secret `NVD_API_KEY`, and as a Dependabot secret so Dependabot pull requests are
   checked too. The first run with the key verifies the analysis end to end.
-- Snyk runs only where `SNYK_TOKEN` is available: add it as a Dependabot secret as well.
+- Snyk runs only where `SNYK_TOKEN` is available: add it as a Dependabot secret as well. The
+  stored token was rejected (401) on the first run of PR 3 and has to be rotated; until then the
+  `security` job fails on the Snyk step while Dependency-Check and gitleaks still report.
 - Dependabot pull request #41 (GitHub Actions bumps) edits the removed and rewritten workflows
   and needs a rebase or a close after PR 3.
 - Sonar project key is still the old `…_Architrace-agent`; rename in SonarCloud or keep.

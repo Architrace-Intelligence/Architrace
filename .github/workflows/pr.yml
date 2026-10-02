@@ -148,8 +148,8 @@ jobs:
         run: |
           archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
-          curl -sSfL -o "$archive" "$base/$archive"
-          curl -sSfL -o checksums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          curl --proto '=https' --tlsv1.2 -sSfL -o "$archive" "$base/$archive"
+          curl --proto '=https' --tlsv1.2 -sSfL -o checksums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
           grep " $archive\$" checksums.txt | sha256sum --check --strict
           mkdir -p gitleaks-bin
           tar -xzf "$archive" -C gitleaks-bin gitleaks
@@ -181,7 +181,7 @@ jobs:
           cache-dependency-path: documentation/architrace-inteligence/package-lock.json
 
       - name: Install the dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build the site
         run: npm run build

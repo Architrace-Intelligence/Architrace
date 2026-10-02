@@ -26,9 +26,10 @@ Last updated: **2026-10-02**
   `javascript-typescript` and `actions`; the composite action `.github/actions/setup-build` reads
   the toolchain versions from `gradle.properties`; `agent.yml` removed; `docs-deploy.yml`
   restricted to `main`. Details on the [M0](../features/m0-engineering-platform/) page.
-- Maintainer tasks opened by PR 3: request an NVD API key and store it as the repository secret
-  `NVD_API_KEY` (Dependency-Check 13.0.0 cannot run without it and is skipped with a warning until
-  then); add `NVD_API_KEY` and `SNYK_TOKEN` as Dependabot secrets so Dependabot pull requests are
+- Maintainer tasks opened by PR 3: rotate `SNYK_TOKEN` (the first run of `security` got a 401
+  from Snyk, the stored token is no longer valid); request an NVD API key and store it as the
+  repository secret `NVD_API_KEY` (Dependency-Check 13.0.0 cannot run without it and is skipped
+  with a warning until then); add both as Dependabot secrets so Dependabot pull requests are
   scanned too; rebase or close Dependabot PR #41, which edits the replaced workflows.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
   rule in `AGENTS.md` §4).

@@ -81,6 +81,7 @@ Options:
       the project in SonarCloud must have *Automatic Analysis* switched off because analysis is
       CI-driven.
 - [ ] Confirm the Snyk organisation slug (`SNYK_ORG`).
+- [ ] Rotate `SNYK_TOKEN`: the stored token is rejected with 401 (first run of `security`, PR #44).
 - [ ] Request an [NVD API key](https://nvd.nist.gov/developers/request-an-api-key) and store it as
       the repository secret `NVD_API_KEY`; OWASP Dependency-Check is skipped until it exists.
 - [ ] Add `NVD_API_KEY` and `SNYK_TOKEN` as Dependabot secrets too (Settings → Secrets and

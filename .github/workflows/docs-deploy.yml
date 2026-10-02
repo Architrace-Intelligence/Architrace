@@ -39,7 +39,7 @@ jobs:
           token: ${{ secrets.PAGES_DEPLOY_TOKEN || github.token }}
 
       - name: Install the dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build the site
         run: npm run build
