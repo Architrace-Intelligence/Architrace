@@ -14,6 +14,7 @@ grpc = "1.77.1"
 protobuf = "4.33.4"
 otel-proto = "1.9.0-alpha"
 sonarqube = "7.1.0.6387"
+dependency-check = "13.0.0"
 protobuf-gradle-plugin = "0.9.5"
 javax-annotation = "1.3.2"
 assertj = "3.27.4"
@@ -84,6 +85,7 @@ java-semver = { group = "com.github.zafarkhaja", name = "java-semver", version.r
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+dependency-check = { id = "org.owasp.dependencycheck", version.ref = "dependency-check" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf-gradle-plugin" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }

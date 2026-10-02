@@ -3,7 +3,7 @@ title: M0. Engineering platform
 description: Green gates on every PR, automatic versioning and publishing on main.
 ---
 
-Status: in progress (PR 2 of 5 in review, ARCHI-33) · Order: 1 · Requirements: P1–P7, §5.1–5.5
+Status: in progress (PR 3 of 5 in review, ARCHI-34) · Order: 1 · Requirements: P1–P7, §5.1–5.5
 
 ## Goal
 
@@ -52,16 +52,23 @@ Gradle project paths equal directory names (`:architrace-agent`, not `:agent`). 
 ### Pipelines
 
 ```
-pr.yml    build ──► quality ──► security          (required checks)
-          └ docs build (site)
-codeql.yml (advanced setup, JDK 25, manual build mode)
-main.yml  build ──► quality ──► security ──► release ──► images ──► docs deploy
+pr.yml        build ──► quality ──► security       (required checks)
+              └ docs
+pr-title.yml  title                                (required check)
+codeql.yml    CodeQL (java-kotlin | javascript-typescript | actions)
+main.yml      build ──► quality ──► security ──► release ──► images ──► docs deploy
 ```
 
-- `build`: compile, unit and integration tests, coverage report, upload reports and jars.
-- `quality`: Spotless, Checkstyle, Sonar with quality gate on new code.
+- `build`: `./gradlew build`, the same gate as on a developer machine (compile, Spotless,
+  Checkstyle, tests with the JaCoCo gate, UI gate, `build-logic` tests, jars); uploads the reports
+  and the jars as artifacts.
+- `quality`: SonarCloud analysis over the reports restored from `build`, quality gate on new code;
+  skipped for Dependabot, which has no access to the token.
 - `security`: Snyk test (high+), OWASP Dependency-Check (fail on CVSS ≥ 7, NVD API key from
-  `NVD_API_KEY`), Gitleaks.
+  `NVD_API_KEY`, SARIF to code scanning), gitleaks over the commits of the pull request.
+- `docs`: builds the documentation site.
+- `title`: the pull request title follows the commit convention; its own workflow, so a title
+  edit does not rebuild.
 - `release` (main only): compute version; when the commits since the last tag contain a
   releasing type, create tag `vX.Y.Z`, GitHub release with generated notes.
 - `images` (main only): build agent and control plane images, Trivy scan (fail on critical),
@@ -75,8 +82,8 @@ main.yml  build ──► quality ──► security ──► release ──►
   TypeScript, Gradle, workflows and docs, request-changes workflow on, summaries off (the PR
   template carries the summary).
 - `main` ruleset per [ADR 0003](../../adr/0003-review-identity-and-merge-gate/): PR required, 0 approvals,
-  required checks `build`, `quality`, `security`, `CodeQL`, conversation resolution, linear
-  history, no force push or deletion, no bypass.
+  required checks `build`, `quality`, `security`, `docs`, `title` and the CodeQL analyses,
+  conversation resolution, linear history, no force push or deletion, no bypass.
 - Repository: squash merge only, delete branch on merge, Dependabot alerts and security
   updates, secret scanning with push protection, code scanning via CodeQL.
 
@@ -92,7 +99,7 @@ main.yml  build ──► quality ──► security ──► release ──►
 
 1. Hygiene: green build on `main`, stale files removed, templates and labels fixed (ARCHI-24, #26).
 2. `build-logic` conventions and versioning; CLI version from manifest (ARCHI-33).
-3. `pr.yml`, `codeql.yml`, composite action, scanner configuration, Dependabot.
+3. `pr.yml`, `pr-title.yml`, `codeql.yml`, composite action, scanner configuration (ARCHI-34).
 4. `main.yml` with release and images; Dockerfiles for agent and control plane (shared with M7).
 5. Ruleset, repository settings, `.coderabbit.yaml`, site pages (contributing, getting started).
 
@@ -146,11 +153,62 @@ What landed and the decisions behind it:
   generator's YAML parser), the root `runArchitrace` and `buildRuntime` tasks, the plain
   control plane jar (it collided with the `*.jar` glob of the demo Dockerfile).
 
+### PR 3: pull request pipeline (ARCHI-34)
+
+What landed and the decisions behind it:
+
+- **`pr.yml`** replaces `agent.yml`. `build` runs `./gradlew build --continue`: the same command
+  and therefore the same gate as locally, and every module reports its failures in one run; the
+  test, coverage and Checkstyle reports and the two jars are uploaded as artifacts. `quality`
+  downloads the reports, compiles and runs the SonarCloud analysis, then waits for the quality
+  gate. The `sonar` task of the Sonar Gradle plugin has no task dependencies and only reads what
+  is on disk, which is why the job compiles explicitly and restores the reports instead of
+  re-running the tests; the plugin derives the JaCoCo XML path, the JUnit results path and the
+  pull request coordinates by itself. `security` runs its scanners independently of each other
+  (`if: !cancelled()`), so a Snyk failure never hides a leaked secret. `docs` builds the site.
+  The job names are the required-check names of ADR 0003.
+- **Composite action** `.github/actions/setup-build`: reads `javaVersion` and `nodeVersion` from
+  `gradle.properties` (one source of truth for the toolchains), installs the Temurin JDK,
+  configures Gradle with the dependency and build caches (written only from `main`) and caches the
+  Node.js distribution that Gradle downloads into `.gradle/nodejs`.
+- **Title check** in its own workflow `pr-title.yml` on `opened`, `edited`, `reopened` and
+  `synchronize`: a title edit re-runs a two-second job instead of the whole pipeline. The regular
+  expression accepts the nine commit types, the scope `ARCHI-<n>` or `deps` (Dependabot) and an
+  optional `!`. The title reaches the script through an environment variable, never by
+  interpolation.
+- **CodeQL** (`codeql.yml`, advanced setup) on pull requests, pushes to `main` and weekly:
+  `java-kotlin` in manual build mode (`./gradlew --no-daemon --no-build-cache compileJava`, so the
+  tracer sees every javac invocation), `javascript-typescript` and `actions` without a build.
+  `.github/codeql/codeql-config.yml` keeps generated sources, bundles and `node_modules` out of the
+  results. Default setup is not enabled on the repository, so the workflow is the only analysis.
+- **Snyk** tests every manifest it finds (`--all-projects`) except the Python demo and
+  `build-logic` (no wrapper in that directory), fails on high and critical findings and is skipped
+  with a notice when the token is absent (Dependabot runs).
+- **OWASP Dependency-Check** through the Gradle plugin on the root project:
+  `dependencyCheckAggregate` scans the `runtimeClasspath` of every module and the UI lockfile,
+  fails at CVSS 7 and writes HTML and SARIF to `build/reports/dependency-check`; the SARIF goes to
+  code scanning. The NVD data lives in `~/.gradle/dependency-check-data` and is cached per week.
+  The task runs with `--no-parallel`: the aggregate task resolves the configurations of the other
+  projects, which Gradle 9 forbids while projects execute in parallel. Suppressions belong in
+  `config/dependency-check/suppressions.xml`.
+- **gitleaks** runs as the pinned binary (checksum verified) over the commits of the pull request
+  (`base..head`) with secrets redacted in the log. The official action was not used because it
+  requires a licence key for organisation repositories.
+- `docs-deploy.yml` runs only on pushes to `main` (pull requests build the site in `pr.yml`), with
+  pinned actions and Node.js 24. `ci-cd.yml` stays until PR 4 replaces it with `main.yml`.
+
 ## Risks and open points
 
-- SpotBugs and CodeQL support for Java 25 preview bytecode must be verified in PR 3; fallback
-  is Sonar + Error Prone for bug patterns.
-- OWASP Dependency-Check without an NVD API key is slow; the maintainer creates the key.
+- CodeQL support for Java 25 preview sources shows on the first run of `codeql.yml`; the
+  fallback is `build-mode: none`. SpotBugs stays out: Sonar and CodeQL cover bug and security
+  patterns.
+- Dependency-Check 13.0.0 cannot update without an NVD API key (upstream issue 8715 sends an
+  empty key); the step is skipped with a warning until the maintainer stores the key as the
+  repository secret `NVD_API_KEY`, and as a Dependabot secret so Dependabot pull requests are
+  checked too. The first run with the key verifies the analysis end to end.
+- Snyk runs only where `SNYK_TOKEN` is available: add it as a Dependabot secret as well.
+- Dependabot pull request #41 (GitHub Actions bumps) edits the removed and rewritten workflows
+  and needs a rebase or a close after PR 3.
 - Sonar project key is still the old `…_Architrace-agent`; rename in SonarCloud or keep.
 - The demo Dockerfiles build inside the container and therefore need `.git` in the build
   context for the version (removed from `.dockerignore`); PR 4 switches the images to prebuilt

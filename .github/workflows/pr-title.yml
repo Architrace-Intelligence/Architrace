@@ -1,0 +1,24 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  title:
+    name: title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the title against the commit convention
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|perf|refactor|build|ci|docs|test|chore)\((ARCHI-[0-9]+|deps)\)!?: [A-Z].+$'
+          if [[ "$TITLE" =~ $pattern ]]; then
+            echo "The title follows the convention: $TITLE"
+          else
+            echo "::error::The title must match '<type>(ARCHI-<n>): <Imperative subject>' with type feat, fix, perf, refactor, build, ci, docs, test or chore (scope 'deps' is reserved for Dependabot). Got: $TITLE"
+            exit 1
+          fi
