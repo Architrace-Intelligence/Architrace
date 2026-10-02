@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
@@ -39,6 +40,28 @@ class ControlPlaneApplicationTests {
         .bodyText()
         .contains("/api/v1/openapi.yaml");
     assertThat(mvc.get().uri("/webjars/swagger-ui/swagger-ui-bundle.js")).hasStatusOk();
-    assertThat(mvc.get().uri("/v3/api-docs")).hasStatus(404);
+    assertThat(mvc.get().uri("/v3/api-docs").accept(MediaType.APPLICATION_JSON)).hasStatus(404);
+  }
+
+  @Test
+  void servesTheUiBundleWithASinglePageFallback() {
+    assertThat(mvc.get().uri("/").accept(MediaType.TEXT_HTML)).hasForwardedUrl("index.html");
+    assertThat(mvc.get().uri("/index.html"))
+        .hasStatusOk()
+        .hasHeader("Cache-Control", "no-cache")
+        .bodyText()
+        .contains("<div id=\"root\"></div>");
+    assertThat(mvc.get().uri("/projects/webshop/PROD/k8s-prod-eu1").accept(MediaType.TEXT_HTML))
+        .hasStatusOk()
+        .bodyText()
+        .contains("<div id=\"root\"></div>");
+    assertThat(mvc.get().uri("/projects/webshop").accept(MediaType.APPLICATION_JSON))
+        .hasStatus(404)
+        .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON);
+    assertThat(mvc.get().uri("/assets/missing.js")).hasStatus(404);
+    assertThat(mvc.get().uri("/api/v1/missing"))
+        .hasStatus(404)
+        .hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON);
+    assertThat(mvc.get().uri("/actuator/missing")).hasStatus(404);
   }
 }

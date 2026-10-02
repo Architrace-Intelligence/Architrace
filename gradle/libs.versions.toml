@@ -25,6 +25,7 @@ swagger-ui = "5.32.15"
 swagger = "2.2.21"
 jakarta-validation = "3.1.1"
 openapi-generator = "7.14.0"
+node-gradle = "7.1.0"
 
 [libraries]
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
@@ -82,3 +83,4 @@ protobuf = { id = "com.google.protobuf", version.ref = "protobuf-gradle-plugin" 
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }
+node = { id = "com.github.node-gradle.node", version.ref = "node-gradle" }

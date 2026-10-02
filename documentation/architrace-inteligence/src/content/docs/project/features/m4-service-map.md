@@ -3,7 +3,7 @@ title: M4. Service map UI
 description: An interactive per-environment map of services, data stores, topics and external dependencies.
 ---
 
-Status: design agreed · Order: 5 · Requirements: F8
+Status: in progress (PR 1 of 4 in review, ARCHI-32) · Order: 5 · Requirements: F8
 
 ## Goal
 
@@ -65,12 +65,59 @@ URL carries environment, filters and time so a view can be shared.
 
 ## Delivery plan
 
-1. Module scaffold, Gradle integration, SPA serving, CI gates for the frontend.
-2. API client, environment switcher, service map with ELK layout (library decision).
-3. Filters, search, node and edge panels, time selector, URL state.
-4. Visual polish, accessibility pass, user guide page.
+The initial release is the two screens agreed on 2026-10-01 ([UI design](../ui-design/#initial-release)):
+the Projects list and the Service map of a scope.
+
+1. ARCHI-32: module scaffold, Gradle integration, SPA serving, typed client, UI quality gate.
+2. ARCHI-33: Projects list on `GET /scopes` with filters and grouping.
+3. ARCHI-34: Service map on `…/graph` and `…/services` with ELK layout (library decision).
+4. ARCHI-35: lenses, node and dependency panels, time selector, URL state, polish.
+
+### PR 1: scaffold (ARCHI-32)
+
+What landed and the decisions behind it:
+
+- **Module `architrace-ui`** is a Gradle project (`:ui`) built with the `com.github.node-gradle.node`
+  plugin. Gradle downloads the Node.js version pinned in `gradle.properties` (`nodeVersion`)
+  into `.gradle/nodejs/` at the repository root, so a contributor needs no local Node to build
+  or test; the dev loop (`npm run dev`) needs Node 22.12+ and proxies `/api` to port 8085.
+- **One gate, two entry points.** `npm run check` chains the TypeScript types from the OpenAPI
+  document, `tsc -b`, ESLint (flat config, type-checked rules of typescript-eslint, React hooks
+  and refresh rules, Prettier conflicts disabled), `prettier --check` and Vitest with Testing
+  Library and V8 coverage thresholds of 85 %. Gradle runs it as `:ui:test`, so the existing
+  pipelines and the documented quality-gate command cover the UI without changes.
+- **Bundle hand-over as a Gradle artifact.** `:ui:npmBuild` writes `build/dist`, exposed as the
+  consumable configuration `bundle`; the control plane resolves it into `processResources`
+  under `static/`. No task reaches into another project.
+- **Single-page fallback.** `WebConfiguration` registers `/assets/**` (hashed files, one-year
+  immutable cache) and `/**` (`no-cache`) with a `SpaFallbackResourceResolver` that extends
+  Spring's `PathResourceResolver`: when the requested file does not exist, the path is not
+  under `/api`, `/actuator`, `/swagger-ui` or `/webjars`, its last segment has no extension and
+  the client accepts `text/html`, the resolver answers `index.html`; everything else keeps its
+  404, so the API still returns problem details and clients asking for JSON never get HTML.
+  The configurer has the highest precedence so Spring Boot does not register its own `/**`.
+- **Typed client without code generation.** `openapi-typescript` writes `src/api/schema.d.ts`
+  from the contract (never committed); `openapi-fetch` gives typed `GET` calls at zero runtime
+  cost; a thin `listScopes` turns problem responses into a `ProblemError` carrying the RFC 9457
+  body. TanStack Query holds server state through `queryOptions` factories.
+- **Design tokens** from the Foundations screen are the CSS custom properties in
+  `src/styles/tokens.css` (dark by default, light under `data-theme="light"`); IBM Plex Sans and
+  JetBrains Mono are self-hosted through Fontsource. The direction still awaits the
+  maintainer's confirmation; changing it is a token edit.
+- **Toolchain pins.** TypeScript stays on 5.9 because `openapi-typescript` and
+  `typescript-eslint` do not support 6 and 7 yet; Vite 8, Vitest 5, React 19, ESLint 10.
+  The Vite template's default linter (oxlint) was not adopted: the agreed design names ESLint.
+- **Spotless** applies the SPDX header to `.ts`, `.tsx`, `.css` and the config files of the UI,
+  so `spotlessCheck` covers both languages; Prettier keeps the formatting.
+- **SonarCloud** analyses `architrace-ui/src` with the Vitest `lcov` report; Dependabot watches
+  `architrace-ui/package.json` weekly.
+- **Walking skeleton.** The first screen shows the `Projects` heading and how many scopes the
+  control plane reports (or the problem it answered); ARCHI-33 replaces it with the list.
 
 ## Risks and open points
 
-- Node tooling in CI lengthens the pipeline; mitigated by caching `node_modules`.
+- Node tooling in CI lengthens the pipeline (Node download and `npm ci` per job, about a
+  minute); caching `~/.npm` is a follow-up for the M0 pipeline work.
 - Graph library choice is validated early with real data from the demo stack.
+- The UI tests stub `fetch` globally; the client therefore resolves `globalThis.fetch` per
+  call instead of capturing it at creation.

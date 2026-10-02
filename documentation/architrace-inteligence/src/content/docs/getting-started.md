@@ -7,13 +7,15 @@ description: Build and run Architrace locally.
 
 - Java 25+
 - Docker (for the PostgreSQL database, the integration tests and the demo stack)
-- Node.js (for this docs site only)
+- Node.js 22.12+ only for the UI dev loop and this docs site; the Gradle build downloads its
+  own pinned Node.js for building and testing the UI
 
 ## Repository structure
 
 - `architrace-agent`: runtime agent CLI and OTLP ingestion.
 - `architrace-control-plane`: Spring Boot control-plane (HTTP + gRPC).
-- `architrace-api`: shared protobuf contract and generated types.
+- `architrace-api`: shared protobuf and OpenAPI contracts and generated types.
+- `architrace-ui`: web UI (Vite, React, TypeScript), bundled into the control plane jar.
 - `otel-test-app`: end-to-end demo services and OpenTelemetry collector.
 
 ## Build all modules
@@ -22,6 +24,9 @@ description: Build and run Architrace locally.
 ./gradlew spotlessCheck classes test jacocoTestReport
 ./gradlew build
 ```
+
+The first build downloads Node.js and the UI packages; `test` includes the UI gate (`:ui:test`:
+types, lint, formatting, unit tests) and `build` packs the UI bundle into the control plane jar.
 
 ## Run control-plane locally
 
@@ -48,7 +53,7 @@ Health and metrics are on Actuator: `http://localhost:8085/actuator/health` and
 The [Query API](../reference/query-api/) is under `http://localhost:8085/api/v1`: `/scopes`,
 `/scopes/{project}/{environment}/{cluster}/graph`, `…/services`, `…/snapshots`,
 `/snapshots/{id}` and `/agents`. Its OpenAPI document is at `/api/v1/openapi.yaml` and Swagger
-UI at `/swagger-ui`.
+UI at `/swagger-ui`. The web UI is at `http://localhost:8085/`.
 
 The integration tests of the control plane start their own PostgreSQL through Testcontainers, so
 `./gradlew test` needs a running Docker daemon.
@@ -68,6 +73,22 @@ java -jar architrace-agent/build/libs/agent-0.1.0-all.jar run --config ./otel-te
 ```
 
 Agent OTLP receiver listens on `otlp-receiver-port` from config (demo uses `4319`).
+
+## UI development
+
+The UI dev server rebuilds on every change and proxies `/api` to a control plane on port
+`8085`, so start the control plane first:
+
+```bash
+cd architrace-ui
+npm ci
+npm run dev
+```
+
+`npm run check` runs the same gate as `./gradlew :ui:test`; `npm run generate` refreshes the
+TypeScript types from the OpenAPI document (it runs automatically before `dev`, `build` and
+`check`). Node.js 22.12+ is required; the Gradle build keeps its own copy under `.gradle/nodejs/` at
+the repository root.
 
 ## Docs development
 
