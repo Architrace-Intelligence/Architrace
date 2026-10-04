@@ -41,14 +41,19 @@ public final class TestDataProvider {
     }
 
     public static AgentConfig agentConfig(String controlPlaneServer, int otlpPort, Duration retryDelay) {
+        return agentConfig(controlPlaneServer, otlpPort, retryDelay, Duration.ofSeconds(60));
+    }
+
+    public static AgentConfig agentConfig(
+            String controlPlaneServer, int otlpPort, Duration retryDelay, Duration snapshotInterval) {
         return new AgentConfig(
                 "demo",
-                "DEV",
+                "PROD",
                 "cluster-1",
                 "agent-a",
                 new AgentConfig.ControlPlaneSettings(controlPlaneServer, retryDelay),
                 new AgentConfig.OtlpSettings(otlpPort),
-                new AgentConfig.SnapshotSettings(Duration.ofSeconds(60), 64),
+                new AgentConfig.SnapshotSettings(snapshotInterval, 64),
                 new AgentConfig.BufferSettings(16, Duration.ofSeconds(120)),
                 new AgentConfig.MetricsSettings(9464),
                 AttributeMapping.defaults());

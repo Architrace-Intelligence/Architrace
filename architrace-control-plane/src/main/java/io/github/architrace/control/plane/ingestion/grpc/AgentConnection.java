@@ -57,7 +57,6 @@ final class AgentConnection implements StreamObserver<AgentRegisterRequestedEven
             case REGISTER -> register(event.getRegister());
             case SNAPSHOT -> snapshot(event.getSnapshot());
             case HEARTBEAT -> heartbeat();
-            case GRAPH_BATCH -> reject(0, "graph_batch is deprecated; send a snapshot");
             case PAYLOAD_NOT_SET -> reject(0, "empty message");
         }
     }

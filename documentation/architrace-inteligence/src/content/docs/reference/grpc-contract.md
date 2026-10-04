@@ -22,8 +22,10 @@ Until the first release the contract may still change; afterwards changes within
 |---------|------|---------|
 | `register` | first message of the stream | `agent_name`, `agent_version`, and the scope: `project`, `environment`, `cluster_id` |
 | `snapshot` | every snapshot interval | `GraphSnapshot`: window `[window_start_epoch_ms, window_end_epoch_ms)`, `nodes[]`, `edges[]` |
-| `heartbeat` | between snapshots | `sent_at_epoch_ms` |
-| `graph_batch` | deprecated | rejected by the control plane; removed when the agent pipeline (M1) switches to `snapshot` |
+| `heartbeat` | every heartbeat interval (default 30 s, `heartbeat.interval-seconds` of the config update) | `sent_at_epoch_ms` |
+
+Field number `2` (`graph_batch`) is reserved: the deprecated batch messages were removed with
+the agent pipeline (M1).
 
 A `SnapshotNode` has `id`, `type` (`SERVICE`, `DATABASE`, `TOPIC`, `EXTERNAL`), `name`,
 `versions[]`, `deployments[]` (`cluster`, `namespace`) and free-form `labels`. A
@@ -40,14 +42,16 @@ reference nodes of the same snapshot.
 |---------|------|---------|
 | `config_update` | once after a successful registration | `version` and a map; today `snapshot.interval-seconds` and `heartbeat.interval-seconds` |
 | `snapshot_ack` | after a snapshot is stored | `window_end_epoch_ms`, `snapshot_id` |
-| `snapshot_rejected` | after an invalid snapshot, a deprecated batch or an empty message | `window_end_epoch_ms`, `reason`; the stream stays open |
+| `snapshot_rejected` | after an invalid snapshot or an empty message | `window_end_epoch_ms`, `reason`; the stream stays open |
 
 ## Stream errors
 
 The control plane closes the stream with a gRPC status when the conversation cannot continue:
 `INVALID_ARGUMENT` for a registration with a blank name or scope, `FAILED_PRECONDITION` for a
 snapshot or heartbeat before registration and for a second registration on the same stream.
-The agent reconnects after `control-plane-retry-seconds`.
+The agent keeps its unsent snapshots in a bounded queue (`snapshot.queue-size`, oldest dropped
+and counted) and opens a new session after `control-plane.retry-seconds`, re-registering first;
+a snapshot whose send failed goes back to the front of the queue.
 
 ## Health payload
 

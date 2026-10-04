@@ -19,7 +19,7 @@ class AgentIdentityTest {
         AgentIdentity identity = AgentIdentity.from(TestDataProvider.agentConfig());
 
         assertThat(identity)
-                .isEqualTo(new AgentIdentity("agent-a", BuildVersion.current(), "demo", "DEV", "cluster-1"));
+                .isEqualTo(new AgentIdentity("agent-a", BuildVersion.current(), "demo", "PROD", "cluster-1"));
     }
 
     @Test

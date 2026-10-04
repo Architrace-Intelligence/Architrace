@@ -32,6 +32,7 @@ info.picocli:picocli:4.7.7=annotationProcessor,checkstyle,compileClasspath,compi
 io.grpc:grpc-api:1.84.0=compileClasspath,compileProtoPath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 io.grpc:grpc-context:1.84.0=compileProtoPath,runtimeClasspath,testCompileProtoPath,testRuntimeClasspath
 io.grpc:grpc-core:1.84.0=compileClasspath,compileProtoPath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
+io.grpc:grpc-inprocess:1.84.0=testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 io.grpc:grpc-netty-shaded:1.84.0=compileClasspath,compileProtoPath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 io.grpc:grpc-protobuf-lite:1.84.0=compileProtoPath,runtimeClasspath,testCompileProtoPath,testRuntimeClasspath
 io.grpc:grpc-protobuf:1.84.0=compileClasspath,compileProtoPath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath

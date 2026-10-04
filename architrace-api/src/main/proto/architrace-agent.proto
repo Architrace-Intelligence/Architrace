@@ -12,9 +12,11 @@ service ControlPlaneService {
 }
 
 message AgentRegisterRequestedEvent {
+  reserved 2;
+  reserved "graph_batch";
+
   oneof payload {
     AgentRegister register = 1;
-    GraphBatch graph_batch = 2 [deprecated = true];
     GraphSnapshot snapshot = 3;
     Heartbeat heartbeat = 4;
   }
@@ -82,29 +84,6 @@ message EdgeMetrics {
   int64 p95_millis = 4;
   int64 p99_millis = 5;
   int64 max_millis = 6;
-}
-
-message GraphBatch {
-  option deprecated = true;
-  string agent_name = 1;
-  int64 observed_at_epoch_ms = 2;
-  repeated GraphNode nodes = 3;
-  repeated GraphEdge edges = 4;
-}
-
-message GraphNode {
-  option deprecated = true;
-  string id = 1;
-  string type = 2;
-  string name = 3;
-}
-
-message GraphEdge {
-  option deprecated = true;
-  string source_node_id = 1;
-  string target_node_id = 2;
-  string operation = 3;
-  int64 call_count = 4;
 }
 
 message ControlPlaneCommand {
