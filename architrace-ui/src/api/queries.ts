@@ -4,11 +4,18 @@
  */
 
 import { queryOptions } from "@tanstack/react-query";
-import { listScopes } from "./client";
+import { getGraph, listScopes, type Scope } from "./client";
 
 export function scopesQuery() {
   return queryOptions({
     queryKey: ["scopes"],
     queryFn: ({ signal }) => listScopes(signal),
+  });
+}
+
+export function graphQuery(scope: Scope) {
+  return queryOptions({
+    queryKey: ["graph", scope.project, scope.environment, scope.cluster],
+    queryFn: ({ signal }) => getGraph(scope, signal),
   });
 }

@@ -4,8 +4,15 @@
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { problem, requestOf, respondWithJson, respondWithText, scopeSummary } from "../test/http";
-import { listScopes, ProblemError } from "./client";
+import {
+  demoGraph,
+  problem,
+  requestOf,
+  respondWithJson,
+  respondWithText,
+  scopeSummary,
+} from "../test/http";
+import { describeError, getGraph, listScopes, ProblemError } from "./client";
 
 describe("listScopes", () => {
   afterEach(() => {
@@ -55,5 +62,41 @@ describe("listScopes", () => {
     const error = new ProblemError({ status: 503 });
 
     expect(error.message).toBe("The control plane answered 503");
+  });
+});
+
+describe("getGraph", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reads the graph of a scope with encoded path segments", async () => {
+    const fetch = respondWithJson(demoGraph);
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(
+      getGraph({ project: "web shop", environment: "PROD", cluster: "k8s/prod" }),
+    ).resolves.toEqual(demoGraph);
+
+    expect(new URL(requestOf(fetch).url).pathname).toBe(
+      "/api/v1/scopes/web%20shop/PROD/k8s%2Fprod/graph",
+    );
+  });
+
+  it("turns a problem response into a ProblemError", async () => {
+    vi.stubGlobal("fetch", respondWithJson(problem, 404, "application/problem+json"));
+
+    const error = await getGraph(demoGraph.scope).catch((cause: unknown) => cause);
+
+    expect(error).toBeInstanceOf(ProblemError);
+    expect((error as ProblemError).problem).toEqual(problem);
+  });
+});
+
+describe("describeError", () => {
+  it("prefers the problem detail, then the message", () => {
+    expect(describeError(new ProblemError(problem))).toBe(problem.detail);
+    expect(describeError(new ProblemError({ title: "Gone", status: 410 }))).toBe("Gone");
+    expect(describeError(new Error("network down"))).toBe("network down");
   });
 });

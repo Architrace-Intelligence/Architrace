@@ -39,7 +39,7 @@ description: Monorepo module responsibilities.
 
 ## `architrace-ui`
 
-- Web UI: Vite, React, TypeScript, TanStack Query.
+- Web UI: Vite, React, TypeScript, TanStack Query, React Flow with ELK for the service map.
 - Client typed from the OpenAPI document (`openapi-typescript`, `openapi-fetch`).
 - Built by Gradle (`:architrace-ui:npmBuild`), tested by `:architrace-ui:test`; the bundle is a consumable Gradle
   configuration that the control plane packs under `static/`.
