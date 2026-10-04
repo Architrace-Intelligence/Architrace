@@ -23,14 +23,17 @@ Last updated: **2026-10-04**
   CodeRabbit app, make the two GHCR packages public, seed `v0.1.0` (`git tag -a v0.1.0 -m v0.1.0
   f0c43ab && git push origin v0.1.0`). Dependabot #45 is closed. Until the ruleset is active
   the merge gate is discipline, not platform.
-- **M1 PR 1 (ARCHI-38, in review)**: `SpanRecord` with `ServiceIdentity`, `Deployment` and the
-  sealed `Peer`; `MappedField` + `AttributeMapping` with the current and legacy conventions;
-  `SpanNormaliser` (OTLP → records); configuration v2 (`AgentConfigDocument` → `AgentConfig`,
-  every problem reported at once, unknown keys rejected, `--prop` overrides parsed as YAML,
-  `dry-run` prints the effective configuration); the legacy pipeline consumes `SpanRecord`;
-  `InternalSpan`, `SpanExtractor`, `AttributeDictionary` and the empty processors are gone;
-  agent tests use no reflection; ratchet line 0.85 / branch 0.77 / method 0.85. Details on the
-  [M1](../features/m1-agent-pipeline/) page.
+- **M1 PR 1 merged (#50)**; **M1 PR 2 (ARCHI-39, in review)**: `graph` package (sealed
+  `GraphNode` with ADR 0007 ids, `EdgeBuilder` over kind and peer, `PendingSpanIndex` with TTL,
+  `LatencyHistogram` with base-two buckets, `GraphWindow` → immutable `GraphSnapshot`,
+  `GraphBuilder` with the environment filter and the sweep) and `pipeline` package (`SpanQueue`
+  over `ArrayBlockingQueue`, `GraphWorker` as the single owner of the window with freeze
+  requests and periodic sweeps). The legacy `model`, `service.graph`, `service.processor`,
+  `snapshot` and `otlp` graph classes are gone. Snapshots are frozen every interval and still
+  discarded by the transport stub. Ratchet: line 0.85 / branch 0.84 / method 0.85. Details on
+  the [M1](../features/m1-agent-pipeline/) page.
+- The maintainer asked on 2026-10-04 to leave the ruleset aside and implement M1 and M4 first;
+  testing follows.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
   administration writes); the maintainer applies them.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
@@ -87,18 +90,18 @@ timeline mode only).
 
 ## Next step
 
-M1 PR 1 (ARCHI-38) is open for review. Merge it first (one PR at a time), then continue M1 in
+M1 PR 2 (ARCHI-39) is open for review. Merge it first (one PR at a time), then continue M1 in
 the order of its delivery plan, one PR each with the next free ticket number:
 
-1. M1 PR 2: sealed `GraphNode` with ADR 0007 ids, edge builder by kind and peer, pending span
-   index with TTL, `EdgeMetrics` with the logarithmic histogram, `GraphWindow`; replaces the
-   legacy resolvers and registries.
-2. M1 PR 3: snapshot scheduler, `GraphSnapshot` publisher over the bounded queue, runtime fix
-   (reconnecting control plane session), `GraphBatch` removed from the proto.
-3. M1 PR 4: eviction sweeps, metrics endpoint, rate-limited logging, load test.
-4. M1 PR 5: cleanup (`ControlPlaneServiceImpl`, `ControlPlaneRegistry`, duplicates), formatter
-   on, ratchet at the default, integration test, reference pages.
-5. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
+1. M1 PR 3: snapshot scheduler, `GraphSnapshot` → protobuf mapping, publisher over the bounded
+   outbound queue (drop-oldest, counted), reconnecting control plane session (the supervisor
+   currently stops after the first failed session), `GraphBatch` removed from the proto.
+2. M1 PR 4: metrics endpoint (Micrometer, Prometheus on `metrics.port`, `/health`), rate-limited
+   logging of rejections and drops, load test (10 000 spans/s, heap under 512 MB).
+3. M1 PR 5: cleanup (`ControlPlaneServiceImpl`, `ControlPlaneRegistry`, `ControlPlanePublisher`
+   and the `GraphBatch` path, remaining `Thread.sleep` in legacy tests), formatter on, ratchet
+   at the default, OTLP-in / `GraphSnapshot`-out integration test, reference pages.
+4. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
 
 Then M4 PR 2 (Projects list), M4 PR 3–4, M5, M6, M7.
 

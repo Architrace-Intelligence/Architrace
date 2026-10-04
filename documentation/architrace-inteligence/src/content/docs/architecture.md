@@ -37,9 +37,12 @@ flowchart LR
 - The agent receives OTLP traces and normalises every span into a `SpanRecord` (identity,
   deployment and a sealed peer resolved through a configurable attribute mapping that covers
   the current and the legacy semantic conventions), builds nodes and edges in memory and keeps
-  edge metrics that are never populated. Its configuration v2 is validated as a whole, printed
-  by `dry-run` and overridable with `--prop`. It registers with its scope (project, environment,
-  cluster) but sends no `GraphSnapshot` until the pipeline is completed (M1, PR 2 onwards).
+  then builds the graph on a single worker thread fed by a bounded queue: nodes with ADR 0007
+  ids, sync edges paired through a pending index with TTL, database, topic and external edges,
+  per-window metrics with a logarithmic latency histogram, frozen into an immutable
+  `GraphSnapshot` every interval. Its configuration v2 is validated as a whole, printed by
+  `dry-run` and overridable with `--prop`. It registers with its scope (project, environment,
+  cluster) but still discards the snapshots it freezes until the publisher lands (M1, PR 3).
 - The control plane registers agents, validates and stores `GraphSnapshot` messages in
   PostgreSQL (agents, snapshots, nodes, edges; Liquibase), answers with acknowledgements and
   tracks liveness through heartbeats. `TopologyQuery` answers the current graph of a scope at

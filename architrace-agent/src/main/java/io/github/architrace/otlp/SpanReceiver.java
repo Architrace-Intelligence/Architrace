@@ -5,21 +5,22 @@
 
 package io.github.architrace.otlp;
 
-import io.github.architrace.service.processor.SpanBatchProcessor;
+import io.github.architrace.pipeline.SpanQueue;
 import io.github.architrace.span.SpanNormaliser;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
+import java.util.Objects;
 
 public class SpanReceiver {
 
     private final SpanNormaliser normaliser;
-    private final SpanBatchProcessor batchProcessor;
+    private final SpanQueue queue;
 
-    public SpanReceiver(SpanNormaliser normaliser, SpanBatchProcessor batchProcessor) {
-        this.normaliser = normaliser;
-        this.batchProcessor = batchProcessor;
+    public SpanReceiver(SpanNormaliser normaliser, SpanQueue queue) {
+        this.normaliser = Objects.requireNonNull(normaliser, "normaliser");
+        this.queue = Objects.requireNonNull(queue, "queue");
     }
 
     public void receive(ExportTraceServiceRequest request) {
-        batchProcessor.submit(normaliser.normalise(request));
+        queue.offerAll(normaliser.normalise(request));
     }
 }

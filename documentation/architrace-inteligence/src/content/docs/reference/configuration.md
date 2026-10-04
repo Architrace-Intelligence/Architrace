@@ -44,7 +44,7 @@ attribute-mapping:
 | `otlp.port` | no | `4319` | OTLP/gRPC receiver port (`1`–`65535`) |
 | `snapshot.interval-seconds` | no | `60` | window length; one snapshot per interval |
 | `snapshot.queue-size` | no | `64` | snapshots kept while the control plane is unreachable (oldest dropped) |
-| `buffers.ring-size` | no | `65536` | span ring buffer between the receiver and the pipeline; a power of two |
+| `buffers.ring-size` | no | `65536` | bounded span queue between the receiver and the graph worker; spans beyond it are rejected and counted |
 | `buffers.pending-ttl-seconds` | no | `120` | how long a span waits for its partner before eviction |
 | `metrics.port` | no | `9464` | Prometheus metrics and health endpoint port |
 | `attribute-mapping.<field>` | no | see below | attribute keys tried in order for one field; replaces the default list of that field |

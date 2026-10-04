@@ -124,7 +124,7 @@ class AgentConfigLoaderTest {
                   interval-seconds: -1
                   queue-size: 0
                 buffers:
-                  ring-size: 1000
+                  ring-size: 0
                   pending-ttl-seconds: 0
                 metrics:
                   port: 0
@@ -143,7 +143,7 @@ class AgentConfigLoaderTest {
                         "Invalid config field: otlp.port must be between 1 and 65535",
                         "Invalid config field: snapshot.interval-seconds must be > 0",
                         "Invalid config field: snapshot.queue-size must be > 0",
-                        "Invalid config field: buffers.ring-size must be a power of two",
+                        "Invalid config field: buffers.ring-size must be > 0",
                         "Invalid config field: buffers.pending-ttl-seconds must be > 0",
                         "Invalid config field: metrics.port must be between 1 and 65535",
                         "Invalid config field: attribute-mapping.domain must list at least one attribute key",

@@ -6,54 +6,53 @@
 package io.github.architrace.grpc;
 
 import com.google.inject.Inject;
+import io.github.architrace.graph.GraphSnapshot;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.github.architrace.grpc.proto.ControlPlaneServiceGrpc;
-import io.github.architrace.otlp.GraphSnapshot;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.TimeUnit;
 
 public class ControlPlaneClient implements TransportClient {
 
-  private final ManagedChannel channel;
-  private final ControlPlaneServiceGrpc.ControlPlaneServiceStub stub;
+    private final ManagedChannel channel;
+    private final ControlPlaneServiceGrpc.ControlPlaneServiceStub stub;
 
-  private StreamObserver<AgentRegisterRequestedEvent> outboundObserver;
+    private StreamObserver<AgentRegisterRequestedEvent> outboundObserver;
 
-  @Inject
-  public ControlPlaneClient(ManagedChannel channel) {
-    this.channel = channel;
-    this.stub = ControlPlaneServiceGrpc.newStub(channel);
-  }
-
-  @Override
-  public StreamObserver<AgentRegisterRequestedEvent> open(StreamObserver<ControlPlaneCommand> inboundObserver) {
-    this.outboundObserver = stub.connect(inboundObserver);
-
-    return outboundObserver;
-  }
-
-  @Override
-  public void close() {
-    channel.shutdownNow();
-    try {
-      channel.awaitTermination(2, TimeUnit.SECONDS);
-    } catch (InterruptedException _) {
-      Thread.currentThread().interrupt();
-    }
-  }
-
-  @Override
-  public void send(GraphSnapshot snapshot) {
-    if (outboundObserver == null) {
-      return;
+    @Inject
+    public ControlPlaneClient(ManagedChannel channel) {
+        this.channel = channel;
+        this.stub = ControlPlaneServiceGrpc.newStub(channel);
     }
 
-    AgentRegisterRequestedEvent event = AgentRegisterRequestedEvent.newBuilder()
-        .build();
+    @Override
+    public StreamObserver<AgentRegisterRequestedEvent> open(StreamObserver<ControlPlaneCommand> inboundObserver) {
+        this.outboundObserver = stub.connect(inboundObserver);
 
-    outboundObserver.onNext(event);
-  }
+        return outboundObserver;
+    }
 
+    @Override
+    public void close() {
+        channel.shutdownNow();
+        try {
+            channel.awaitTermination(2, TimeUnit.SECONDS);
+        } catch (InterruptedException _) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @Override
+    public void send(GraphSnapshot snapshot) {
+        if (outboundObserver == null) {
+            return;
+        }
+
+        AgentRegisterRequestedEvent event =
+                AgentRegisterRequestedEvent.newBuilder().build();
+
+        outboundObserver.onNext(event);
+    }
 }

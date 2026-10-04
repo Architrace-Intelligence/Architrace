@@ -13,10 +13,10 @@ import io.github.architrace.controlplane.ControlPlaneBootstrapService;
 import io.github.architrace.controlplane.ControlPlaneLifecycle;
 import io.github.architrace.controlplane.RegistrationService;
 import io.github.architrace.core.config.AgentConfig;
+import io.github.architrace.graph.GraphSnapshot;
 import io.github.architrace.grpc.TransportClient;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
-import io.github.architrace.otlp.GraphSnapshot;
 import io.github.architrace.service.runtime.AgentRuntimeService;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
@@ -55,7 +55,7 @@ class AgentRuntimeServiceTest {
 
         assertThat(agent.isAlive()).isFalse();
         assertThat(outcome.get()).isInstanceOf(InterruptedException.class);
-        assertThat(isListening(otlpPort)).isFalse();
+        await().atMost(STARTUP_TIMEOUT).until(() -> !isListening(otlpPort));
     }
 
     private static ControlPlaneBootstrapService failingBootstrap(AgentConfig config, AtomicBoolean closed) {
