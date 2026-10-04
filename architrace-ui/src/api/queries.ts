@@ -13,9 +13,9 @@ export function scopesQuery() {
   });
 }
 
-export function graphQuery(scope: Scope) {
+export function graphQuery(scope: Scope, at?: string) {
   return queryOptions({
-    queryKey: ["graph", scope.project, scope.environment, scope.cluster],
-    queryFn: ({ signal }) => getGraph(scope, signal),
+    queryKey: ["graph", scope.project, scope.environment, scope.cluster, at ?? "live"],
+    queryFn: ({ signal }) => getGraph(scope, at, signal),
   });
 }

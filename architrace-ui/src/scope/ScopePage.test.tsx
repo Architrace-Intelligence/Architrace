@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../app/App";
@@ -14,6 +14,22 @@ const SCOPE = "/scopes/web%20shop/PROD/k8s-prod-eu1";
 
 function chips() {
   return within(screen.getByRole("group", { name: "Node types" }));
+}
+
+function rail() {
+  return within(screen.getByRole("complementary", { name: "Context" }));
+}
+
+function element(selector: string): Element {
+  const found = document.querySelector(selector);
+  if (found === null) {
+    throw new Error(`${selector} is not on the page`);
+  }
+  return found;
+}
+
+function count(selector: string): number {
+  return document.querySelectorAll(selector).length;
 }
 
 describe("ScopePage", () => {
@@ -127,6 +143,106 @@ describe("ScopePage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The control plane did not answer: no agent has registered for scope webshop/PROD/k8s-prod-eu2",
+    );
+  });
+
+  it("selects a node from the URL, lights its neighbourhood and shows it in the context rail", async () => {
+    renderAt(`${SCOPE}?node=service%3Aorders-service`, <App />);
+
+    expect(await screen.findByText("Service · PROD")).toBeInTheDocument();
+    expect(rail().getByText("orders-service")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(count(".react-flow__node.selected")).toBe(1);
+    });
+    expect(count(".react-flow__node.dimmed")).toBe(5);
+    expect(count(".react-flow__edge.touching")).toBe(5);
+    expect(count(".react-flow__edge.dimmed")).toBe(6);
+    expect(screen.getAllByText("12.4k · 0.3 %").length).toBeGreaterThan(1);
+  });
+
+  it("selects an edge from the URL and describes the dependency", async () => {
+    renderAt(
+      `${SCOPE}?edge=service%3Apayments-service%3Eexternal%3Aapi.stripe.com%3ASYNC`,
+      <App />,
+    );
+
+    expect(await screen.findByText("Dependency · PROD")).toBeInTheDocument();
+    expect(rail().getByText("payments-service → api.stripe.com")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(count(".react-flow__edge.touching")).toBe(1);
+    });
+    expect(count(".react-flow__node.dimmed")).toBe(8);
+  });
+
+  it("selects by click and keyboard, clears with the pane and with Escape", async () => {
+    const user = userEvent.setup();
+    renderAt(SCOPE, <App />);
+    await screen.findByText("Scope · PROD");
+
+    fireEvent.click(await screen.findByText("payments-service"));
+    expect(await screen.findByText("Service · PROD")).toBeInTheDocument();
+    expect(rail().getByText("service:payments-service")).toBeInTheDocument();
+
+    fireEvent.click(element(".react-flow__pane"));
+    expect(await screen.findByText("Scope · PROD")).toBeInTheDocument();
+
+    const card = element('.react-flow__node[data-id="service:api-gateway"]');
+    if (card instanceof HTMLElement) {
+      card.focus();
+    }
+    await user.keyboard("{Enter}");
+    expect(await screen.findByText("service:api-gateway")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(await screen.findByText("Scope · PROD")).toBeInTheDocument();
+
+    await user.click(rail().getByRole("button", { name: /order-events/ }));
+    expect(await screen.findByText("Data stream · PROD")).toBeInTheDocument();
+  });
+
+  it("switches the lens, finds nodes and asks for a point in time", async () => {
+    const user = userEvent.setup();
+    const fetch = respondWithJson(demoGraph);
+    vi.stubGlobal("fetch", fetch);
+    renderAt(SCOPE, <App />);
+    await screen.findByText("orders-service");
+
+    await user.click(
+      within(screen.getByRole("group", { name: "Lens" })).getByRole("button", {
+        name: "Data streams",
+      }),
+    );
+    await waitFor(() => {
+      expect(count(".react-flow__node.dimmed")).toBe(5);
+    });
+    expect(count(".react-flow__edge.dimmed")).toBe(7);
+
+    await user.type(screen.getByRole("searchbox", { name: "Find in map" }), "pay");
+    expect(await screen.findByText("3 of 10 nodes match “pay”")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(count(".react-flow__node.match")).toBe(3);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Live" }));
+    const form = screen.getByRole("form", { name: "Point in time" });
+    fireEvent.change(within(form).getByLabelText("Graph at (UTC)"), {
+      target: { value: "2026-10-01T12:00:00" },
+    });
+    await user.click(within(form).getByRole("button", { name: "Apply" }));
+
+    expect(
+      await screen.findByRole("button", { name: "At 2026-10-01 12:00:00 UTC" }),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+    const request = fetch.mock.calls[1]?.[0];
+    expect(request instanceof Request ? new URL(request.url).search : "").toBe(
+      "?at=2026-10-01T12%3A00%3A00.000Z",
+    );
+    expect(screen.getByRole("link", { name: "Open as JSON" })).toHaveAttribute(
+      "href",
+      "/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/graph?at=2026-10-01T12%3A00%3A00.000Z",
     );
   });
 });
