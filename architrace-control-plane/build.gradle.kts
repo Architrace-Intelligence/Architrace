@@ -30,7 +30,7 @@ dependencies {
     implementation(project(":architrace-api"))
     implementation(libs.swagger.ui)
     implementation(libs.webjars.locator.lite)
-    implementation(libs.spring.grpc.spring.boot.starter)
+    implementation(libs.spring.boot.starter.grpc.server)
     implementation(libs.spring.boot.starter.data.jdbc)
     implementation(libs.spring.boot.starter.liquibase)
 
@@ -43,17 +43,17 @@ dependencies {
     testImplementation(libs.spring.boot.starter.data.jdbc.test)
     testImplementation(libs.spring.boot.testcontainers)
     testImplementation(libs.testcontainers.postgresql)
-    testImplementation(libs.spring.grpc.test)
     testImplementation(libs.grpc.inprocess)
 
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
-dependencyManagement {
-    imports {
-        mavenBom(libs.spring.grpc.bom.get().toString())
-    }
-}
+extra["grpc-java.version"] = libs.versions.grpc.get()
+extra["jackson-2-bom.version"] = libs.versions.jackson.get()
+extra["jackson-bom.version"] = libs.versions.jackson3.get()
+extra["netty.version"] = libs.versions.netty.get()
+extra["protobuf-java.version"] = libs.versions.protobuf.asProvider().get()
+extra["tomcat.version"] = libs.versions.tomcat.get()
 
 protobuf {
     protoc {
@@ -67,8 +67,10 @@ protobuf {
     generateProtoTasks {
         all().forEach {
             it.plugins {
-                create("grpc") {
-                    option("@generated=omit")
+                maybeCreate("grpc").apply {
+                    if (options.isEmpty()) {
+                        option("@generated=omit")
+                    }
                 }
             }
         }

@@ -1,0 +1,12 @@
+# Snyk policy for the documentation site. Findings without an upstream fix are ignored with an
+# expiry so they come back once a fixed release exists or the ignore lapses.
+version: v1.25.0
+ignore:
+  SNYK-JS-HTTPCACHESEMANTICS-19964064:
+    - '*':
+        reason: Transitive build-time dependency of Astro used only while generating the static site; no fixed release of http-cache-semantics is available yet.
+        expires: 2026-11-30T00:00:00.000Z
+  SNYK-JS-HTTPCACHESEMANTICS-19964068:
+    - '*':
+        reason: Transitive build-time dependency of Astro used only while generating the static site; no fixed release of http-cache-semantics is available yet.
+        expires: 2026-11-30T00:00:00.000Z
