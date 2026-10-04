@@ -71,3 +71,12 @@ from Spring properties `architrace.rules.*`.
 1. Engine, `CyclicDependency`, `SharedDatabase`, `UnknownExternal`, tests.
 2. Remaining rules, persistence, evaluation trigger, API, OpenAPI update.
 3. Findings page, map badges, user guide page.
+
+## Open points
+
+From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
+
+- B2: a data stream with consumers but no producer is usually an outbox filled by change data
+  capture; an insight should say so instead of leaving the topic dangling.
+- B3: a platform category in the external allowlist (feature-flag server, config server) so
+  these hosts are grouped on the map and skipped by `UnknownExternal`.

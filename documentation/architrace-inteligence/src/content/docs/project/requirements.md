@@ -344,3 +344,32 @@ stack works from M2 onwards. Everything listed under "Out of MVP" stays out.
 | M7 | Packaging and demo | [m7-packaging-demo](../features/m7-packaging-demo/) |
 
 Each design page states goal, scope, design, acceptance criteria and the PR delivery plan.
+
+## 9. Backlog from the first real-data test round
+
+On 2026-10-04 the maintainer ran Architrace (`main`, b1579fe) against a private stack of eight
+Spring Boot services driven by its end-to-end suite: HTTP between services, MariaDB over JDBC
+and R2DBC, Kafka through Spring Kafka, reactor-kafka and Kafka Streams, a Debezium outbox,
+Redis, a feature-flag server and a mock of the external APIs. Six services carry the
+OpenTelemetry Spring Boot starter 2.15 and only needed environment variables; two carried no
+OpenTelemetry at all and got the OpenTelemetry Java agent 2.15 attached; a last round attached
+the Java agent everywhere. Nothing in Architrace needed a change.
+
+| Measure | Value |
+|---------|-------|
+| Spans received / rejected / foreign | 331 063 / 0 / 0 |
+| Snapshots published / acknowledged / rejected | 52 / 52 / 0 |
+| Map (Java agent everywhere) | 8 services, 7 data stores, 21 data streams, 2 external hosts, 58 dependencies |
+| Prometheus output of a service with the SDK off, the starter on and the Java agent on | identical metric families and sample names |
+
+The round produced the backlog below; each item names the feature that owns it.
+
+| # | Finding | Backlog item | Owner |
+|---|---------|--------------|-------|
+| B1 | Kafka Streams internal topics (`<application-id>-…-changelog`, `…-repartition`) made 11 of the 21 data streams. They are implementation detail of one service, not an interface between services. | Fold or hide internal topics: a default pattern list in the agent (`-changelog`, `-repartition`, configurable) or a map lens that collapses them into their service. | M1 agent configuration, M4 map |
+| B2 | Outbox pattern: topics filled by Debezium from a database table have consumers but no producer; the producing service only shows an edge to the outbox database. | Insight "data stream without a producer" with the outbox explanation; optionally derive the producer edge from the outbox database and the CDC topic naming. | M6 rules |
+| B3 | Every service polls the feature-flag server and the config server; they appear as the same external host on every service and dominate the external lens. | Group infrastructure dependencies (allowlist with a "platform" category) so they are shown once and excluded from rules such as `UnknownExternal`. | M6 rules, M4 map |
+| B4 | Database calls of a few hundred microseconds show `p50 = 0 ms`; the latency histogram counts integer milliseconds. | Record latency in microseconds (or fractional milliseconds) in the histogram, the contract and the API. | M1 agent, contract |
+| B5 | The agent image's `HEALTHCHECK` probes `ARCHITRACE_OTLP_PORT`, whose default is `4317`, while the agent listens on `4319`; without the variable the container is reported unhealthy. | Health check on `/health` of the metrics port (already planned) and one default port shared by the Dockerfile, the configuration and the docs. | M7 images |
+| B6 | Services instrumented with the Spring Boot starter only showed Spring Kafka; Kafka Streams, reactor-kafka, raw `KafkaProducer`, Lettuce and OkHttp clients stayed invisible until the Java agent was attached. The Kafka interceptors shipped with the starter do nothing because the starter registers no global OpenTelemetry. | Deployment guide section "instrumenting Spring Boot services": the environment variables, what the starter covers, when the Java agent is needed, and that metrics stay untouched. | M7 guides |
+| B7 | External hosts appear only after the pending TTL (120 s by default) because a client span without a partner waits that long; a three-minute run showed them late. | Shorter TTL in the demo configuration and the delay documented next to the setting. | M7 demo |

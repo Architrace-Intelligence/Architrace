@@ -71,3 +71,17 @@ box.
 1. Dockerfiles and image publishing: done (M0 PR 4, ARCHI-36).
 2. Demo stack with two environments, broker and database; traffic generator.
 3. Guides and reference pages; final architecture page update for the MVP.
+
+## Open points
+
+From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
+
+- B5: the agent `HEALTHCHECK` defaults to port `4317` while the agent listens on `4319`; the
+  check moves to `/health` on the metrics port and one default port is shared by the
+  Dockerfile, the configuration and the docs.
+- B6: the deployment guide gets a section on instrumenting Spring Boot services: the
+  environment variables for the OpenTelemetry starter, what the starter covers (HTTP, JDBC,
+  R2DBC, Spring Kafka) and what needs the Java agent (Kafka Streams, reactor-kafka, raw Kafka
+  clients, Lettuce, OkHttp), with the note that Prometheus metrics stay untouched.
+- B7: the demo configuration uses a shorter pending TTL so external hosts appear within the
+  first minute, and the setting documents the delay.
