@@ -61,7 +61,7 @@ protobuf {
     generateProtoTasks {
         all().forEach { task: com.google.protobuf.gradle.GenerateProtoTask ->
             task.plugins {
-                create("grpc")
+                maybeCreate("grpc")
             }
         }
     }

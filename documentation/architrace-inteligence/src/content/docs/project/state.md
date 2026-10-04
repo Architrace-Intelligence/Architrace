@@ -7,7 +7,7 @@ Hand-over page. It describes only the present: what is in flight, what is decide
 next. History lives in [Progress](../progress/) and in git. Rewrite it before starting a new
 task; delete anything that is no longer needed to resume.
 
-Last updated: **2026-10-02**
+Last updated: **2026-10-04**
 
 ## Where we are
 
@@ -26,11 +26,25 @@ Last updated: **2026-10-02**
   `javascript-typescript` and `actions`; the composite action `.github/actions/setup-build` reads
   the toolchain versions from `gradle.properties`; `agent.yml` removed; `docs-deploy.yml`
   restricted to `main`. Details on the [M0](../features/m0-engineering-platform/) page.
-- Maintainer tasks opened by PR 3: rotate `SNYK_TOKEN` (the first run of `security` got a 401
-  from Snyk, the stored token is no longer valid); request an NVD API key and store it as the
-  repository secret `NVD_API_KEY` (Dependency-Check 13.0.0 cannot run without it and is skipped
-  with a warning until then); add both as Dependabot secrets so Dependabot pull requests are
-  scanned too; rebase or close Dependabot PR #41, which edits the replaced workflows.
+- M0 PR 3 is merged (#44). Scanner credentials are in place since 2026-10-02: `SNYK_TOKEN` is
+  the Snyk PAT `architrace-ci` (Snyk PATs live 90 days at most, this one expires 2026-12-31;
+  service accounts are a paid feature), `SNYK_ORG` is the real slug `architrace`, `NVD_API_KEY`
+  is an activated NVD key; all of them exist as repository and as Dependabot secrets.
+- **Dependency update (ARCHI-35, in review)**: the first Snyk run with valid credentials found
+  22 critical and 110 high findings across the Java modules and the docs site. The PR moves
+  Spring Boot 4.0.3 → 4.1.1 and the control plane to the Boot gRPC server starter (Spring gRPC 1.1
+  moved its starters and test support into Boot, its BOM now manages only `spring-grpc-core`),
+  overrides the Boot-managed Tomcat (11.0.26), Netty (4.2.18), Jackson 2 (2.22.3), grpc-java
+  (1.84.0) and protobuf-java (4.36.2, gencode and runtime must match) versions from the catalog,
+  lifts the rest of the catalog to the latest releases (protobuf plugin 0.10.0 needs
+  `maybeCreate` for the per-task grpc plugin options), moves the docs site to Astro 7 /
+  Starlight 0.42 (sidebar `autogenerate` groups became `items`), and tells Dependabot to ignore
+  TypeScript majors for the UI. The root `gradle.lockfile` is gone: the root project has no
+  lockable configurations and the old file only carried stale GraalVM entries.
+- Still open for the maintainer: seed `v0.1.0` after PR 4 is merged (the legacy `ci-cd.yml` still
+  releases on `v*` tags), make the GHCR packages public after the first push, rebase or close
+  Dependabot PR #41 after PR 4; Dependabot closes #43, #28 and #40 by itself once `main` carries
+  the versions.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
   rule in `AGENTS.md` §4).
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
@@ -75,7 +89,8 @@ only).
 
 ## Next step
 
-M0 PR 3 (ARCHI-34) is open for review. Merge it first (one PR at a time), then update this page.
+The dependency update (ARCHI-35) is open for review. Merge it first (one PR at a time), then
+update this page.
 
 Then, in order (one PR each, next free ticket number):
 

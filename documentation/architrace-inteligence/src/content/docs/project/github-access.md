@@ -80,12 +80,12 @@ Options:
 - [ ] Confirm SonarCloud project key: the build still uses `Architrace-Intelligence_Architrace-agent`;
       the project in SonarCloud must have *Automatic Analysis* switched off because analysis is
       CI-driven.
-- [ ] Confirm the Snyk organisation slug (`SNYK_ORG`).
-- [ ] Rotate `SNYK_TOKEN`: the stored token is rejected with 401 (first run of `security`, PR #44).
-- [ ] Request an [NVD API key](https://nvd.nist.gov/developers/request-an-api-key) and store it as
-      the repository secret `NVD_API_KEY`; OWASP Dependency-Check is skipped until it exists.
-- [ ] Add `NVD_API_KEY` and `SNYK_TOKEN` as Dependabot secrets too (Settings → Secrets and
-      variables → Dependabot), so Dependabot pull requests get the same scanners.
+- [x] Snyk organisation slug: `SNYK_ORG=architrace` (corrected on 2026-10-02).
+- [x] `SNYK_TOKEN` rotated on 2026-10-02: Snyk PAT `architrace-ci`, expires 2026-12-31 (Snyk PATs
+      live 90 days at most; service accounts are a paid feature). Rotate before it expires.
+- [x] `NVD_API_KEY` stored on 2026-10-02 (the key must be activated through the link in the NVD
+      e-mail before it works; Dependency-Check is skipped with a warning while it is absent).
+- [x] Both secrets mirrored as Dependabot secrets, so Dependabot pull requests get the same scanners.
 
 - [x] Ticket numbering: `ARCHI-<n>` sequential.
 - [x] Copyright holder: `Dmytro Hryshchenko`; header fixed in the hygiene feature.

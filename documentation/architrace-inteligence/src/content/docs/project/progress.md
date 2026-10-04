@@ -78,3 +78,5 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-02 | M0 PR 2: `build-logic` convention plugins, version from git tags and Conventional Commits, CLI version from the manifest, palantir-java-format and Checkstyle, project paths equal directory names (ARCHI-33) |
 | 2026-10-02 | M0 PR 2 merged (#42) |
 | 2026-10-02 | M0 PR 3: `pr.yml` with `build → quality → security` and `docs`, title check, CodeQL for Java, TypeScript and workflows, Snyk, OWASP Dependency-Check, gitleaks, composite setup action (ARCHI-34) |
+| 2026-10-02 | M0 PR 3 merged (#44); Snyk token rotated, NVD API key activated, scanner secrets mirrored to Dependabot |
+| 2026-10-04 | Dependency update: Spring Boot 4.1.1 with the Boot gRPC starter, managed-version overrides, catalog on the latest releases, docs site on Astro 7; closes the first Snyk and Dependency-Check findings (ARCHI-35) |

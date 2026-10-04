@@ -26,7 +26,7 @@ protobuf {
     generateProtoTasks {
         all().forEach {
             it.plugins {
-                create("grpc")
+                maybeCreate("grpc")
             }
         }
     }

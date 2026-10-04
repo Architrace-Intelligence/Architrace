@@ -44,6 +44,9 @@ updates:
     groups:
       ui-dependencies:
         patterns: ["*"]
+    ignore:
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     labels: [chore]
     commit-message:
       prefix: "build(deps)"
