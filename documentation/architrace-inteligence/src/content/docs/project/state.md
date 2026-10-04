@@ -7,7 +7,7 @@ Hand-over page. It describes only the present: what is in flight, what is decide
 next. History lives in [Progress](../progress/) and in git. Rewrite it before starting a new
 task; delete anything that is no longer needed to resume.
 
-Last updated: **2026-10-04**
+Last updated: **2026-10-05**
 
 ## Where we are
 
@@ -16,7 +16,7 @@ Last updated: **2026-10-04**
   M6, M7.
 - Merged: M0 PR 1–5 (#26, #42, #44, #48, #49), the dependency update (ARCHI-35, #46), the UI
   design (#30), M1 (#50–#54), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1–5 (#39, #55, #56, #58,
-  #59), the real-data backlog (ARCHI-47, #60), M5 PR 1 (ARCHI-48, #61). The `main` pipeline is green end to end; both
+  #59), the real-data backlog (ARCHI-47, #60), M5 (ARCHI-48 #61, ARCHI-49 #62). The `main` pipeline is green end to end; both
   images are in GHCR.
 - **M0 is complete in the repository.** What remains is the maintainer checklist on the
   [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
@@ -26,13 +26,13 @@ Last updated: **2026-10-04**
 - **M1 and M4 are done**, see the [M1](../features/m1-agent-pipeline/) and
   [M4](../features/m4-service-map/) pages. Lesson recorded on 2026-10-04: **no stacked pull
   requests**, one pull request against `main` at a time.
-- **M5 is in review.** PR 1 (ARCHI-48, #61, merged) delivered the `drift` package
-  (`GraphRef`, `NodeChange`, `TopologyDiff`, `DiffMode`, `GraphDiffer`, `DriftQuery`), the
-  endpoints `diff/environments` and `diff/timeline` under a scope, the OpenAPI schemas and
-  the reference page. PR 2 (ARCHI-49, #62) delivers the Drift screen (modes, sides in the
-  URL, counters, grouped list, map overlays, rail, guide page). See the
-  [M5](../features/m5-drift/) page. Working assumption to confirm: environment mode compares
-  versions only, timeline mode versions and deployments.
+- **M5 is done** (#61 drift domain and endpoints, #62 Drift screen), see the
+  [M5](../features/m5-drift/) page. Still to confirm by the maintainer: environment mode
+  compares versions only, timeline mode versions and deployments (`DiffMode`).
+- **M6 is next.** On 2026-10-05 the maintainer added blast radius to it: an impact query on
+  any node (`…/impact?node=`), an impact lens with a rail card on the map and the rule
+  `WideBlastRadius`; the API is scope-based like the rest. Design and delivery plan on the
+  [M6](../features/m6-architecture-rules/) page (three PRs).
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -100,15 +100,22 @@ timeline mode only).
 
 ## Next step
 
-Merge #62 (M5 PR 2, the Drift screen); that closes M5. Then continue, one PR each with the
-next free ticket number:
+Merge the docs pull request of ARCHI-50 (blast radius in M6, M5 closed). Then continue, one
+PR each with the next free ticket number:
 
-1. M6 Architecture rules (with the candidates B2 and B3), M7 Packaging and demo (B5 health
-   check on `/health`, B6 deployment guide for Spring Boot services, B7 demo TTL; the demo stack
-   exercises the map and the drift with real data).
-3. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
-   as small PRs when M5 is out of the way.
-4. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
+1. M6 PR 1: rule engine, `CyclicDependency`, `SharedDatabase`, `UnknownExternal`,
+   configuration `architrace.rules.*`, fixture tests.
+2. M6 PR 2: `ImpactAnalysis` and `WideBlastRadius`, the remaining rules, `finding` table,
+   evaluation after ingestion, findings and impact endpoints, OpenAPI, reference pages
+   (candidates B2 and B3 on the way).
+3. M6 PR 3: Findings page, map badges, impact lens and rail card, guide page.
+4. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+   services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
+   real data).
+5. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+   as small PRs; the Dependabot Gradle bumps of #47 in a maintainer PR; test hygiene:
+   `AgentRuntimeServiceTest` binds the metrics port `9464` from `TestDataProvider`, give it a
+   free port so a local agent container no longer breaks the gate.
 
 ## How to resume
 

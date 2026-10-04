@@ -3,7 +3,7 @@ title: M5. Drift
 description: What differs between two environments, or between two points in time of one environment.
 ---
 
-Status: in progress (PR 1 delivered as ARCHI-48, PR 2 as ARCHI-49) · Order: 6 · Requirements: F9
+Status: done (PR 1 ARCHI-48 merged as #61, PR 2 ARCHI-49 merged as #62) · Order: 6 · Requirements: F9
 
 ## Goal
 
