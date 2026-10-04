@@ -59,7 +59,7 @@ Print the version the build computes from git tags and Conventional Commits:
 - **Graph Transformation** - Converts spans into nodes/edges and graph batches
 - **Control Plane Stream** - Bidirectional gRPC session between agent and control-plane with registration, heartbeats, acknowledged snapshots and automatic reconnection
 - **Agent Metrics** - Prometheus `/metrics` and `/health` on port `9464`, rate-limited reporting of rejected and evicted spans
-- **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract: scopes, agents, the graph and services of a scope at a point in time, snapshot history; Swagger UI at `/swagger-ui`
+- **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract: scopes, agents, the graph and services of a scope at a point in time, snapshot history, and the drift of a scope against another scope of its project or against its own past; Swagger UI at `/swagger-ui`
 - **Web UI** - React + TypeScript single-page application served by the control plane at `/`, talking to the Query API through a client typed from the same contract: a Projects list filtered by environment and cluster, and the Service map of a scope (React Flow with an ELK layered layout)
 - **Structured Concurrency** - Runtime built on Java 25 concurrency primitives
 - **Modular Monorepo** - Separate modules for runtime agent, control-plane, shared API contracts and the UI, with shared build conventions in `build-logic`

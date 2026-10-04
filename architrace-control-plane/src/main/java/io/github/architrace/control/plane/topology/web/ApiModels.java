@@ -25,6 +25,7 @@ import io.github.architrace.control.plane.topology.AgentStatus;
 import io.github.architrace.control.plane.topology.Dependency;
 import io.github.architrace.control.plane.topology.Deployment;
 import io.github.architrace.control.plane.topology.EdgeMetrics;
+import io.github.architrace.control.plane.topology.NodeAttributes;
 import io.github.architrace.control.plane.topology.NodeView;
 import io.github.architrace.control.plane.topology.Page;
 import io.github.architrace.control.plane.topology.Scope;
@@ -43,18 +44,29 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-final class ApiModels {
+public final class ApiModels {
 
     private static final Comparator<Deployment> DEPLOYMENT_ORDER =
             Comparator.comparing(Deployment::cluster).thenComparing(Deployment::namespace);
 
     private ApiModels() {}
 
-    static Optional<Instant> toInstant(OffsetDateTime value) {
+    public static Optional<Instant> toInstant(OffsetDateTime value) {
         return Optional.ofNullable(value).map(OffsetDateTime::toInstant);
     }
 
-    static ScopeDto toDto(Scope scope) {
+    public static List<String> versions(NodeAttributes attributes) {
+        return attributes.versions().stream().sorted().toList();
+    }
+
+    public static List<DeploymentDto> deployments(NodeAttributes attributes) {
+        return attributes.deployments().stream()
+                .sorted(DEPLOYMENT_ORDER)
+                .map(ApiModels::toDto)
+                .toList();
+    }
+
+    public static ScopeDto toDto(Scope scope) {
         return new ScopeDto(scope.project(), scope.environment(), scope.cluster());
     }
 
@@ -89,17 +101,14 @@ final class ApiModels {
                 graph.edges().stream().map(ApiModels::toDto).toList());
     }
 
-    static TopologyNodeDto toDto(TopologyNode node) {
+    public static TopologyNodeDto toDto(TopologyNode node) {
         var attributes = node.attributes();
         return new TopologyNodeDto(
                 node.id(),
                 NodeTypeDto.fromValue(node.type().name()),
                 node.name(),
-                attributes.versions().stream().sorted().toList(),
-                attributes.deployments().stream()
-                        .sorted(DEPLOYMENT_ORDER)
-                        .map(ApiModels::toDto)
-                        .toList(),
+                versions(attributes),
+                deployments(attributes),
                 attributes.labels());
     }
 
@@ -169,7 +178,7 @@ final class ApiModels {
         return new TimeWindowDto(atUtc(window.start()), atUtc(window.end()));
     }
 
-    private static OffsetDateTime atUtc(Instant instant) {
+    public static OffsetDateTime atUtc(Instant instant) {
         return instant.atOffset(ZoneOffset.UTC);
     }
 }

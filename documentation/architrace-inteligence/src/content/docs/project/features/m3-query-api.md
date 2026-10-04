@@ -43,7 +43,7 @@ theirs.
 
 Since ARCHI-26 the unit of the API is the scope (project, environment, cluster), not the
 environment alone. Tags, and therefore generated interfaces: `scopes` (list, graph, services),
-`snapshots` (history, one snapshot), `agents`.
+`snapshots` (history, one snapshot), `agents`; M5 added `drift` (environment and timeline diff of a scope).
 
 | Method and path | Returns | Status |
 |-----------------|---------|--------|

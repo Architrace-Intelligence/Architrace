@@ -16,10 +16,6 @@ import java.util.stream.Stream;
 
 public final class GraphMerger {
 
-    private static final Comparator<TopologyEdge> EDGE_ORDER = Comparator.comparing(TopologyEdge::sourceId)
-            .thenComparing(TopologyEdge::targetId)
-            .thenComparing(TopologyEdge::kind);
-
     private GraphMerger() {}
 
     public static TopologyGraph merge(Scope scope, Instant at, List<Snapshot> snapshots) {
@@ -35,7 +31,7 @@ public final class GraphMerger {
                 .collect(Collectors.toMap(EdgeKey::of, Function.identity(), GraphMerger::mergeEdges))
                 .values()
                 .stream()
-                .sorted(EDGE_ORDER)
+                .sorted(Comparator.comparing(EdgeKey::of, EdgeKey.ORDER))
                 .toList();
         return new TopologyGraph(scope, at, nodes, edges);
     }
@@ -68,12 +64,5 @@ public final class GraphMerger {
                         Math.max(a.p95Millis(), b.p95Millis()),
                         Math.max(a.p99Millis(), b.p99Millis()),
                         Math.max(a.maxMillis(), b.maxMillis())));
-    }
-
-    private record EdgeKey(String sourceId, String targetId, EdgeKind kind) {
-
-        static EdgeKey of(TopologyEdge edge) {
-            return new EdgeKey(edge.sourceId(), edge.targetId(), edge.kind());
-        }
     }
 }

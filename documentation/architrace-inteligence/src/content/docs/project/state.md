@@ -16,7 +16,8 @@ Last updated: **2026-10-04**
   M6, M7.
 - Merged: M0 PR 1–5 (#26, #42, #44, #48, #49), the dependency update (ARCHI-35, #46), the UI
   design (#30), M1 (#50–#54), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1–5 (#39, #55, #56, #58,
-  #59). The `main` pipeline is green end to end; both images are in GHCR.
+  #59), the real-data backlog (ARCHI-47, #60). The `main` pipeline is green end to end; both
+  images are in GHCR.
 - **M0 is complete in the repository.** What remains is the maintainer checklist on the
   [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
   ruleset (`.github/rulesets/main.json`) and the repository settings (§5 there), install the
@@ -25,13 +26,14 @@ Last updated: **2026-10-04**
 - **M1 and M4 are done**, see the [M1](../features/m1-agent-pipeline/) and
   [M4](../features/m4-service-map/) pages. Lesson recorded on 2026-10-04: **no stacked pull
   requests**, one pull request against `main` at a time.
-- **First real-data round (2026-10-04)**: `main` at b1579fe ran unchanged against a private
-  eight-service stack (HTTP, JDBC and R2DBC, Spring Kafka, reactor-kafka, Kafka Streams,
-  Debezium outbox, Redis) driven by its end-to-end suite; 331 063 spans, 0 rejected, 52
-  snapshots acknowledged; Prometheus output of the instrumented services unchanged. The backlog
-  B1–B7 is in [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round)
-  and on the M1, M6 and M7 pages (ARCHI-47). The stack itself is private and is not described
-  in this repository.
+- **M5 is in progress.** PR 1 (ARCHI-48) delivers the `drift` package (`GraphRef`,
+  `NodeChange`, `TopologyDiff`, `DiffMode`, `GraphDiffer`, `DriftQuery`), the endpoints
+  `diff/environments` and `diff/timeline` under a scope, the OpenAPI schemas and the
+  reference page; see the [M5](../features/m5-drift/) page. Working assumption to confirm:
+  environment mode compares versions only, timeline mode versions and deployments.
+- Backlog B1–B7 from the first real-data round is in
+  [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
+  the M1, M6 and M7 pages.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
   administration writes); the maintainer applies them.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
@@ -51,7 +53,9 @@ its services and data streams.
 
 Query API conventions since ARCHI-31: domain errors carry `urn:architrace:problem:<slug>`
 types, framework errors none; the services list embeds the dependencies of every service
-instead of a per-id resource; the snapshot history filters on window end, inclusive.
+instead of a per-id resource; the snapshot history filters on window end, inclusive. Since
+ARCHI-48: a diff is a resource of the scope that is its right side; the left side comes as
+query parameters; everything "added" is only on the right, "removed" only on the left.
 
 UI conventions since ARCHI-32: feature folders under `src/`; server state only through
 `queryOptions` factories; the generated `src/api/schema.d.ts` is never committed; tests stub
@@ -92,14 +96,16 @@ timeline mode only).
 
 ## Next step
 
-Merge the docs pull request of ARCHI-47 (backlog B1–B7). Then continue, one PR each with the
+Merge the M5 PR 1 of ARCHI-48 (drift domain and endpoints). Then continue, one PR each with the
 next free ticket number:
 
-1. M5 Drift: `TopologyDiff` on the control plane (environment and timeline modes), the Query
-   API endpoint, the Drift screen (grouped list, map overlays) as designed.
+1. M5 PR 2 (Drift screen): route `/scopes/{project}/{environment}/{cluster}/drift` with mode,
+   left side, time bounds, view and selection in the URL; counters, grouped list with "Show on
+   map", map view with drift overlays and legend, context rail with deterministic sentences,
+   "Drift" in the navigation rail, user guide page. Plan on the M5 page, PR 2.
 2. M6 Architecture rules (with the candidates B2 and B3), M7 Packaging and demo (B5 health
    check on `/health`, B6 deployment guide for Spring Boot services, B7 demo TTL; the demo stack
-   exercises the map with real data).
+   exercises the map and the drift with real data).
 3. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small PRs when M5 is out of the way.
 4. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.

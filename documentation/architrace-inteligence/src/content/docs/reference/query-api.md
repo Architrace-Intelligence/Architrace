@@ -20,6 +20,8 @@ generated from it, and so is the TypeScript client of the UI.
 | `GET /api/v1/scopes/{project}/{environment}/{cluster}/services?at=` | every service of that graph with its inbound and outbound dependencies, the node at the other end embedded |
 | `GET /api/v1/scopes/{project}/{environment}/{cluster}/snapshots?from=&to=&page=&size=` | the snapshot history of the scope, newest first, one page at a time |
 | `GET /api/v1/snapshots/{snapshotId}` | one snapshot as the agent reported it, nodes and edges included |
+| `GET /api/v1/scopes/{project}/{environment}/{cluster}/diff/environments?leftEnvironment=&leftCluster=&at=` | the drift between another scope of the project (left) and this scope (right), both at `at` (default now) |
+| `GET /api/v1/scopes/{project}/{environment}/{cluster}/diff/timeline?from=&to=` | the drift of this scope between `from` (left) and `to` (right, default now) |
 | `GET /api/v1/agents` | every registered agent with its scope, version, first and last seen time and liveness, ordered by scope and name |
 
 Timestamps are RFC 3339 in both directions (`2026-10-01T12:00:00Z`).
@@ -152,6 +154,60 @@ defaults to 50. Summaries carry counts only; `GET /api/v1/snapshots/{snapshotId}
 snapshot with its nodes and edges exactly as the agent reported it. Retention removes old
 snapshots, so an id listed earlier can answer `404` later.
 
+## Drift
+
+```bash
+curl -s 'http://localhost:8085/api/v1/scopes/webshop/PROD/k8s-prod-eu1/diff/environments?leftEnvironment=DEV&leftCluster=k8s-dev' | jq .
+curl -s 'http://localhost:8085/api/v1/scopes/webshop/PROD/k8s-prod-eu1/diff/timeline?from=2026-09-30T18:00:00Z' | jq .nodesChanged
+```
+
+```json
+{
+  "left": { "scope": { "project": "webshop", "environment": "DEV", "cluster": "k8s-dev" },
+            "at": "2026-10-01T12:00:00Z" },
+  "right": { "scope": { "project": "webshop", "environment": "PROD", "cluster": "k8s-prod-eu1" },
+             "at": "2026-10-01T12:00:00Z" },
+  "nodesAdded": [
+    { "id": "service:reporting", "type": "SERVICE", "name": "reporting", "versions": ["1.2.0"],
+      "deployments": [{ "cluster": "k8s-prod-eu1", "namespace": "reporting" }], "labels": {} }
+  ],
+  "nodesRemoved": [
+    { "id": "db:postgresql/catalog", "type": "DATABASE", "name": "catalog",
+      "versions": [], "deployments": [], "labels": {} }
+  ],
+  "nodesChanged": [
+    { "id": "service:search", "type": "SERVICE", "name": "search",
+      "versionsBefore": ["2.3.0"], "versionsAfter": ["2.2.1"],
+      "deploymentsBefore": [{ "cluster": "k8s-dev", "namespace": "search" }],
+      "deploymentsAfter": [{ "cluster": "k8s-prod-eu1", "namespace": "search" }] }
+  ],
+  "edgesAdded": [
+    { "sourceId": "service:reporting", "targetId": "db:postgresql/orders", "kind": "SYNC" }
+  ],
+  "edgesRemoved": [
+    { "sourceId": "service:search", "targetId": "db:postgresql/catalog", "kind": "SYNC" }
+  ]
+}
+```
+
+A diff has a left side and a right side, each a scope at a point in time. Everything
+"added" exists only on the right, everything "removed" only on the left, so the diff reads
+as "what the right side has that the left side has not". Nodes are matched by their stable
+id and listed as they look on their own side; edges are matched by source, target and kind
+and listed without metrics, because traffic volume is not drift. Lists are ordered by id, or
+by source, target and kind.
+
+`diff/environments` compares the current graphs of two scopes of the same project at `at`
+(default now): the right side is the scope in the path, the left side is named by
+`leftEnvironment` and `leftCluster`, so another cluster of the same environment is a valid
+left side too. A node on both sides is `changed` when its set of versions differs;
+deployments differ between environments by construction and are reported but not compared.
+
+`diff/timeline` compares one scope with itself at `from` (left, required) and `to` (right,
+default now). A node present at both points is `changed` when its versions or its
+deployments differ. `from` after `to` answers `400 invalid-query`; a side whose scope has no
+registered agent answers `404 scope-not-found`.
+
 ## Errors
 
 Every error is an RFC 9457 problem with the media type `application/problem+json`. Errors
@@ -166,9 +222,9 @@ Errors raised by the domain carry a stable type, a title and the reason:
 
 | Type | Status | When |
 |------|--------|------|
-| `urn:architrace:problem:scope-not-found` | 404 | no agent has registered for the scope in the path |
+| `urn:architrace:problem:scope-not-found` | 404 | no agent has registered for the scope in the path, or for the left side of a diff |
 | `urn:architrace:problem:snapshot-not-found` | 404 | no snapshot has the id, or retention removed it |
-| `urn:architrace:problem:invalid-query` | 400 | `page` or `size` out of range, `from` after `to` |
+| `urn:architrace:problem:invalid-query` | 400 | `page` or `size` out of range, `from` after `to` (history and timeline drift) |
 
 ```json
 {
