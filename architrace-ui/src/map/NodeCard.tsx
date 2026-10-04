@@ -16,28 +16,26 @@ export type CardNode = Node<
 export function NodeCard({ data, selected }: NodeProps<CardNode>) {
   const { node, onSelect } = data;
   return (
-    <div
-      className="node"
-      title={node.id}
-      role="button"
-      tabIndex={0}
-      aria-pressed={selected}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect({ kind: "node", id: node.id });
-        } else if (event.key === "Escape") {
-          onSelect(undefined);
-        }
-      }}
-    >
+    <>
       <Handle type="target" position={Position.Left} isConnectable={false} />
-      <NodeIcon type={node.type} />
-      <span className="node-text">
-        <span className="node-name">{node.name}</span>
-        <span className="node-sub mono">{subtitle(node)}</span>
-      </span>
+      <button
+        type="button"
+        className="node"
+        title={node.id}
+        aria-pressed={selected}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            onSelect(undefined);
+          }
+        }}
+      >
+        <NodeIcon type={node.type} />
+        <span className="node-text">
+          <span className="node-name">{node.name}</span>
+          <span className="node-sub mono">{subtitle(node)}</span>
+        </span>
+      </button>
       <Handle type="source" position={Position.Right} isConnectable={false} />
-    </div>
+    </>
   );
 }

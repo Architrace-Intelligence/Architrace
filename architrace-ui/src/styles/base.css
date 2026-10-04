@@ -651,7 +651,7 @@ legend {
   color: var(--ink-3);
 }
 
-.node {
+button.node {
   width: 192px;
   height: 56px;
   border-radius: 10px;
