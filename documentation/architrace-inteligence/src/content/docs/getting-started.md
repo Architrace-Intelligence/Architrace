@@ -78,7 +78,8 @@ java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.ja
 
 `dry-run` prints the effective configuration or every validation problem; `--prop key=value`
 overrides single values for both commands. The OTLP receiver listens on `otlp.port` (default
-`4319`); the keys are on the [Configuration](../reference/configuration/) page.
+`4319`), metrics and health on `metrics.port` (default `9464`: `/metrics`, `/health`); the keys
+are on the [Configuration](../reference/configuration/) page.
 
 ## UI development
 

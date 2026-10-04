@@ -23,8 +23,11 @@ Last updated: **2026-10-04**
   CodeRabbit app, make the two GHCR packages public, seed `v0.1.0` (`git tag -a v0.1.0 -m v0.1.0
   f0c43ab && git push origin v0.1.0`). Dependabot #45 is closed. Until the ruleset is active
   the merge gate is discipline, not platform.
-- **M1 PR 1 merged (#50)**; **M1 PR 2 (ARCHI-39, #51) and PR 3 (ARCHI-40) in review**, PR 3
-  branched from PR 2 and opened after it merges. PR 2: `graph` package (sealed `GraphNode` with
+- **M1 PR 1 merged (#50)**; **M1 PR 2 (ARCHI-39, #51), PR 3 (ARCHI-40) and PR 4 (ARCHI-41) in
+  review**, each branched from the previous one and opened after it merges. PR 4: `metrics`
+  package (`AgentMetrics` binding, `MetricsServer` with `/metrics` and `/health`,
+  `DropReporter`), counters on the receiver, queues, builder and publisher, `loadTest` Gradle
+  task (tag `load`, `-Pload.seconds`). PR 2: `graph` package (sealed `GraphNode` with
   ADR 0007 ids, `EdgeBuilder`, `PendingSpanIndex`, `LatencyHistogram`, `GraphWindow`,
   `GraphBuilder`) and `pipeline` package (`SpanQueue`, `GraphWorker`). PR 3: `publish` package
   (`SnapshotProtoMapper`, `SnapshotQueue`, `PublisherStats`), `ControlPlaneSession` and
@@ -90,16 +93,15 @@ timeline mode only).
 
 ## Next step
 
-Merge #51 (M1 PR 2), then the PR of ARCHI-40 (M1 PR 3). Then continue M1, one PR each with
-the next free ticket number:
+Merge #51 (M1 PR 2), then the PRs of ARCHI-40 (M1 PR 3) and ARCHI-41 (M1 PR 4), in that
+order. Then continue, one PR each with the next free ticket number:
 
-1. M1 PR 4: metrics endpoint (Micrometer, Prometheus on `metrics.port`, `/health`) exposing the
-   counters that already exist (`SpanQueue.rejected`, `GraphBuilder.foreignSpans` and
-   `droppedSpans`, `EdgeBuilder.pendingSpans`, `SnapshotQueue.dropped`, `PublisherStats`),
-   rate-limited logging of rejections and drops, load test (10 000 spans/s, heap under 512 MB).
-2. M1 PR 5: formatter on for the agent (the remaining 2-space files: `MainApp`, `cli`,
-   `core.BuildVersion`, `otlp` receiver, `grpc.GrpcAddressParser` and their tests), ratchet at
-   the default, remaining `Thread.sleep` in tests, reference pages, M1 marked done.
+1. M1 PR 5: formatter on for the agent (the remaining 2-space files: `MainApp`, `cli`,
+   `core.BuildVersion`, `otlp` receiver and server, `grpc.GrpcAddressParser` and their tests),
+   the ten-minute load run recorded on the M1 page, M1 marked done; the agent Dockerfile
+   health check can move to `/health` (M7 owns the image).
+2. M4 PR 2: Projects list (scopes with agents, services, data streams, last snapshot) on the
+   agreed UI design; then M4 PR 3–4 (Service map), M5, M6, M7.
 3. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
 
 Then M4 PR 2 (Projects list), M4 PR 3–4, M5, M6, M7.

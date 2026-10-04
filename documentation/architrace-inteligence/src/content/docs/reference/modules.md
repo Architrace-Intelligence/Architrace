@@ -20,7 +20,9 @@ description: Monorepo module responsibilities.
 - OTLP trace receiver (`otlp`) and span normalisation (`span`): `SpanRecord`, attribute mapping.
 - Graph building (`graph`, `pipeline`): nodes and edges, pending index, window, snapshot; the
   worker thread and the bounded span queue.
-- Control plane client (`controlplane`, `grpc`, `session`): registration, session, publishing.
+- Control plane client (`controlplane`, `grpc`, `publish`): registration, session, snapshot
+  queue and publishing.
+- Metrics (`metrics`): Micrometer binding, Prometheus and health endpoint, drop reporting.
 
 ## `architrace-control-plane`
 
