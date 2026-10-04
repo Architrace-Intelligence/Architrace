@@ -3,7 +3,7 @@ title: M4. Service map UI
 description: An interactive per-environment map of services, data stores, topics and external dependencies.
 ---
 
-Status: in progress (PR 2 of 4 in review, ARCHI-43) · Order: 5 · Requirements: F8
+Status: in progress (PR 3 of 4 in review, ARCHI-44) · Order: 5 · Requirements: F8
 
 ## Goal
 
@@ -33,10 +33,27 @@ Visual design and interaction: [UI design](../ui-design/) (interactive prototype
 
 ### Graph rendering
 
-Recommendation: **React Flow** with **ELK** layered layout. It gives first-class React nodes
-(custom cards per node type), pan and zoom, selection and minimap, and ELK handles 300+ nodes
-with readable left-to-right layering. Alternative kept in view: Cytoscape.js if layout quality
-on large graphs proves insufficient. Final choice is confirmed in PR 2 with a 300-node fixture.
+Decision (PR 3, ARCHI-44): **React Flow 12** with the **ELK layered** algorithm. React Flow
+gives first-class React nodes (one card component per node type), pan and zoom, minimap and
+controls; ELK layers the graph left to right so a dependency always points right. Cytoscape.js
+stays the fallback if layout quality on real landscapes disappoints.
+
+The 300-node, 900-edge fixture (`src/test/graph.ts`: 180 services in 6 tiers, 60 data stores,
+40 topics, 20 external hosts) measured on the maintainer's machine with Node 24:
+
+| Graph shape | ELK options | Layout time |
+|-------------|-------------|-------------|
+| service-shaped fixture | layered, defaults | 0.75–0.83 s |
+| service-shaped fixture | layered, thoroughness 3 (chosen) | 0.54 s |
+| service-shaped fixture | layered, thoroughness 1 | 0.42 s |
+| random 300/900 | layered, defaults | 1.8 s |
+| random 300/900 | layered, thoroughness 3 | about 0.75 s |
+
+ELK is loaded on demand: the bundled engine is its own chunk (436 kB gzipped) fetched the first
+time a map opens, so the initial bundle stays at 156 kB gzipped against the 500 kB budget. In
+the production build served by `vite preview` in Chromium, opening the fixture scope from the
+Projects list took 1.4 s from the click until all 300 cards and 900 edges were in the DOM,
+including the first load of the ELK chunk; the map pans and zooms freely afterwards.
 
 ### Views
 
@@ -59,7 +76,8 @@ URL carries environment, filters and time so a view can be shared.
 
 ## Acceptance criteria
 
-- A 300-node, 900-edge fixture renders in under 2 s and stays interactive.
+- A 300-node, 900-edge fixture renders in under 2 s and stays interactive (measured 1.4 s in
+  the production build, see Graph rendering).
 - Filters, search and the time selector change the map without a full reload.
 - The UI is served from the control plane jar at `/` with no separate deployment.
 
@@ -70,10 +88,11 @@ the Projects list and the Service map of a scope.
 
 1. ARCHI-32 (merged as #39): module scaffold, Gradle integration, SPA serving, typed client,
    UI quality gate.
-2. Projects list on `GET /scopes` with filters and grouping, with the shell (navigation rail,
-   top bar).
-3. Service map on `…/graph` and `…/services` with ELK layout (library decision).
-4. Lenses, node and dependency panels, time selector, URL state, polish.
+2. ARCHI-43 (merged as #55): Projects list on `GET /scopes` with filters and grouping, with the
+   shell (navigation rail, top bar).
+3. ARCHI-44: Service map on `GET …/graph` with React Flow and ELK, node-type chips, legend,
+   minimap, fit to view.
+4. Lenses, node and dependency panels, time selector, URL state for selection and time, polish.
 
 Ticket numbers are assigned when a branch is created (next free `ARCHI-<n>`); the remaining M0
 pull requests and M1 come first (maintainer, 2026-10-02).
@@ -155,10 +174,61 @@ What landed and the decisions behind it:
   theme and the map entry. Testing Library's `user-event` is the only new dev dependency.
   Coverage of the UI stays above 95 % on every counter.
 
+### PR 3: Service map (ARCHI-44)
+
+What landed and the decisions behind it:
+
+- **One request.** The scope page asks `GET /scopes/{project}/{environment}/{cluster}/graph`
+  once (`graphQuery`, TanStack Query) and derives everything else in the browser: node-type
+  counts, the visible subgraph, edge styles. `GET …/services` is not called: every dependency
+  it would return is already in the graph, and the panels of PR 4 derive inbound and outbound
+  lists from the same edges (YAGNI).
+- **Pure map logic** (`map/model.ts`): the filter is the set of hidden node types, parsed from
+  and written to the URL (`hide=DATABASE`); `visibleGraph` drops hidden nodes and every edge
+  that touches them; `edgeHealth` applies the design thresholds (amber from 1 % errors, red
+  from 3 %); `edgeWidth` grows with `log10(calls)` and caps at 6 px; `subtitle` prefers the
+  versions, then the namespaces, then the id. Components only render.
+- **Layout as derived server state** (`map/layout.ts`, `ServiceMap`): `layoutGraph` turns the
+  visible graph into an ELK graph (fixed 192 × 56 cards, direction `RIGHT`, thoroughness 3)
+  and returns a map of positions. The component runs it through `useQuery` keyed by the node
+  and edge ids, so a layout is computed once per visible graph, cached while the user toggles
+  chips back and forth, and never recomputed inside an effect. The engine is imported
+  dynamically, which gives Vite the split point for the ELK chunk.
+- **Encoding in CSS, not in JavaScript.** React Flow edges carry two class names, the kind
+  (`edge-sync`, `edge-publish`, `edge-consume`) and the health (`health-ok`, `health-warn`,
+  `health-bad`); the stylesheet maps them to dash pattern and colour through the design tokens,
+  so both themes work without any colour logic in components. Arrowheads are three SVG markers
+  owned by the map (`arrow-ok`, `arrow-warn`, `arrow-bad`) filled by the same tokens. The React
+  Flow theme variables (`--xy-*`) are mapped onto the tokens once in `base.css`.
+- **Node cards** are a custom React Flow node type (`card`): icon tile by type, name, subtitle
+  in mono, invisible handles on the left (target) and right (source) so every edge enters from
+  the left and leaves to the right. Node type is announced to assistive technology through a
+  visually hidden label; the node id is the tooltip.
+- **Chrome of the canvas.** Node-type chips with counts above the map (pressed = shown,
+  dashed = hidden, URL carries the hidden set), a count line as an `output` element, legend
+  bottom-left, minimap bottom-right coloured by node type, zoom and fit-to-view controls
+  top-right, dotted background on the design grid. Nodes are not draggable in this release:
+  positions come from the layout and are not persisted anywhere.
+- **Tests.** The pure logic has unit tests; `layout.test.ts` checks that dependencies layer
+  left to right on the demo graph and that the 300-node fixture lands on 300 distinct positions
+  within a 5 s ceiling (the ceiling guards against a slow strategy, not the 2 s acceptance
+  criterion, which is measured in the browser); the page tests drive the real router and the
+  typed client with a stubbed `fetch` through the chips, the hidden set in the URL, the empty
+  scope and the problem response, and count the rendered edges by class. React Flow needs a
+  `ResizeObserver`, `DOMMatrixReadOnly` and element sizes that jsdom lacks; `src/test/setup.ts`
+  stubs them, and the observer callback is deferred to a microtask because React Flow registers
+  its container after the node effects run.
+- **Not in this PR.** Selection and the context rail, the Data streams lens, find-in-map, the
+  time selector and URL state for selection and time come with PR 4. The Ask bar slot of the top
+  bar holds the breadcrumb on this screen.
+
 ## Risks and open points
 
 - Node tooling in CI lengthens the pipeline (Node download and `npm ci` per job, about a
   minute); caching `~/.npm` is a follow-up for the M0 pipeline work.
-- Graph library choice is validated early with real data from the demo stack.
+- ELK runs on the main thread: a 300-node layout blocks for well under a second once, when the
+  graph loads. A web worker is the follow-up if real landscapes grow past that.
+- Layout quality on real landscapes is validated with the demo stack of M7; Cytoscape.js stays
+  the fallback.
 - The UI tests stub `fetch` globally; the client therefore resolves `globalThis.fetch` per
   call instead of capturing it at creation.

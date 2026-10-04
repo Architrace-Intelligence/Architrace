@@ -28,11 +28,13 @@ Last updated: **2026-10-04**
   session, Prometheus metrics and health, formatter on for the whole module, acceptance run
   of 6 000 000 spans in 600 s with 0 rejections and 20 MB heap. Details on the
   [M1](../features/m1-agent-pipeline/) page.
-- **M4 PR 2 (ARCHI-43, #55) in review**: the Projects list on the agreed frames with
-  `react-router` 8 (declarative mode), the shell (rail, top bar, theme), environment and
-  cluster facet chips with counts, text filter, grouping, URL state, scope page placeholder.
-  Details on the [M4](../features/m4-service-map/) page. The routing choice is open for the
-  maintainer to confirm in the review.
+- **M4 PR 2 is merged (#55)**: the Projects list, the shell and `react-router` 8 in declarative
+  mode; the merge confirmed the routing choice.
+- **M4 PR 3 (ARCHI-44) in review**: the Service map of a scope with React Flow 12 and the ELK
+  layered layout, decided on the 300-node fixture (layout 0.5 s, initial bundle 156 kB gzipped,
+  ELK as a lazy 436 kB chunk): node cards by type, edges by kind with width by calls and colour
+  by error rate, node-type chips with counts carried in the URL, legend, minimap, fit to view.
+  Details on the [M4](../features/m4-service-map/) page.
 - The maintainer asked on 2026-10-04 to leave the ruleset aside and implement M1 and M4 first;
   testing follows.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
@@ -59,7 +61,11 @@ instead of a per-id resource; the snapshot history filters on window end, inclus
 UI conventions since ARCHI-32: feature folders under `src/`; server state only through
 `queryOptions` factories; the generated `src/api/schema.d.ts` is never committed; tests stub
 `fetch` with the helpers in `src/test/http.ts`; TypeScript stays on 5.x until
-`openapi-typescript` and `typescript-eslint` support 6 and 7.
+`openapi-typescript` and `typescript-eslint` support 6 and 7. Since ARCHI-44: the map derives
+everything from the one `…/graph` request; a layout is a TanStack query keyed by node and edge
+ids; edge kind and health are class names styled through the tokens; React Flow's `--xy-*`
+variables map onto the tokens in `base.css`; the jsdom stubs React Flow needs live in
+`src/test/setup.ts`.
 
 Build conventions since ARCHI-33: new Java modules apply `architrace.java` (or
 `architrace.spring-boot`); third-party plugins are applied by id, their versions live in the
@@ -91,15 +97,12 @@ timeline mode only).
 
 ## Next step
 
-Merge #55 (M4 PR 2). Then continue, one PR each with the next free ticket number:
+Merge M4 PR 3 (ARCHI-44). Then continue, one PR each with the next free ticket number:
 
-1. M4 PR 3: the Service map of a scope on `…/graph` and `…/services`: React Flow with ELK
-   layered layout (decide with a 300-node fixture; Cytoscape.js is the fallback), node cards
-   by type, edges by kind with width by calls and colour by error rate, node-type chips with
-   counts, fit to view, minimap, legend; the scope page of PR 2 becomes the map.
-2. M4 PR 4: lenses (All, Data streams), node and dependency panels in the context rail, time
-   selector (`graph?at=`), URL state for selection and time, polish; then M5, M6, M7.
-3. The agent Dockerfile health check can move to `/health` (M7 owns the image). Take over the
+1. M4 PR 4: lenses (All, Data streams), node and dependency panels in the context rail derived
+   from the graph edges, find-in-map, time selector (`graph?at=`), URL state for selection and
+   time, keyboard navigation between nodes, polish; then M5, M6, M7.
+2. The agent Dockerfile health check can move to `/health` (M7 owns the image). Take over the
    Dependabot Gradle bumps of #47 in a maintainer PR on the way.
 
 ## How to resume
