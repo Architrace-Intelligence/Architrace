@@ -166,7 +166,10 @@ the quality gate on new code), `security` (Snyk, OWASP Dependency-Check, gitleak
 [`CodeQL`](./.github/workflows/codeql.yml) analyses the Java and TypeScript sources and the
 workflows. Merges to `main` run [`Main`](./.github/workflows/main.yml): the same gates, then a
 release when the commits since the last tag contain a releasing type (tag, notes, jars), the
-container images, the documentation site and the dependency graph. Details on the
+container images, the documentation site and the dependency graph. The `main` ruleset
+([`.github/rulesets/main.json`](./.github/rulesets/main.json)) makes those checks, resolved review
+threads and a squash merge mandatory, and CodeRabbit ([`.coderabbit.yaml`](./.coderabbit.yaml))
+reviews every pull request. Details on the
 [M0 page](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/).
 
 ## Container images

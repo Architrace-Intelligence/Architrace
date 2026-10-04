@@ -310,7 +310,7 @@ jobs:
       - name: Scan the image for code scanning
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          image-ref: ${{ steps.image.outputs.name }}:${{ steps.meta.outputs.version }}
           format: sarif
           output: trivy-${{ matrix.module }}.sarif
           severity: CRITICAL,HIGH
@@ -325,7 +325,7 @@ jobs:
       - name: Gate the image on critical vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          image-ref: ${{ steps.image.outputs.name }}:${{ steps.meta.outputs.version }}
           format: table
           severity: CRITICAL
           ignore-unfixed: true

@@ -100,3 +100,11 @@ cd documentation/architrace-inteligence
 npm install
 npm run dev
 ```
+
+## Next steps
+
+- [Local Development](../guides/local-development/): run the modules from source, tests,
+  dependency changes, versions and release notes.
+- [Docker Demo](../guides/docker-demo/): the demo stack with instrumented services and a collector.
+- [Contributing](../project/contributing/): how a change reaches `main`, the checks it has to
+  pass and the commit convention.

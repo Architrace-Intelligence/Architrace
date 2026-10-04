@@ -14,45 +14,18 @@ Last updated: **2026-10-04**
 - Stages 0–2 are done. Stage 3 (implementation) is open. Order of work since 2026-10-02: finish
   **M0** first, then M1, M4 PR 2 onwards, M5, M6, M7; the vertical UI slices are paused after
   M4 PR 1.
-- Merged: M0 PR 1 (hygiene, #26) and PR 2 (build conventions and versioning, ARCHI-33, #42), the
-  UI design (#30), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1 (#39). The UI direction (dark-first
-  "calm control room", tokens in `architrace-ui/src/styles/tokens.css`) still awaits the
-  maintainer's confirmation.
-- **M0 PR 3 (ARCHI-34, in review)**: `pr.yml` with the required checks `build` (`./gradlew build`,
-  reports and jars as artifacts), `quality` (SonarCloud over the restored reports, quality gate on
-  new code) and `security` (Snyk high+, OWASP Dependency-Check CVSS ≥ 7 through the root Gradle
-  plugin with `--no-parallel`, gitleaks binary over the pull request commits) plus `docs`;
-  `pr-title.yml` checks the title; `codeql.yml` analyses `java-kotlin` (manual build),
-  `javascript-typescript` and `actions`; the composite action `.github/actions/setup-build` reads
-  the toolchain versions from `gradle.properties`; `agent.yml` removed; `docs-deploy.yml`
-  restricted to `main`. Details on the [M0](../features/m0-engineering-platform/) page.
-- M0 PR 3 is merged (#44). Scanner credentials are in place since 2026-10-02: `SNYK_TOKEN` is
-  the Snyk PAT `architrace-ci` (Snyk PATs live 90 days at most, this one expires 2026-12-31;
-  service accounts are a paid feature), `SNYK_ORG` is the real slug `architrace`, `NVD_API_KEY`
-  is an activated NVD key; all of them exist as repository and as Dependabot secrets.
-- **M0 PR 4 (ARCHI-36, in review)**: `main.yml` replaces `ci-cd.yml` and `docs-deploy.yml`:
-  the three gates of `pr.yml`, then `release` (tag, notes, jars under the tag, GitHub release;
-  skipped with a notice while no `v*` tag exists), `images` (module Dockerfiles over the prebuilt
-  jars, Trivy SARIF plus a gate on fixable critical findings, GHCR tags `sha-<short>` always and
-  `X.Y.Z` + `latest` on release), `docs` deploy to Pages and Gradle dependency-graph submission.
-  Dockerfiles `architrace-agent/Dockerfile` and `architrace-control-plane/Dockerfile` verified
-  locally. Details on the [M0](../features/m0-engineering-platform/) page.
-- **Dependency update (ARCHI-35, merged as #46)**: the first Snyk run with valid credentials found
-  22 critical and 110 high findings across the Java modules and the docs site. The PR moves
-  Spring Boot 4.0.3 → 4.1.1 and the control plane to the Boot gRPC server starter (Spring gRPC 1.1
-  moved its starters and test support into Boot, its BOM now manages only `spring-grpc-core`),
-  overrides the Boot-managed Tomcat (11.0.26), Netty (4.2.18), Jackson 2 (2.22.3), grpc-java
-  (1.84.0) and protobuf-java (4.36.2, gencode and runtime must match) versions from the catalog,
-  lifts the rest of the catalog to the latest releases (protobuf plugin 0.10.0 needs
-  `maybeCreate` for the per-task grpc plugin options), moves the docs site to Astro 7 /
-  Starlight 0.42 (sidebar `autogenerate` groups became `items`), and tells Dependabot to ignore
-  TypeScript majors for the UI. The root `gradle.lockfile` is gone: the root project has no
-  lockable configurations and the old file only carried stale GraalVM entries.
-- Still open for the maintainer, after PR 4 is merged: seed the tag (`git tag -a v0.1.0 -m v0.1.0
-  <merge commit> && git push origin v0.1.0`; from then on every `feat`/`fix` merge releases),
-  make the two GHCR packages public after the first `main` run, close Dependabot #45 (edits the
-  removed `ci-cd.yml`). Dependabot Gradle PRs (#47) fail `build` because Dependabot does not
-  regenerate lockfiles; take their bumps into maintainer PRs.
+- Merged: M0 PR 1–4 (#26, #42, #44, #48), the dependency update (ARCHI-35, #46), the UI design
+  (#30), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1 (#39). The UI direction (dark-first "calm
+  control room", tokens in `architrace-ui/src/styles/tokens.css`) still awaits the maintainer's
+  confirmation.
+- **M0 PR 5 (ARCHI-37, in review)**: the `main` ruleset as code (`.github/rulesets/main.json`),
+  `.coderabbit.yaml` validated against the CodeRabbit schema, the contributing, getting-started
+  and GitHub setup pages, and a fix of `main.yml`: the first `main` run (2026-10-04) passed every
+  gate and reported the missing seed tag, but both `images` jobs failed because Trivy scanned
+  `sha-<full sha>` while the image was tagged `sha-<short sha>`; both scans now use the tag the
+  metadata step computed. Details on the [M0](../features/m0-engineering-platform/) page.
+- The agent session cannot write repository settings or rulesets (its tool permissions stop at
+  administration writes), so applying them is a maintainer step, listed below.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
   rule in `AGENTS.md` §4).
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
@@ -89,6 +62,11 @@ whose action needs a licence runs as a pinned, checksum-verified binary instead;
 a secret skips with a notice when the secret is absent (Dependabot runs) rather than failing;
 the Gradle gate in CI is the same command as locally.
 
+Merge gate conventions since ARCHI-37: the ruleset lives in `.github/rulesets/main.json` and
+changes with the job names it requires; squash merge only, the pull request title is the commit
+subject; branches need not be up to date with `main` (one pull request at a time); CodeRabbit
+threads are resolved by a fix or an answer.
+
 Working assumption since ARCHI-26: a **scope** is project × environment × cluster, reported by
 the agent at registration and stored on every snapshot. Pending: where the project value comes
 from on the agent side (resource attribute or agent setting), confirmation of the UI direction,
@@ -97,17 +75,19 @@ only).
 
 ## Next step
 
-M0 PR 4 (ARCHI-36) is open for review. Merge it first (one PR at a time), watch the first
-`main` run (images, notice about the missing seed tag), seed `v0.1.0`, then update this page.
+M0 PR 5 (ARCHI-37) is open for review. Merge it first (one PR at a time). Then the maintainer
+closes M0 with the checklist on the [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer)
+page: apply the ruleset and the repository settings (§5 there), install the CodeRabbit app,
+watch the `main` run of the merge (the `images` jobs must now push `sha-<short>` tags), make the
+two GHCR packages public, seed `v0.1.0` on that merge commit, close Dependabot #45. After that,
+update this page and mark M0 done on the progress page.
 
-Then, in order (one PR each, next free ticket number):
+Then, in order (one PR each, next free ticket number after ARCHI-37):
 
-1. M0 PR 5: `main` ruleset (ADR 0003) with the required checks `build`, `quality`, `security`,
-   `docs`, `title` and the CodeQL analyses; repository settings (squash only, delete branch on
-   merge, Dependabot alerts and security updates, secret scanning with push protection);
-   `.coderabbit.yaml`; site pages.
-2. M1 agent pipeline (restores 85 % coverage and the formatter in the agent), then M4 PR 2
-   (Projects list), M4 PR 3–4, M5, M6, M7.
+1. M1 agent pipeline (restores 85 % coverage and the formatter in the agent); take over the
+   Dependabot Gradle bumps of #47 in a maintainer PR on the way (Dependabot cannot regenerate
+   the lockfiles).
+2. M4 PR 2 (Projects list), M4 PR 3–4, M5, M6, M7.
 
 ## How to resume
 

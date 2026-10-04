@@ -27,6 +27,6 @@ Operating rules for AI agents and contributors are in [`AGENTS.md`](./AGENTS.md)
 
 4. Open a pull request titled `<type>(ARCHI-<n>): <Imperative subject>` and fill in the
    template completely.
-5. Resolve every review thread; the maintainer merges.
+5. Resolve every review thread (CodeRabbit's and the maintainer's); the maintainer squash-merges.
 
 By contributing you agree that your contributions are licensed under the Apache License 2.0.
