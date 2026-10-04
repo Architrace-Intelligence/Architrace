@@ -69,13 +69,16 @@ Build fat jar:
 ./gradlew :architrace-agent:shadowJar
 ```
 
-Run with config (the jar name carries the computed version):
+Validate the configuration, then run (the jar name carries the computed version):
 
 ```bash
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
 java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./otel-test-app/architrace-agent.yaml
 ```
 
-Agent OTLP receiver listens on `otlp-receiver-port` from config (demo uses `4319`).
+`dry-run` prints the effective configuration or every validation problem; `--prop key=value`
+overrides single values for both commands. The OTLP receiver listens on `otlp.port` (default
+`4319`); the keys are on the [Configuration](../reference/configuration/) page.
 
 ## UI development
 

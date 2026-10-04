@@ -14,18 +14,25 @@ Last updated: **2026-10-04**
 - Stages 0–2 are done. Stage 3 (implementation) is open. Order of work since 2026-10-02: finish
   **M0** first, then M1, M4 PR 2 onwards, M5, M6, M7; the vertical UI slices are paused after
   M4 PR 1.
-- Merged: M0 PR 1–4 (#26, #42, #44, #48), the dependency update (ARCHI-35, #46), the UI design
-  (#30), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1 (#39). The UI direction (dark-first "calm
-  control room", tokens in `architrace-ui/src/styles/tokens.css`) still awaits the maintainer's
-  confirmation.
-- **M0 PR 5 (ARCHI-37, in review)**: the `main` ruleset as code (`.github/rulesets/main.json`),
-  `.coderabbit.yaml` validated against the CodeRabbit schema, the contributing, getting-started
-  and GitHub setup pages, and a fix of `main.yml`: the first `main` run (2026-10-04) passed every
-  gate and reported the missing seed tag, but both `images` jobs failed because Trivy scanned
-  `sha-<full sha>` while the image was tagged `sha-<short sha>`; both scans now use the tag the
-  metadata step computed. Details on the [M0](../features/m0-engineering-platform/) page.
+- Merged: M0 PR 1–5 (#26, #42, #44, #48, #49), the dependency update (ARCHI-35, #46), the UI
+  design (#30), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1 (#39). The second `main` run
+  (2026-10-04) was green end to end: both images are in GHCR as `sha-f0c43ab`.
+- **M0 is complete in the repository.** What remains is the maintainer checklist on the
+  [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
+  ruleset (`.github/rulesets/main.json`) and the repository settings (§5 there), install the
+  CodeRabbit app, make the two GHCR packages public, seed `v0.1.0` (`git tag -a v0.1.0 -m v0.1.0
+  f0c43ab && git push origin v0.1.0`). Dependabot #45 is closed. Until the ruleset is active
+  the merge gate is discipline, not platform.
+- **M1 PR 1 (ARCHI-38, in review)**: `SpanRecord` with `ServiceIdentity`, `Deployment` and the
+  sealed `Peer`; `MappedField` + `AttributeMapping` with the current and legacy conventions;
+  `SpanNormaliser` (OTLP → records); configuration v2 (`AgentConfigDocument` → `AgentConfig`,
+  every problem reported at once, unknown keys rejected, `--prop` overrides parsed as YAML,
+  `dry-run` prints the effective configuration); the legacy pipeline consumes `SpanRecord`;
+  `InternalSpan`, `SpanExtractor`, `AttributeDictionary` and the empty processors are gone;
+  agent tests use no reflection; ratchet line 0.85 / branch 0.77 / method 0.85. Details on the
+  [M1](../features/m1-agent-pipeline/) page.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
-  administration writes), so applying them is a maintainer step, listed below.
+  administration writes); the maintainer applies them.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
   rule in `AGENTS.md` §4).
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
@@ -67,27 +74,33 @@ changes with the job names it requires; squash merge only, the pull request titl
 subject; branches need not be up to date with `main` (one pull request at a time); CodeRabbit
 threads are resolved by a fix or an answer.
 
+Agent conventions since ARCHI-38: absent record components are `Optional`, never `null`; the
+Jackson-facing document record and the effective configuration record are separate types;
+new agent files are written in palantir format even though the module-wide formatter switch
+stays off until the legacy files are rewritten (M1 PR 5); the agent coverage ratchet only
+moves up. Working assumption: `project` is an agent setting, not a telemetry attribute.
+
 Working assumption since ARCHI-26: a **scope** is project × environment × cluster, reported by
-the agent at registration and stored on every snapshot. Pending: where the project value comes
-from on the agent side (resource attribute or agent setting), confirmation of the UI direction,
-and the drift refinement proposed on the UI design page (compare deployments in timeline mode
-only).
+the agent at registration and stored on every snapshot. Pending: confirmation of the UI
+direction and the drift refinement proposed on the UI design page (compare deployments in
+timeline mode only).
 
 ## Next step
 
-M0 PR 5 (ARCHI-37) is open for review. Merge it first (one PR at a time). Then the maintainer
-closes M0 with the checklist on the [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer)
-page: apply the ruleset and the repository settings (§5 there), install the CodeRabbit app,
-watch the `main` run of the merge (the `images` jobs must now push `sha-<short>` tags), make the
-two GHCR packages public, seed `v0.1.0` on that merge commit, close Dependabot #45. After that,
-update this page and mark M0 done on the progress page.
+M1 PR 1 (ARCHI-38) is open for review. Merge it first (one PR at a time), then continue M1 in
+the order of its delivery plan, one PR each with the next free ticket number:
 
-Then, in order (one PR each, next free ticket number after ARCHI-37):
+1. M1 PR 2: sealed `GraphNode` with ADR 0007 ids, edge builder by kind and peer, pending span
+   index with TTL, `EdgeMetrics` with the logarithmic histogram, `GraphWindow`; replaces the
+   legacy resolvers and registries.
+2. M1 PR 3: snapshot scheduler, `GraphSnapshot` publisher over the bounded queue, runtime fix
+   (reconnecting control plane session), `GraphBatch` removed from the proto.
+3. M1 PR 4: eviction sweeps, metrics endpoint, rate-limited logging, load test.
+4. M1 PR 5: cleanup (`ControlPlaneServiceImpl`, `ControlPlaneRegistry`, duplicates), formatter
+   on, ratchet at the default, integration test, reference pages.
+5. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
 
-1. M1 agent pipeline (restores 85 % coverage and the formatter in the agent); take over the
-   Dependabot Gradle bumps of #47 in a maintainer PR on the way (Dependabot cannot regenerate
-   the lockfiles).
-2. M4 PR 2 (Projects list), M4 PR 3–4, M5, M6, M7.
+Then M4 PR 2 (Projects list), M4 PR 3–4, M5, M6, M7.
 
 ## How to resume
 

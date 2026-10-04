@@ -15,7 +15,7 @@ description: Run Architrace modules directly from source.
 java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
 ```
 
-`dry-run` currently logs validation start and accepts `--prop key=value` overrides (not yet applied).
+`dry-run` validates the file, applies `--prop key=value` overrides and prints the effective configuration.
 
 ## 3. Start agent runtime
 

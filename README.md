@@ -37,10 +37,12 @@ Run control-plane locally:
 ./gradlew :architrace-control-plane:bootRun
 ```
 
-Build runnable agent fat jar:
+Build runnable agent fat jar, validate a configuration, run the agent:
 
 ```bash
 ./gradlew :architrace-agent:shadowJar
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./otel-test-app/architrace-agent.yaml --prop otlp.port=4320
 ```
 
 Print the version the build computes from git tags and Conventional Commits:
@@ -53,7 +55,7 @@ Print the version the build computes from git tags and Conventional Commits:
 
 ## Features
 
-- **OTLP Ingestion** - Receives traces on OTLP gRPC (`:4319`)
+- **OTLP Ingestion** - Receives traces on OTLP gRPC (`:4319`) from collectors and SDKs; service identity, deployment and peers come from the standard OpenTelemetry semantic conventions (current and legacy keys), with a configurable attribute mapping
 - **Graph Transformation** - Converts spans into nodes/edges and graph batches
 - **Control Plane Stream** - Bidirectional gRPC session between agent and control-plane
 - **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract: scopes, agents, the graph and services of a scope at a point in time, snapshot history; Swagger UI at `/swagger-ui`

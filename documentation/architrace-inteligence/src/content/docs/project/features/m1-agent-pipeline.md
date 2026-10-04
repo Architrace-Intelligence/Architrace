@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: design agreed · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: in progress (PR 1 of 5 in review, ARCHI-38) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 
@@ -101,7 +101,9 @@ HTTP server: `/metrics`, `/health`. Metrics: `spans_received`, `spans_rejected`,
 ### Configuration v2
 
 ```yaml
+project: webshop
 environment: DEV
+cluster: cluster-a
 agent:
   name: cluster-a-agent
 control-plane:
@@ -121,8 +123,11 @@ attribute-mapping:
   domain: [service.namespace, team]
 ```
 
-`dry-run` loads, validates and prints the effective configuration including mapping defaults;
-`--prop key=value` overrides apply to both commands.
+`project`, `environment` and `cluster` form the scope the agent registers with; `environment`
+and `cluster` are also the fallbacks when a resource carries no environment or cluster
+attribute. `dry-run` loads, validates and prints the effective configuration including mapping
+defaults; `--prop key=value` overrides apply to both commands. The full key table is on the
+[Configuration](../../../reference/configuration/) page.
 
 ### Cleanup
 
@@ -146,6 +151,56 @@ drives OTLP in and asserts the `GraphBatch` out through in-process gRPC.
 3. Snapshot scheduler, publisher of `GraphSnapshot` (the contract was extended in ARCHI-28; remove `GraphBatch`), queue, runtime fix.
 4. Eviction sweeps, metrics endpoint, rate-limited logging, load test.
 5. Cleanup, integration test, reference pages (configuration, CLI).
+
+### PR 1: span model, attribute mapping, normaliser, configuration v2 (ARCHI-38)
+
+What landed and the decisions behind it:
+
+- **Span model** (`span` package): `SpanRecord` with `ServiceIdentity`, `Deployment` and the
+  sealed `Peer` (`Http`, `Database`, `Messaging`, `None`). Components that may be absent
+  (`parentSpanId`, namespace, instance, port, destination) are `Optional` instead of `null`, so
+  pattern matching and record deconstruction never meet a null. Compact constructors reject
+  missing required components. `latencyMillis()` is derived from the OTLP nanos and never
+  negative.
+- **Attribute mapping**: `MappedField` is an enum that carries the config key and the default
+  key list of every field; `AttributeMapping` is an immutable record over an `EnumMap`, so the
+  table is complete by construction and prints in declaration order. A configured override
+  replaces the key list of one field entirely, which is easier to reason about than merging.
+- **Normaliser** (`SpanNormaliser`): one pass per resource resolves identity and deployment,
+  then every span of the resource gets its peer from the span attributes. Peer precedence is
+  database, then messaging, then HTTP, because a database or messaging client span usually
+  carries a server address as well. Resources without a service name are dropped: no identity,
+  no node. Scalar attribute values of every type are read as text (ports arrive as integers);
+  arrays and maps are ignored. Trace and span ids are lower-case hex, the error flag is the
+  OTLP status code.
+- **Configuration v2**: two records with different jobs. `AgentConfigDocument` is the Jackson
+  face of the YAML, nullable and annotated with the kebab-case keys; `AgentConfig` is the
+  effective configuration, non-null, with `Duration` instead of seconds. Validation runs on the
+  document and reports every problem at once as an `AgentConfigException`, so `dry-run` shows
+  the whole list instead of the first finding. Unknown keys are rejected by Jackson and
+  reported with their path. `--prop` overrides are applied to the YAML tree before mapping:
+  the key is a dotted path, the value is parsed as YAML, so numbers, booleans and lists work
+  and overrides are validated exactly like file values. `dry-run` renders the effective
+  configuration through the same document type, which is why the output loads back to an
+  equal `AgentConfig` (tested). Both commands share a picocli `@Mixin` for `--config` and
+  `--prop`.
+- **Runtime**: the configuration now drives the ring size, the OTLP port, the retry delay and
+  the snapshot interval (A7 in part). The snapshot loop looks the control plane session up on
+  every tick instead of dereferencing it at start-up, which removes the start-up crash of A2;
+  publishing itself stays a stub until PR 3. The legacy resolvers and registries consume
+  `SpanRecord` through pattern matching on `Peer`; `InternalSpan`, `SpanExtractor`,
+  `AttributeDictionary` and the empty sampling and anomaly processors are gone (A4, part of
+  A5).
+- **Tests without reflection**: commands are driven through `CommandLine.execute`, the
+  runtime through its public `run` on a worker thread (OTLP port observed, failed session
+  closed, interruption stops everything), the pipeline through records fed into
+  `SpanPipeline`. The agent ratchet moves to line 0.85, branch 0.77, method 0.85. New and
+  rewritten files are already in palantir format; the module-wide formatter switch stays off
+  until the remaining legacy files are rewritten, because reformatting them would flood the
+  SonarCloud new-code gate.
+- **Working assumption**: `project` is an agent setting (default `default`), not a telemetry
+  attribute; the scope decision pending since ARCHI-26 is resolved this way unless the
+  maintainer objects.
 
 ## Risks and open points
 

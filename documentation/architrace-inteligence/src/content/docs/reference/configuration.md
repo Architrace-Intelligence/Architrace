@@ -3,59 +3,100 @@ title: Configuration
 description: Agent and control plane configuration, defaults and examples.
 ---
 
-## YAML schema
+## Agent
+
+The agent reads one YAML file (`run --config <path>`, `dry-run --config <path>`). Every value
+can be overridden on the command line with `--prop <dotted.key>=<value>`; the value is parsed
+as YAML, so numbers, booleans and lists (`[a, b]`) work. `dry-run` prints the effective
+configuration after defaults and overrides, or lists every problem when the file is invalid.
 
 ```yaml
-environment: DEV
 project: webshop
-clusterId: cluster-1
+environment: PROD
+cluster: eu-1
 agent:
-  name: demo-agent
+  name: eu-1-agent
 control-plane:
-  bootstrap:
-    server: localhost:9090
-otlp-receiver-port: 4319
-control-plane-retry-seconds: 5
+  server: control-plane:9090
+  retry-seconds: 5
+otlp:
+  port: 4319
+snapshot:
+  interval-seconds: 60
+  queue-size: 64
+buffers:
+  ring-size: 65536
+  pending-ttl-seconds: 120
+metrics:
+  port: 9464
+attribute-mapping:
+  domain: [service.namespace, team]
 ```
 
-## Required fields
+| Key | Required | Default | Meaning |
+|-----|----------|---------|---------|
+| `project` | no | `default` | project the agent reports under; with `environment` and `cluster` it forms the agent's scope |
+| `environment` | yes | | environment used when a resource carries no `deployment.environment.name` |
+| `cluster` | yes | | cluster used when a resource carries no `k8s.cluster.name` |
+| `agent.name` | yes | | agent identity at registration |
+| `control-plane.server` | yes | | `host:port` of the control plane gRPC endpoint |
+| `control-plane.retry-seconds` | no | `5` | pause before a new control plane session after a failure |
+| `otlp.port` | no | `4319` | OTLP/gRPC receiver port (`1`–`65535`) |
+| `snapshot.interval-seconds` | no | `60` | window length; one snapshot per interval |
+| `snapshot.queue-size` | no | `64` | snapshots kept while the control plane is unreachable (oldest dropped) |
+| `buffers.ring-size` | no | `65536` | span ring buffer between the receiver and the pipeline; a power of two |
+| `buffers.pending-ttl-seconds` | no | `120` | how long a span waits for its partner before eviction |
+| `metrics.port` | no | `9464` | Prometheus metrics and health endpoint port |
+| `attribute-mapping.<field>` | no | see below | attribute keys tried in order for one field; replaces the default list of that field |
 
-- `environment`: the environment the agent observes (`DEV`, `STAGE`, `PROD`, …)
-- `clusterId`: the Kubernetes cluster the agent runs in
-- `agent.name`
-- `control-plane.bootstrap.server`
+Unknown keys are rejected, so a typo cannot silently disable a setting. The control plane
+stores every snapshot under the scope `project` × `environment` × `cluster`, and the UI lists
+one row per scope.
 
-`project`, `environment` and `clusterId` form the agent's scope. The control plane stores
-every snapshot under that scope, and the UI lists one row per scope.
+### Attribute mapping
 
-## Optional fields
+Service identity, deployment and peers are read from OpenTelemetry attributes. Each field has an
+ordered list of keys; the first key present with a non-blank value wins. The defaults cover the
+current semantic conventions first and legacy names after them.
 
-- `project`: the project the agent reports under (default `default`)
-- `otlp-receiver-port` (must be `> 0` when provided)
-- `control-plane-retry-seconds` (must be `> 0` when provided)
+| Field | Keys in priority order | Fallback |
+|-------|------------------------|----------|
+| `environment` | `deployment.environment.name`, `deployment.environment`, `environment` | config `environment` |
+| `domain` | `service.namespace`, `domainId` | `default` |
+| `service` | `service.name`, `serviceName` | spans without it are dropped |
+| `version` | `service.version` | `unknown` |
+| `cluster` | `k8s.cluster.name`, `cluster` | config `cluster` |
+| `namespace` | `k8s.namespace.name`, `namespace` | none |
+| `instance` | `service.instance.id`, `k8s.pod.name` | none |
+| `http-address` | `server.address`, `net.peer.name`, `http.host` | no HTTP peer |
+| `http-port` | `server.port`, `net.peer.port` | unknown port |
+| `db-system` | `db.system` | no database peer |
+| `db-namespace` | `db.namespace`, `db.name` | none |
+| `messaging-system` | `messaging.system` | no messaging peer |
+| `messaging-destination` | `messaging.destination.name`, `messaging.destination` | none |
+| `messaging-operation` | `messaging.operation.type`, `messaging.operation` | none |
 
-## Example (project demo)
+The first seven fields are resource attributes, the rest span attributes. A span is classified
+as a database call when `db-system` resolves, else as messaging when `messaging-system`
+resolves, else as HTTP when `http-address` resolves.
+
+### Example (demo stack)
 
 ```yaml
-environment: DEV
 project: demo
-clusterId: otel-test
-
-domainId: demo
-namespace: local
+environment: DEV
+cluster: otel-test
 
 agent:
   name: docker-agent
 
 control-plane:
-  bootstrap:
-    server: control-plane:9090
+  server: control-plane:9090
+  retry-seconds: 5
 
-otlp-receiver-port: 4319
-control-plane-retry-seconds: 5
+otlp:
+  port: 4319
 ```
-
-`domainId` and `namespace` are ignored today; the agent pipeline (M1) replaces them with the standard OpenTelemetry resource attributes.
 
 ## Control plane
 
