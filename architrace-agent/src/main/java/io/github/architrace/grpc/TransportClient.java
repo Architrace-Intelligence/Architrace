@@ -5,19 +5,17 @@
 
 package io.github.architrace.grpc;
 
+import io.github.architrace.graph.GraphSnapshot;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
-import io.github.architrace.otlp.GraphSnapshot;
 import io.grpc.stub.StreamObserver;
 
 public interface TransportClient extends AutoCloseable {
 
-  StreamObserver<AgentRegisterRequestedEvent> open(
-      StreamObserver<ControlPlaneCommand> inboundObserver);
+    StreamObserver<AgentRegisterRequestedEvent> open(StreamObserver<ControlPlaneCommand> inboundObserver);
 
-  @Override
-  void close();
+    @Override
+    void close();
 
-  void send(GraphSnapshot snapshot);
+    void send(GraphSnapshot snapshot);
 }
-

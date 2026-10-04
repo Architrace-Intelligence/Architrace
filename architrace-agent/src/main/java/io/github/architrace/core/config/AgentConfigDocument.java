@@ -90,7 +90,7 @@ record AgentConfigDocument(
                 port(section(otlp, OtlpSection::port), "otlp.port"),
                 positive(section(snapshot, SnapshotSection::intervalSeconds), "snapshot.interval-seconds"),
                 positive(section(snapshot, SnapshotSection::queueSize), "snapshot.queue-size"),
-                powerOfTwo(section(buffers, BuffersSection::ringSize), "buffers.ring-size"),
+                positive(section(buffers, BuffersSection::ringSize), "buffers.ring-size"),
                 positive(section(buffers, BuffersSection::pendingTtlSeconds), "buffers.pending-ttl-seconds"),
                 port(section(metrics, MetricsSection::port), "metrics.port"));
         return Stream.concat(checks, mappingProblems())
@@ -173,11 +173,6 @@ record AgentConfigDocument(
     private static Optional<String> port(Integer value, String field) {
         boolean outOfRange = value != null && (value < 1 || value > MAX_PORT);
         return invalidIf(outOfRange, field + " must be between 1 and " + MAX_PORT);
-    }
-
-    private static Optional<String> powerOfTwo(Integer value, String field) {
-        boolean notPowerOfTwo = value != null && (value <= 0 || Integer.bitCount(value) != 1);
-        return invalidIf(notPowerOfTwo, field + " must be a power of two");
     }
 
     private static boolean isHostPort(String server) {
