@@ -5,9 +5,8 @@
 
 package io.github.architrace.service.processor;
 
-import io.github.architrace.model.InternalSpan;
+import io.github.architrace.span.SpanRecord;
 
 public interface SpanProcessor {
-
-  void onSpan(InternalSpan spans);
+    void onSpan(SpanRecord span);
 }

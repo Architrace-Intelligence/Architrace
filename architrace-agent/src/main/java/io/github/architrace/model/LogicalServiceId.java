@@ -5,18 +5,20 @@
 
 package io.github.architrace.model;
 
-public record LogicalServiceId(
-    String environment,
-    String domainId,
-    String serviceName) {
+import io.github.architrace.span.ServiceIdentity;
 
-  public String asString() {
-    return environment + ":" + domainId + ":" + serviceName;
-  }
+public record LogicalServiceId(String environment, String domainId, String serviceName) {
 
-  @Override
-  public String toString() {
-    return asString();
-  }
+    public static LogicalServiceId of(ServiceIdentity service) {
+        return new LogicalServiceId(service.environment(), service.domain(), service.name());
+    }
 
+    public String asString() {
+        return environment + ":" + domainId + ":" + serviceName;
+    }
+
+    @Override
+    public String toString() {
+        return asString();
+    }
 }

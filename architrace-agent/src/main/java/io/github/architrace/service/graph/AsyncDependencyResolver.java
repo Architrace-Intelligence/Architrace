@@ -6,47 +6,30 @@
 package io.github.architrace.service.graph;
 
 import io.github.architrace.model.AsyncKey;
-import io.github.architrace.model.InternalSpan;
-import io.github.architrace.model.SpanKind;
+import io.github.architrace.span.Peer;
+import io.github.architrace.span.SpanKind;
+import io.github.architrace.span.SpanRecord;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class AsyncDependencyResolver extends AbstractDependencyResolver {
 
-  private final ConcurrentMap<AsyncKey, InternalSpan> waitingProducers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<AsyncKey, SpanRecord> waitingProducers = new ConcurrentHashMap<>();
 
-  public void onSpan(InternalSpan span) {
-    if (span.kind() == SpanKind.PRODUCER) {
-      handleProducer(span);
+    public void onSpan(SpanRecord span) {
+        destination(span).ifPresent(destination -> route(span, new AsyncKey(span.traceId(), destination)));
     }
 
-    if (span.kind() == SpanKind.CONSUMER) {
-      handleConsumer(span);
-    }
-  }
-
-  private void handleProducer(InternalSpan producer) {
-    String destination = producer.messagingDestination();
-    if (destination == null) {
-      return;
+    private void route(SpanRecord span, AsyncKey key) {
+        if (span.kind() == SpanKind.PRODUCER) {
+            waitingProducers.put(key, span);
+        } else if (span.kind() == SpanKind.CONSUMER) {
+            Optional.ofNullable(waitingProducers.remove(key)).ifPresent(producer -> buildDependency(producer, span));
+        }
     }
 
-    AsyncKey key = new AsyncKey(producer.traceId(), destination);
-    waitingProducers.put(key, producer);
-  }
-
-  private void handleConsumer(InternalSpan consumer) {
-    String destination = consumer.messagingDestination();
-    if (destination == null) {
-      return;
+    private static Optional<String> destination(SpanRecord span) {
+        return span.peer() instanceof Peer.Messaging messaging ? messaging.destination() : Optional.empty();
     }
-
-    AsyncKey key = new AsyncKey(consumer.traceId(), destination);
-    InternalSpan producer = waitingProducers.remove(key);
-    if (producer == null) {
-      return;
-    }
-
-    buildDependency(producer, consumer);
-  }
 }

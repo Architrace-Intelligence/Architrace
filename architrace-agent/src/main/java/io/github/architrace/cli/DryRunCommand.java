@@ -5,39 +5,45 @@
 
 package io.github.architrace.cli;
 
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.inject.Inject;
+import io.github.architrace.core.config.AgentConfig;
+import io.github.architrace.core.config.AgentConfigException;
+import io.github.architrace.core.config.AgentConfigLoader;
+import java.io.PrintWriter;
+import java.util.Objects;
+import java.util.concurrent.Callable;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec;
 
-@Command(
-    name = "dry-run",
-    description = "Start Architrace runtime agent"
-)
-public class DryRunCommand implements Runnable {
+@Command(name = "dry-run", description = "Load and validate the configuration, then print the effective values")
+public final class DryRunCommand implements Callable<Integer> {
 
-  private static final Logger log = LoggerFactory.getLogger(DryRunCommand.class);
+    @Mixin
+    private ConfigOptions configOptions;
 
-  @Option(
-      names = "--config",
-      required = true,
-      description = "Path to YAML config file"
-  )
-  private String configPath;
+    @Spec
+    private CommandSpec spec;
 
-  @Option(
-      names = "--prop",
-      description = "Override property (key=value)"
-  )
-  private Map<String, String> properties;
+    private final AgentConfigLoader configLoader;
 
-  @Override
-  public void run() {
-    if (properties != null && !properties.isEmpty()) {
-      log.warn("CLI overrides are not applied yet. Received {} override(s).", properties.size());
+    @Inject
+    public DryRunCommand(AgentConfigLoader configLoader) {
+        this.configLoader = Objects.requireNonNull(configLoader, "configLoader");
     }
 
-    log.info("Validating config has started.");
-  }
+    @Override
+    public Integer call() {
+        try {
+            AgentConfig config = configOptions.load(configLoader);
+            PrintWriter out = spec.commandLine().getOut();
+            out.print(configLoader.render(config));
+            out.flush();
+            return CommandLine.ExitCode.OK;
+        } catch (AgentConfigException e) {
+            return ConfigOptions.reportInvalid(e, spec.commandLine().getErr());
+        }
+    }
 }

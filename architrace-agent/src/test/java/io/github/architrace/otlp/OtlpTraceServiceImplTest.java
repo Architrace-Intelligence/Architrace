@@ -5,38 +5,31 @@
 
 package io.github.architrace.otlp;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.github.architrace.service.graph.SpanExtractor;
 import io.github.architrace.service.processor.SpanBatchProcessor;
+import io.github.architrace.span.AttributeMapping;
+import io.github.architrace.span.SpanNormaliser;
 import io.github.architrace.testsupport.RecordingObserver;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class OtlpTraceServiceImplTest {
 
-  private OtlpTraceServiceImpl sut;
+    private final OtlpTraceServiceImpl sut = new OtlpTraceServiceImpl(new SpanReceiver(
+            new SpanNormaliser(AttributeMapping.defaults(), "DEV", "cluster-1"),
+            new SpanBatchProcessor(new SpanRingBuffer(16), new SpanPipeline(List.of()))));
 
-  @BeforeEach
-  void setUp() {
-    var batchProcessor = new SpanBatchProcessor(new SpanRingBuffer(16), new SpanPipeline(List.of()));
-    sut = new OtlpTraceServiceImpl(new SpanReceiver(new SpanExtractor(), batchProcessor));
-  }
+    @Test
+    void exportShouldRespondAndComplete() {
+        RecordingObserver<ExportTraceServiceResponse> responseObserver = new RecordingObserver<>();
+        var request = TestDataProvider.createSingleSpanRequest("unit-test-span");
 
-  @Test
-  void exportShouldRespondAndComplete() {
-    RecordingObserver<ExportTraceServiceResponse> responseObserver = new RecordingObserver<>();
+        sut.export(request, responseObserver);
 
-    var request = TestDataProvider.createSingleSpanRequest("unit-test-span");
-
-    sut.export(request, responseObserver);
-
-    assertThat(responseObserver.values()).hasSize(1);
-    assertThat(responseObserver.values().get(0)).isEqualTo(ExportTraceServiceResponse.getDefaultInstance());
-    assertThat(responseObserver.isCompleted()).isTrue();
-  }
+        assertThat(responseObserver.values()).containsExactly(ExportTraceServiceResponse.getDefaultInstance());
+        assertThat(responseObserver.isCompleted()).isTrue();
+    }
 }

@@ -5,38 +5,64 @@
 
 package io.github.architrace.core.config;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.architrace.span.AttributeMapping;
+import java.time.Duration;
+import java.util.Objects;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public record AgentConfig(
-    String clusterId,
-    Agent agent,
-    @JsonProperty("control-plane") ControlPlane controlPlane,
-    @JsonProperty("otlp-receiver-port")
-    @JsonAlias("oltp-receiver-port")
-    Integer otlpReceiverPort,
-    @JsonProperty("control-plane-retry-seconds") Long controlPlaneRetrySeconds,
-    String environment,
-    String project) {
+        String project,
+        String environment,
+        String cluster,
+        String agentName,
+        ControlPlaneSettings controlPlane,
+        OtlpSettings otlp,
+        SnapshotSettings snapshot,
+        BufferSettings buffers,
+        MetricsSettings metrics,
+        AttributeMapping attributeMapping) {
 
-  public enum Environment {
-    DEV,
-    TEST,
-    STG,
-    PROD
-  }
+    public static final String DEFAULT_PROJECT = "default";
+    public static final Duration DEFAULT_RETRY_DELAY = Duration.ofSeconds(5);
+    public static final int DEFAULT_OTLP_PORT = 4319;
+    public static final Duration DEFAULT_SNAPSHOT_INTERVAL = Duration.ofSeconds(60);
+    public static final int DEFAULT_QUEUE_SIZE = 64;
+    public static final int DEFAULT_RING_SIZE = 65_536;
+    public static final Duration DEFAULT_PENDING_TTL = Duration.ofSeconds(120);
+    public static final int DEFAULT_METRICS_PORT = 9464;
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public record Agent(String name) {
-  }
+    public AgentConfig {
+        Objects.requireNonNull(project, "project");
+        Objects.requireNonNull(environment, "environment");
+        Objects.requireNonNull(cluster, "cluster");
+        Objects.requireNonNull(agentName, "agentName");
+        Objects.requireNonNull(controlPlane, "controlPlane");
+        Objects.requireNonNull(otlp, "otlp");
+        Objects.requireNonNull(snapshot, "snapshot");
+        Objects.requireNonNull(buffers, "buffers");
+        Objects.requireNonNull(metrics, "metrics");
+        Objects.requireNonNull(attributeMapping, "attributeMapping");
+    }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public record ControlPlane(@JsonProperty("bootstrap") Bootstrap bootstrap) {
-  }
+    public record ControlPlaneSettings(String server, Duration retryDelay) {
+        public ControlPlaneSettings {
+            Objects.requireNonNull(server, "server");
+            Objects.requireNonNull(retryDelay, "retryDelay");
+        }
+    }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public record Bootstrap(String server) {
-  }
+    public record OtlpSettings(int port) {}
+
+    public record SnapshotSettings(Duration interval, int queueSize) {
+        public SnapshotSettings {
+            Objects.requireNonNull(interval, "interval");
+        }
+    }
+
+    public record BufferSettings(int ringSize, Duration pendingTtl) {
+        public BufferSettings {
+            Objects.requireNonNull(pendingTtl, "pendingTtl");
+        }
+    }
+
+    public record MetricsSettings(int port) {}
 }
