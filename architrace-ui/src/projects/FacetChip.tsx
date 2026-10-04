@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useRef } from "react";
+import { usePopover } from "../app/usePopover";
 import type { FacetValue } from "./filters";
 
 interface FacetChipProps {
@@ -13,52 +14,28 @@ interface FacetChipProps {
 }
 
 export function FacetChip({ label, values, onToggle }: FacetChipProps) {
-  const [open, setOpen] = useState(false);
   const container = useRef<HTMLSpanElement>(null);
-  const popoverId = useId();
+  const popover = usePopover(container);
   const selected = values.filter((value) => value.selected);
-
-  useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
-    const close = (event: MouseEvent | KeyboardEvent) => {
-      if (
-        event instanceof KeyboardEvent
-          ? event.key === "Escape"
-          : !container.current?.contains(event.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", close);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("keydown", close);
-    };
-  }, [open]);
 
   return (
     <span className="facet" ref={container}>
       <button
         type="button"
         className={selected.length > 0 ? "chip chip-on" : "chip"}
-        aria-expanded={open}
-        aria-controls={popoverId}
-        onClick={() => {
-          setOpen((current) => !current);
-        }}
+        aria-expanded={popover.open}
+        aria-controls={popover.id}
+        onClick={popover.toggle}
       >
         {label}
         {selected.length > 0 && (
           <span className="mono chip-value">{selected.map((value) => value.value).join(", ")}</span>
         )}
       </button>
-      {open && (
+      {popover.open && (
         <div
           className="popover"
-          id={popoverId}
+          id={popover.id}
           role="group"
           aria-label={`Filter by ${label.toLowerCase()}`}
         >

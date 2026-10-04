@@ -8,17 +8,21 @@ import { Link, useParams, useSearchParams } from "react-router";
 import { describeError, type TopologyGraph } from "../api/client";
 import { graphQuery } from "../api/queries";
 import { Shell } from "../app/Shell";
+import { ContextPanel } from "../map/ContextPanel";
 import {
   countByType,
   describeGraph,
-  type MapFilter,
-  parseMapFilter,
+  describeMatches,
+  type MapState,
+  parseMapState,
+  type Selection,
   toggleNodeType,
   toMapParams,
   visibleGraph,
 } from "../map/model";
 import { NodeTypeChips } from "../map/NodeTypeChips";
 import { ServiceMap } from "../map/ServiceMap";
+import { TimeSelector } from "../map/TimeSelector";
 import { scopePath } from "../projects/filters";
 
 export function ScopePage() {
@@ -26,23 +30,52 @@ export function ScopePage() {
   const scope = { project, environment, cluster };
   const path = scopePath(scope);
   const [params, setParams] = useSearchParams();
-  const filter = parseMapFilter(params);
-  const graph = useQuery(graphQuery(scope));
+  const state = parseMapState(params);
+  const graph = useQuery(graphQuery(scope, state.at));
+  const update = (next: MapState) => {
+    setParams(toMapParams(next), { replace: true });
+  };
+  const select = (selection: Selection | undefined) => {
+    update({ ...state, selection });
+  };
+  const request = `/api/v1${path}/graph${state.at === undefined ? "" : `?at=${encodeURIComponent(state.at)}`}`;
 
-  const crumbs = (
-    <nav className="breadcrumb" aria-label="Scope">
-      <Link to="/">Projects</Link>
-      <span aria-hidden="true">/</span>
-      <span>{project}</span>
-      <span aria-hidden="true">/</span>
-      <span className="badge b-kind">{environment}</span>
-      <span aria-hidden="true">/</span>
-      <span className="mono">{cluster}</span>
-    </nav>
+  const tools = (
+    <>
+      <nav className="breadcrumb" aria-label="Scope">
+        <Link to="/">Projects</Link>
+        <span aria-hidden="true">/</span>
+        <span>{project}</span>
+        <span aria-hidden="true">/</span>
+        <span className="badge b-kind">{environment}</span>
+        <span aria-hidden="true">/</span>
+        <span className="mono">{cluster}</span>
+      </nav>
+      <input
+        className="ask-input"
+        type="search"
+        aria-label="Find in map"
+        placeholder="Find a service, data store or data stream…"
+        value={state.query}
+        onChange={(event) => {
+          update({ ...state, query: event.target.value });
+        }}
+      />
+      <TimeSelector
+        at={state.at}
+        onChange={(at) => {
+          update({ ...state, at });
+        }}
+      />
+    </>
   );
+  const aside =
+    graph.isSuccess && graph.data.nodes.length > 0 ? (
+      <ContextPanel graph={graph.data} state={state} onSelect={select} />
+    ) : undefined;
 
   return (
-    <Shell title="Service map" tools={crumbs} apiRequest={`/api/v1${path}/graph`} mapPath={path}>
+    <Shell title="Service map" tools={tools} apiRequest={request} mapPath={path} aside={aside}>
       {graph.isPending && <output className="status">Loading the graph…</output>}
       {graph.isError && (
         <p className="status status-error" role="alert">
@@ -50,13 +83,7 @@ export function ScopePage() {
         </p>
       )}
       {graph.isSuccess && (
-        <MapView
-          graph={graph.data}
-          filter={filter}
-          onChange={(next) => {
-            setParams(toMapParams(next), { replace: true });
-          }}
-        />
+        <MapView graph={graph.data} state={state} onChange={update} onSelect={select} />
       )}
     </Shell>
   );
@@ -64,11 +91,12 @@ export function ScopePage() {
 
 interface MapViewProps {
   readonly graph: TopologyGraph;
-  readonly filter: MapFilter;
-  readonly onChange: (filter: MapFilter) => void;
+  readonly state: MapState;
+  readonly onChange: (state: MapState) => void;
+  readonly onSelect: (selection: Selection | undefined) => void;
 }
 
-function MapView({ graph, filter, onChange }: MapViewProps) {
+function MapView({ graph, state, onChange, onSelect }: MapViewProps) {
   if (graph.nodes.length === 0) {
     return (
       <p className="empty">
@@ -77,23 +105,48 @@ function MapView({ graph, filter, onChange }: MapViewProps) {
       </p>
     );
   }
-  const visible = visibleGraph(graph, filter);
+  const visible = visibleGraph(graph, state);
   return (
     <>
       <div className="toolbar">
         <NodeTypeChips
           counts={countByType(graph.nodes)}
-          filter={filter}
+          filter={state}
           onToggle={(type) => {
-            onChange(toggleNodeType(filter, type));
+            onChange(toggleNodeType(state, type));
           }}
         />
-        <output className="count-line toolbar-right">{describeGraph(visible)}</output>
+        <div className="seg" role="group" aria-label="Lens">
+          <span className="seg-label">Lens</span>
+          <button
+            type="button"
+            aria-pressed={state.lens === "all"}
+            onClick={() => {
+              onChange({ ...state, lens: "all" });
+            }}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            aria-pressed={state.lens === "streams"}
+            onClick={() => {
+              onChange({ ...state, lens: "streams" });
+            }}
+          >
+            Data streams
+          </button>
+        </div>
+        <output className="count-line toolbar-right">
+          {state.query.trim() === ""
+            ? describeGraph(visible)
+            : describeMatches(visible, state.query)}
+        </output>
       </div>
       {visible.nodes.length === 0 ? (
         <p className="empty">Every node type is hidden. Switch one back on to see the map.</p>
       ) : (
-        <ServiceMap graph={visible} />
+        <ServiceMap graph={visible} state={state} onSelect={onSelect} />
       )}
     </>
   );

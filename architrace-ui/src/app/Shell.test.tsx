@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderAt } from "../test/render";
@@ -83,5 +83,27 @@ describe("Shell", () => {
     );
     expect(screen.getByRole("link", { name: "Map" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Projects" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("copies the link of the current view and says so for a moment", async () => {
+    const user = userEvent.setup();
+    renderAt(
+      "/scopes/webshop/PROD/k8s-prod-eu1?node=a",
+      <Shell title="Service map" apiRequest="/api/v1/scopes" aside={<p>rail</p>}>
+        content
+      </Shell>,
+    );
+    expect(screen.getByRole("complementary", { name: "Context" })).toHaveTextContent("rail");
+
+    await user.click(screen.getByRole("button", { name: "Copy link" }));
+
+    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
+    await expect(navigator.clipboard.readText()).resolves.toBe(window.location.href);
+    await waitFor(
+      () => {
+        expect(screen.getByRole("button", { name: "Copy link" })).toBeInTheDocument();
+      },
+      { timeout: 3_000 },
+    );
   });
 });

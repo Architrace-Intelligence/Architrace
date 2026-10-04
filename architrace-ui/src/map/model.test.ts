@@ -9,12 +9,18 @@ import { demoGraph } from "../test/http";
 import {
   countByType,
   describeGraph,
+  describeMatches,
+  edgeDetails,
   edgeHealth,
   edgeId,
   edgeWidth,
-  EMPTY_MAP_FILTER,
   errorRate,
-  parseMapFilter,
+  INITIAL_MAP_STATE,
+  looks,
+  matchesQuery,
+  nodeDetails,
+  parseMapState,
+  streams,
   subtitle,
   toggleNodeType,
   toMapParams,
@@ -37,17 +43,46 @@ function node(overrides: Partial<TopologyNode>): TopologyNode {
   };
 }
 
-describe("map filter", () => {
-  it("reads the hidden node types from the URL and writes them back in a stable order", () => {
-    const filter = parseMapFilter(new URLSearchParams("hide=TOPIC&hide=SERVICE&hide=BOGUS"));
+describe("map state", () => {
+  it("reads every field from the URL and writes back only what differs from the defaults", () => {
+    const state = parseMapState(
+      new URLSearchParams(
+        "hide=TOPIC&hide=SERVICE&hide=BOGUS&lens=streams&q=ord&at=2026-10-01T12:00:00Z&node=service:orders-service",
+      ),
+    );
 
-    expect(filter.hidden).toEqual(["SERVICE", "TOPIC"]);
-    expect(toMapParams(filter).toString()).toBe("hide=SERVICE&hide=TOPIC");
-    expect(toMapParams(EMPTY_MAP_FILTER).toString()).toBe("");
+    expect(state).toEqual({
+      hidden: ["SERVICE", "TOPIC"],
+      lens: "streams",
+      query: "ord",
+      at: "2026-10-01T12:00:00Z",
+      selection: { kind: "node", id: "service:orders-service" },
+    });
+    expect(toMapParams(state).toString()).toBe(
+      "hide=SERVICE&hide=TOPIC&lens=streams&q=ord&at=2026-10-01T12%3A00%3A00Z&node=service%3Aorders-service",
+    );
+    expect(parseMapState(new URLSearchParams())).toEqual(INITIAL_MAP_STATE);
+    expect(toMapParams(INITIAL_MAP_STATE).toString()).toBe("");
+  });
+
+  it("ignores an invalid time, an unknown lens and an empty selection", () => {
+    expect(parseMapState(new URLSearchParams("at=yesterday&lens=sideways&node=&edge="))).toEqual(
+      INITIAL_MAP_STATE,
+    );
+  });
+
+  it("prefers the node over the edge and keeps an edge selection", () => {
+    expect(parseMapState(new URLSearchParams("node=a&edge=b")).selection).toEqual({
+      kind: "node",
+      id: "a",
+    });
+    const edge = parseMapState(new URLSearchParams("edge=a>b:SYNC"));
+    expect(edge.selection).toEqual({ kind: "edge", id: "a>b:SYNC" });
+    expect(toMapParams(edge).toString()).toBe("edge=a%3Eb%3ASYNC");
   });
 
   it("toggles a node type in and out of the hidden set", () => {
-    const hidden = toggleNodeType(EMPTY_MAP_FILTER, "DATABASE");
+    const hidden = toggleNodeType(INITIAL_MAP_STATE, "DATABASE");
 
     expect(hidden.hidden).toEqual(["DATABASE"]);
     expect(toggleNodeType(hidden, "SERVICE").hidden).toEqual(["SERVICE", "DATABASE"]);
@@ -66,7 +101,10 @@ describe("visibleGraph", () => {
   });
 
   it("drops hidden nodes and every edge that touches them", () => {
-    const visible = visibleGraph(demoGraph, { hidden: ["DATABASE", "TOPIC"] });
+    const visible = visibleGraph(demoGraph, {
+      ...INITIAL_MAP_STATE,
+      hidden: ["DATABASE", "TOPIC"],
+    });
 
     expect(visible.nodes).toHaveLength(6);
     expect(visible.nodes.map((candidate) => candidate.type)).not.toContain("DATABASE");
@@ -74,13 +112,136 @@ describe("visibleGraph", () => {
     expect(visible.edges.every((edge) => edge.kind === "SYNC")).toBe(true);
   });
 
-  it("describes the visible graph in one line", () => {
-    expect(describeGraph(visibleGraph(demoGraph, EMPTY_MAP_FILTER))).toBe(
+  it("describes the visible graph and the matches of a query in one line", () => {
+    const visible = visibleGraph(demoGraph, INITIAL_MAP_STATE);
+
+    expect(describeGraph(visible)).toBe(
       "5 services · 2 data stores · 2 data streams · 1 external host · 11 dependencies (7 sync, 4 stream)",
     );
     expect(describeGraph({ nodes: [node({})], edges: [] })).toBe(
       "1 service · 0 data stores · 0 data streams · 0 external hosts · 0 dependencies (0 sync, 0 stream)",
     );
+    expect(describeMatches(visible, " order ")).toBe("3 of 10 nodes match “order”");
+  });
+});
+
+describe("details", () => {
+  it("lists the inbound and outbound dependencies of a node with the other end embedded", () => {
+    const details = nodeDetails(demoGraph, "service:orders-service");
+    const describe = (dependencies: readonly { other: TopologyNode; edge: { kind: string } }[]) =>
+      dependencies.map((dependency) => `${dependency.other.name}:${dependency.edge.kind}`);
+
+    expect(details?.node.name).toBe("orders-service");
+    expect(describe(details?.inbound ?? [])).toEqual([
+      "api-gateway:SYNC",
+      "inventory-service:SYNC",
+    ]);
+    expect(describe(details?.outbound ?? [])).toEqual([
+      "postgresql/orders:SYNC",
+      "inventory-service:SYNC",
+      "order-events:PUBLISH",
+    ]);
+    expect(nodeDetails(demoGraph, "service:ghost")).toBeUndefined();
+  });
+
+  it("resolves an edge with both ends and rejects unknown ids", () => {
+    const details = edgeDetails(demoGraph, "service:orders-service>db:postgresql/orders:SYNC");
+
+    expect(details?.source.name).toBe("orders-service");
+    expect(details?.target.name).toBe("postgresql/orders");
+    expect(details?.edge.metrics.calls).toBe(24_000);
+    expect(edgeDetails(demoGraph, "a>b:SYNC")).toBeUndefined();
+  });
+
+  it("summarises data streams with producers, consumers and messages", () => {
+    const summaries = streams(demoGraph);
+
+    expect(summaries.map((stream) => stream.topic.name)).toEqual([
+      "order-events",
+      "payment-events",
+    ]);
+    expect(summaries[0]?.producers.map((producer) => producer.name)).toEqual(["orders-service"]);
+    expect(summaries[0]?.consumers.map((consumer) => consumer.name)).toEqual([
+      "notification-service",
+    ]);
+    expect(summaries[0]?.messages).toBe(8_700);
+  });
+});
+
+describe("looks", () => {
+  const visible = visibleGraph(demoGraph, INITIAL_MAP_STATE);
+
+  it("lights the selected node, its neighbours and the touching edges and dims the rest", () => {
+    const result = looks(visible, {
+      ...INITIAL_MAP_STATE,
+      selection: { kind: "node", id: "service:orders-service" },
+    });
+
+    expect(result.nodes.get("service:orders-service")).toEqual({
+      selected: true,
+      dimmed: false,
+      match: false,
+    });
+    expect(result.nodes.get("service:api-gateway")?.dimmed).toBe(false);
+    expect(result.nodes.get("service:payments-service")?.dimmed).toBe(true);
+    expect(result.edges.get("service:api-gateway>service:orders-service:SYNC")).toEqual({
+      touching: true,
+      dimmed: false,
+    });
+    expect(result.edges.get("service:api-gateway>service:payments-service:SYNC")).toEqual({
+      touching: false,
+      dimmed: true,
+    });
+  });
+
+  it("lights only the two ends of a selected edge", () => {
+    const id = "service:payments-service>external:api.stripe.com:SYNC";
+    const result = looks(visible, { ...INITIAL_MAP_STATE, selection: { kind: "edge", id } });
+
+    expect(result.nodes.get("service:payments-service")?.dimmed).toBe(false);
+    expect(result.nodes.get("external:api.stripe.com")?.dimmed).toBe(false);
+    expect(result.nodes.get("service:api-gateway")?.dimmed).toBe(true);
+    expect(result.edges.get(id)?.touching).toBe(true);
+    expect([...result.edges.values()].filter((edge) => edge.touching)).toHaveLength(1);
+  });
+
+  it("ignores a selection that is not in the visible graph", () => {
+    const result = looks(visible, {
+      ...INITIAL_MAP_STATE,
+      selection: { kind: "node", id: "service:ghost" },
+    });
+
+    expect([...result.nodes.values()].every((look) => !look.dimmed && !look.selected)).toBe(true);
+    expect([...result.edges.values()].every((look) => !look.dimmed && !look.touching)).toBe(true);
+  });
+
+  it("marks the matches of a query and dims everything else", () => {
+    const result = looks(visible, { ...INITIAL_MAP_STATE, query: "ORDER" });
+
+    expect(result.nodes.get("service:orders-service")).toEqual({
+      selected: false,
+      dimmed: false,
+      match: true,
+    });
+    expect(result.nodes.get("db:postgresql/orders")?.match).toBe(true);
+    expect(result.nodes.get("topic:kafka/order-events")?.match).toBe(true);
+    expect(result.nodes.get("service:api-gateway")?.dimmed).toBe(true);
+    expect(result.edges.get("service:orders-service>db:postgresql/orders:SYNC")?.dimmed).toBe(
+      false,
+    );
+    expect(result.edges.get("service:api-gateway>service:orders-service:SYNC")?.dimmed).toBe(true);
+  });
+
+  it("recedes synchronous calls and nodes without a stream under the Data streams lens", () => {
+    const result = looks(visible, { ...INITIAL_MAP_STATE, lens: "streams" });
+
+    expect(result.nodes.get("topic:kafka/order-events")?.dimmed).toBe(false);
+    expect(result.nodes.get("service:notification-service")?.dimmed).toBe(false);
+    expect(result.nodes.get("db:postgresql/orders")?.dimmed).toBe(true);
+    expect(
+      result.edges.get("service:orders-service>topic:kafka/order-events:PUBLISH")?.dimmed,
+    ).toBe(false);
+    expect(result.edges.get("service:orders-service>db:postgresql/orders:SYNC")?.dimmed).toBe(true);
   });
 });
 
@@ -132,5 +293,18 @@ describe("subtitle", () => {
     expect(subtitle(node({ id: "db:postgresql/orders", type: "DATABASE" }))).toBe(
       "db:postgresql/orders",
     );
+  });
+
+  it("matches a query against the name, the id and the subtitle", () => {
+    const notify = node({
+      name: "notification-service",
+      deployments: [{ cluster: "a", namespace: "notify" }],
+    });
+
+    expect(matchesQuery(notify, "")).toBe(true);
+    expect(matchesQuery(notify, "NOTIF")).toBe(true);
+    expect(matchesQuery(notify, "service:")).toBe(true);
+    expect(matchesQuery(notify, "notify")).toBe(true);
+    expect(matchesQuery(notify, "orders-db")).toBe(false);
   });
 });

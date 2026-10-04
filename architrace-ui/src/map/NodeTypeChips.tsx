@@ -4,11 +4,11 @@
  */
 
 import type { NodeType } from "../api/client";
-import { type MapFilter, NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES } from "./model";
+import { type MapState, NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES } from "./model";
 
 interface NodeTypeChipsProps {
   readonly counts: Record<NodeType, number>;
-  readonly filter: MapFilter;
+  readonly filter: MapState;
   readonly onToggle: (type: NodeType) => void;
 }
 
