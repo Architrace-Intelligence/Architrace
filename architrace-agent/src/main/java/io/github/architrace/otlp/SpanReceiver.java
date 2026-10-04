@@ -5,25 +5,21 @@
 
 package io.github.architrace.otlp;
 
-import io.github.architrace.model.InternalSpan;
-import io.github.architrace.service.graph.SpanExtractor;
 import io.github.architrace.service.processor.SpanBatchProcessor;
+import io.github.architrace.span.SpanNormaliser;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
-import java.util.List;
 
 public class SpanReceiver {
 
-  private final SpanExtractor extractor;
-  private final SpanBatchProcessor batchProcessor;
+    private final SpanNormaliser normaliser;
+    private final SpanBatchProcessor batchProcessor;
 
-  public SpanReceiver(SpanExtractor extractor, SpanBatchProcessor batchProcessor) {
-    this.extractor = extractor;
-    this.batchProcessor = batchProcessor;
-  }
+    public SpanReceiver(SpanNormaliser normaliser, SpanBatchProcessor batchProcessor) {
+        this.normaliser = normaliser;
+        this.batchProcessor = batchProcessor;
+    }
 
-  public void receive(ExportTraceServiceRequest request) {
-    List<InternalSpan> spans = extractor.extract(request);
-    batchProcessor.submit(spans);
-  }
-
+    public void receive(ExportTraceServiceRequest request) {
+        batchProcessor.submit(normaliser.normalise(request));
+    }
 }

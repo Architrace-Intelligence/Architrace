@@ -5,19 +5,19 @@
 
 package io.github.architrace.service.processor;
 
-import io.github.architrace.model.InternalSpan;
 import io.github.architrace.service.graph.NodeRegistry;
+import io.github.architrace.span.SpanRecord;
 
 public class NodeProcessor implements SpanProcessor {
 
-  private final NodeRegistry nodeRegistry;
+    private final NodeRegistry nodeRegistry;
 
-  public NodeProcessor(NodeRegistry nodeRegistry) {
-    this.nodeRegistry = nodeRegistry;
-  }
+    public NodeProcessor(NodeRegistry nodeRegistry) {
+        this.nodeRegistry = nodeRegistry;
+    }
 
-  @Override
-  public void onSpan(InternalSpan span) {
-      nodeRegistry.register(span);
-  }
+    @Override
+    public void onSpan(SpanRecord span) {
+        nodeRegistry.register(span);
+    }
 }

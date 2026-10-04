@@ -5,173 +5,119 @@
 
 package io.github.architrace.runtime;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.architrace.controlplane.AgentIdentity;
 import io.github.architrace.controlplane.ControlPlaneBootstrapService;
 import io.github.architrace.controlplane.ControlPlaneLifecycle;
 import io.github.architrace.controlplane.RegistrationService;
 import io.github.architrace.core.config.AgentConfig;
-import io.github.architrace.core.config.AgentConfigLoader;
 import io.github.architrace.grpc.TransportClient;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.github.architrace.otlp.GraphSnapshot;
-import io.github.architrace.otlp.SpanPipeline;
-import io.github.architrace.otlp.SpanReceiver;
-import io.github.architrace.otlp.SpanRingBuffer;
-import io.github.architrace.service.graph.SpanExtractor;
-import io.github.architrace.service.processor.SpanBatchProcessor;
 import io.github.architrace.service.runtime.AgentRuntimeService;
 import io.github.architrace.testsupport.TestDataProvider;
 import io.grpc.stub.StreamObserver;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.file.Path;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class AgentRuntimeServiceTest {
 
-  @TempDir
-  Path tempDir;
+    private static final Duration STARTUP_TIMEOUT = Duration.ofSeconds(10);
 
-  @Test
-  void runShouldFailFastWhenConfigDoesNotExist() {
-    AgentRuntimeService sut = new AgentRuntimeService(new AgentConfigLoader(), null);
-    Path missingConfig = tempDir.resolve("missing-config.yaml");
+    @Test
+    void runServesOtlpClosesAFailedControlPlaneSessionAndStopsWhenInterrupted() throws Exception {
+        int otlpPort = TestDataProvider.findFreePort();
+        AgentConfig config = TestDataProvider.agentConfig("localhost:1", otlpPort, Duration.ofMillis(10));
+        AtomicBoolean lifecycleClosed = new AtomicBoolean();
+        AgentRuntimeService sut = new AgentRuntimeService(failingBootstrap(config, lifecycleClosed));
+        AtomicReference<Throwable> outcome = new AtomicReference<>();
+        Thread agent = Thread.ofPlatform().start(() -> {
+            try {
+                sut.run(config);
+            } catch (Throwable throwable) {
+                outcome.set(throwable);
+            }
+        });
 
-    assertThatThrownBy(() -> sut.run(missingConfig))
-        .isInstanceOf(IllegalArgumentException.class);
-  }
+        awaitListening(otlpPort);
+        awaitTrue(lifecycleClosed);
+        agent.interrupt();
+        agent.join(STARTUP_TIMEOUT.toMillis());
 
-  @Test
-  void runControlPlaneSupervisorShouldStopWhenSessionFails() throws Exception {
-    AtomicBoolean lifecycleClosed = new AtomicBoolean(false);
-    ControlPlaneLifecycle failingLifecycle = new ControlPlaneLifecycle(
-        new AgentIdentity("agent-a", "0.1.0", "demo", "DEV", "cluster-1"),
-        new ThrowingTransportClient(lifecycleClosed),
-        new RegistrationService(),
-        List.of());
-
-    ControlPlaneBootstrapService bootstrapService = new ControlPlaneBootstrapService(null) {
-      @Override
-      public ControlPlaneLifecycle bootstrap(AgentConfig config) {
-        return failingLifecycle;
-      }
-    };
-    AgentRuntimeService sut = new AgentRuntimeService(new AgentConfigLoader(), bootstrapService);
-
-    invokePrivate(
-        sut,
-        "runControlPlaneSupervisor",
-        new Class[] {AgentConfig.class},
-        validConfig(1L));
-
-    assertThat(Thread.currentThread().isInterrupted()).isTrue();
-    Thread.interrupted();
-    assertThat(lifecycleClosed.get()).isTrue();
-  }
-
-  @Test
-  void sleepBeforeRetryShouldReturnFalseWhenThreadInterrupted() throws Exception {
-    AgentRuntimeService sut = new AgentRuntimeService(new AgentConfigLoader(), null);
-    Thread.currentThread().interrupt();
-
-    Object result = invokePrivate(sut, "sleepBeforeRetry", new Class[] {Long.class}, 1L);
-
-    assertThat(result).isEqualTo(false);
-    assertThat(Thread.currentThread().isInterrupted()).isTrue();
-    Thread.interrupted();
-  }
-
-  @Test
-  void runReceiverShouldStopWhenInterrupted() throws Exception {
-    AgentRuntimeService sut = new AgentRuntimeService(new AgentConfigLoader(), null);
-    int freePort = TestDataProvider.findFreePort();
-    AgentConfig config =
-        new AgentConfig(
-            "cluster-1",
-            new AgentConfig.Agent("agent-a"),
-            new AgentConfig.ControlPlane(new AgentConfig.Bootstrap("localhost:9090")),
-            freePort,
-            1L,
-            "DEV",
-            "demo");
-
-    AtomicReference<Throwable> failure = new AtomicReference<>();
-    Thread worker = Thread.ofVirtual().start(() -> {
-      try {
-        invokePrivate(
-            sut,
-            "runReceiver",
-            new Class[] {AgentConfig.class, SpanReceiver.class},
-            config,
-            new SpanReceiver(
-                new SpanExtractor(),
-                new SpanBatchProcessor(new SpanRingBuffer(16), new SpanPipeline(List.of()))));
-      } catch (Throwable throwable) {
-        failure.set(throwable);
-      }
-    });
-
-    Thread.sleep(200);
-    worker.interrupt();
-    worker.join(2_000);
-
-    assertThat(failure.get()).isInstanceOf(InterruptedException.class);
-  }
-
-  private static AgentConfig validConfig(Long retrySeconds) {
-    return new AgentConfig(
-        "cluster-1",
-        new AgentConfig.Agent("agent-a"),
-        new AgentConfig.ControlPlane(new AgentConfig.Bootstrap("localhost:9090")),
-        4319,
-        retrySeconds,
-        "DEV",
-        "demo");
-  }
-
-  private static Object invokePrivate(Object target, String methodName, Class<?>[] signature, Object... args)
-      throws Exception {
-    Method method = target.getClass().getDeclaredMethod(methodName, signature);
-    method.setAccessible(true);
-    try {
-      return method.invoke(target, args);
-    } catch (InvocationTargetException ex) {
-      Throwable cause = ex.getCause();
-      if (cause instanceof Exception exception) {
-        throw exception;
-      }
-      throw ex;
-    }
-  }
-
-  private static final class ThrowingTransportClient implements TransportClient {
-    private final AtomicBoolean closeCalled;
-
-    private ThrowingTransportClient(AtomicBoolean closeCalled) {
-      this.closeCalled = closeCalled;
+        assertThat(agent.isAlive()).isFalse();
+        assertThat(outcome.get()).isInstanceOf(InterruptedException.class);
+        assertThat(isListening(otlpPort)).isFalse();
     }
 
-    @Override
-    public StreamObserver<AgentRegisterRequestedEvent> open(StreamObserver<ControlPlaneCommand> inboundObserver) {
-      throw new IllegalStateException("boom");
+    private static ControlPlaneBootstrapService failingBootstrap(AgentConfig config, AtomicBoolean closed) {
+        return new ControlPlaneBootstrapService(null) {
+            @Override
+            public ControlPlaneLifecycle bootstrap(AgentConfig ignored) {
+                return new ControlPlaneLifecycle(
+                        AgentIdentity.from(config),
+                        new ThrowingTransportClient(closed),
+                        new RegistrationService(),
+                        List.of());
+            }
+        };
     }
 
-    @Override
-    public void close() {
-      closeCalled.set(true);
+    private static void awaitListening(int port) throws InterruptedException {
+        long deadline = System.nanoTime() + STARTUP_TIMEOUT.toNanos();
+        while (!isListening(port)) {
+            if (System.nanoTime() > deadline) {
+                throw new AssertionError("OTLP receiver did not start on port " + port);
+            }
+            Thread.sleep(20);
+        }
     }
 
-    @Override
-    public void send(GraphSnapshot snapshot) {
+    private static void awaitTrue(AtomicBoolean flag) throws InterruptedException {
+        long deadline = System.nanoTime() + STARTUP_TIMEOUT.toNanos();
+        while (!flag.get()) {
+            if (System.nanoTime() > deadline) {
+                throw new AssertionError("Condition not met in time");
+            }
+            Thread.sleep(20);
+        }
     }
-  }
+
+    private static boolean isListening(int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress("localhost", port), 200);
+            return true;
+        } catch (IOException _) {
+            return false;
+        }
+    }
+
+    private static final class ThrowingTransportClient implements TransportClient {
+
+        private final AtomicBoolean closeCalled;
+
+        private ThrowingTransportClient(AtomicBoolean closeCalled) {
+            this.closeCalled = closeCalled;
+        }
+
+        @Override
+        public StreamObserver<AgentRegisterRequestedEvent> open(StreamObserver<ControlPlaneCommand> inboundObserver) {
+            throw new IllegalStateException("control plane unreachable");
+        }
+
+        @Override
+        public void close() {
+            closeCalled.set(true);
+        }
+
+        @Override
+        public void send(GraphSnapshot snapshot) {}
+    }
 }

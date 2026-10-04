@@ -5,41 +5,21 @@
 
 package io.github.architrace.service.graph;
 
-import io.github.architrace.model.InternalSpan;
 import io.github.architrace.model.TraceSpanKey;
+import io.github.architrace.span.SpanRecord;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GlobalSpanRegistry {
 
-  private final ConcurrentMap<TraceSpanKey, InternalSpan> spanIndex = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TraceSpanKey, SpanRecord> spanIndex = new ConcurrentHashMap<>();
 
-  public boolean registerIfAbsent(InternalSpan span) {
-    var key = new TraceSpanKey(span.traceId(), span.spanId());
-
-    return spanIndex.putIfAbsent(key, span) == null;
-  }
-
-  public void register(InternalSpan span) {
-    if (span.spanId() == null || span.traceId() == null) {
-      return;
+    public boolean registerIfAbsent(SpanRecord span) {
+        return spanIndex.putIfAbsent(new TraceSpanKey(span.traceId(), span.spanId()), span) == null;
     }
 
-    var key = new TraceSpanKey(span.traceId(), span.spanId());
-    spanIndex.put(key, span);
-  }
-
-  public InternalSpan findParent(InternalSpan span) {
-    if (span.parentSpanId() == null) {
-      return null;
+    public Optional<SpanRecord> findParent(SpanRecord span) {
+        return span.parentSpanId().map(parentSpanId -> spanIndex.get(new TraceSpanKey(span.traceId(), parentSpanId)));
     }
-
-    var parentKey = new TraceSpanKey(span.traceId(), span.parentSpanId());
-
-    return spanIndex.get(parentKey);
-  }
-
-  public ConcurrentMap<TraceSpanKey, InternalSpan> getSpanIndex() {
-    return spanIndex;
-  }
 }

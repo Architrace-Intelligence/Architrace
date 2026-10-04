@@ -1,16 +1,13 @@
-environment: DEV
 project: demo
-clusterId: otel-test
-
-domainId: demo
-namespace: local
+environment: DEV
+cluster: otel-test
 
 agent:
   name: docker-agent
 
 control-plane:
-  bootstrap:
-    server: control-plane:9090
+  server: control-plane:9090
+  retry-seconds: 5
 
-otlp-receiver-port: 4319
-control-plane-retry-seconds: 5
+otlp:
+  port: 4319

@@ -3,13 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package io.github.architrace.model;
+package io.github.architrace.span;
 
 public enum SpanKind {
-  CLIENT,
-  SERVER,
-  INTERNAL,
-  PRODUCER,
-  CONSUMER,
-  UNSPECIFIED;
+    CLIENT,
+    SERVER,
+    PRODUCER,
+    CONSUMER,
+    INTERNAL
 }

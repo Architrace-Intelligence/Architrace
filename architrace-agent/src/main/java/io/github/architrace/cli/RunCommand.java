@@ -6,51 +6,56 @@
 package io.github.architrace.cli;
 
 import com.google.inject.Inject;
+import io.github.architrace.core.config.AgentConfig;
+import io.github.architrace.core.config.AgentConfigException;
+import io.github.architrace.core.config.AgentConfigLoader;
 import io.github.architrace.service.runtime.AgentRuntimeService;
-import java.io.File;
-import java.nio.file.Path;
+import java.util.Objects;
+import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec;
 
-@Command(
-    name = "run",
-    description = "Start Architrace runtime agent"
-)
-public class RunCommand implements Runnable {
+@Command(name = "run", description = "Start the Architrace agent")
+public final class RunCommand implements Callable<Integer> {
 
-  private static final Logger log = LoggerFactory.getLogger(RunCommand.class);
-  public static final String ARCHITRACE_RUNTIME_SHUTDOWN =
-      "architrace-runtime-shutdown";
+    private static final Logger log = LoggerFactory.getLogger(RunCommand.class);
 
-  private final AgentRuntimeService runtimeService;
+    @Mixin
+    private ConfigOptions configOptions;
 
-  @Option(
-      names = "--config",
-      required = true,
-      description = "Path to YAML config file"
-  )
-  private File configFile;
+    @Spec
+    private CommandSpec spec;
 
-  @Inject
-  public RunCommand(AgentRuntimeService runtimeService) {
-    this.runtimeService = runtimeService;
-  }
+    private final AgentConfigLoader configLoader;
+    private final AgentRuntimeService runtimeService;
 
-  @Override
-  public void run() {
-    Path configPath = configFile.toPath();
-    log.info("Starting Architrace runtime with config={}", configPath);
-
-    try {
-      runtimeService.run(configPath);
-      log.info("Architrace runtime terminated normally.");
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IllegalStateException("Architrace runtime interrupted.", e);
-    } catch (Exception e) {
-      throw new IllegalStateException("Architrace runtime failed.", e);
+    @Inject
+    public RunCommand(AgentConfigLoader configLoader, AgentRuntimeService runtimeService) {
+        this.configLoader = Objects.requireNonNull(configLoader, "configLoader");
+        this.runtimeService = Objects.requireNonNull(runtimeService, "runtimeService");
     }
-  }
+
+    @Override
+    public Integer call() throws InterruptedException {
+        AgentConfig config;
+        try {
+            config = configOptions.load(configLoader);
+        } catch (AgentConfigException e) {
+            return ConfigOptions.reportInvalid(e, spec.commandLine().getErr());
+        }
+        log.info(
+                "Starting the Architrace agent '{}' for scope {}/{}/{}",
+                config.agentName(),
+                config.project(),
+                config.environment(),
+                config.cluster());
+        runtimeService.run(config);
+        log.info("Architrace agent terminated normally.");
+        return CommandLine.ExitCode.OK;
+    }
 }

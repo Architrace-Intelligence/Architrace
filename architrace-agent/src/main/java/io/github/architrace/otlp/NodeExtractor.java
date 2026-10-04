@@ -5,42 +5,33 @@
 
 package io.github.architrace.otlp;
 
-import io.github.architrace.model.InternalSpan;
+import io.github.architrace.model.LogicalServiceId;
 import io.github.architrace.model.NodeType;
-import java.util.Optional;
+import io.github.architrace.span.Peer;
+import io.github.architrace.span.SpanKind;
+import io.github.architrace.span.SpanRecord;
 
 public class NodeExtractor {
 
-  public NodeDescriptor extract(InternalSpan span) {
-    return switch (span) {
-      case InternalSpan s when s.isDbSystem() -> databaseNode(s);
-      case InternalSpan s when s.isMessaging() -> messagingNode(s);
-      case InternalSpan s when s.isExternalService() -> externalNode(s);
-      default -> serviceNode(span);
-    };
-  }
+    public NodeDescriptor extract(SpanRecord span) {
+        return switch (span.peer()) {
+            case Peer.Database database ->
+                new NodeDescriptor("db:" + database.system(), NodeType.DATABASE, database.system());
+            case Peer.Messaging messaging ->
+                messaging
+                        .destination()
+                        .map(topic -> new NodeDescriptor("topic:" + topic, NodeType.TOPIC, topic))
+                        .orElseGet(() -> serviceNode(span));
+            case Peer.Http http ->
+                span.kind() == SpanKind.CLIENT
+                        ? new NodeDescriptor("ext:" + http.address(), NodeType.EXTERNAL_SERVICE, http.address())
+                        : serviceNode(span);
+            case Peer.None _ -> serviceNode(span);
+        };
+    }
 
-  private NodeDescriptor databaseNode(InternalSpan span) {
-    return Optional.ofNullable(span.dbSystem())
-        .map(db -> new NodeDescriptor("db:" + db, NodeType.DATABASE, db))
-        .orElseGet(() -> serviceNode(span));
-  }
-
-  private NodeDescriptor messagingNode(InternalSpan span) {
-    return Optional.ofNullable(span.messagingDestination())
-        .map(topic -> new NodeDescriptor("topic:" + topic, NodeType.TOPIC, topic))
-        .orElseGet(() -> serviceNode(span));
-  }
-
-  private NodeDescriptor externalNode(InternalSpan span) {
-    return Optional.ofNullable(span.httpHost())
-        .map(host -> new NodeDescriptor("ext:" + host, NodeType.EXTERNAL_SERVICE, host))
-        .orElseGet(() -> serviceNode(span));
-  }
-
-  private NodeDescriptor serviceNode(InternalSpan span) {
-    return Optional.ofNullable(span.logicalServiceId())
-        .map(id -> new NodeDescriptor(id.asString(), NodeType.SERVICE, id.serviceName()))
-        .orElseThrow(() -> new IllegalStateException("Cannot resolve node for span: " + span));
-  }
+    private static NodeDescriptor serviceNode(SpanRecord span) {
+        LogicalServiceId id = LogicalServiceId.of(span.service());
+        return new NodeDescriptor(id.asString(), NodeType.SERVICE, id.serviceName());
+    }
 }
