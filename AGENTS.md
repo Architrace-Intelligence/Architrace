@@ -126,8 +126,7 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
 
 - Formatting is palantir-java-format (4-space indentation, 120 columns) applied by Spotless;
   Checkstyle (`config/checkstyle/checkstyle.xml`, Google style adjusted) rejects comments,
-  unused imports and variables and naming violations. The agent module keeps
-  `java.format.enabled=false` next to its coverage ratchet until M1 rewrites it.
+  unused imports and variables and naming violations.
 
 - Dependencies are declared in `gradle/libs.versions.toml` only. Resolved versions are locked
   per module in `gradle.lockfile`; after any dependency change run

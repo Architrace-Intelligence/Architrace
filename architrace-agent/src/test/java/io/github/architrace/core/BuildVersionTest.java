@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 
 class BuildVersionTest {
 
-  @Test
-  void fallsBackToTheDevelopmentVersionWithoutAManifest() {
-    assertThat(BuildVersion.current()).isEqualTo(BuildVersion.DEVELOPMENT);
-    assertThat(BuildVersion.describe()).isEqualTo("Architrace dev");
-  }
+    @Test
+    void fallsBackToTheDevelopmentVersionWithoutAManifest() {
+        assertThat(BuildVersion.current()).isEqualTo(BuildVersion.DEVELOPMENT);
+        assertThat(BuildVersion.describe()).isEqualTo("Architrace dev");
+    }
 }

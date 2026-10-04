@@ -63,8 +63,7 @@ class SpanNormaliserTest {
                 span(Span.SpanKind.SPAN_KIND_INTERNAL, TRACE_ID, SERVER_SPAN_ID)));
 
         assertThat(records).singleElement().satisfies(normalised -> {
-            assertThat(normalised.service())
-                    .isEqualTo(new ServiceIdentity("DEV", "sales", "orders", "unknown"));
+            assertThat(normalised.service()).isEqualTo(new ServiceIdentity("DEV", "sales", "orders", "unknown"));
             assertThat(normalised.deployment())
                     .isEqualTo(new Deployment("local", Optional.of("team-a"), Optional.empty()));
             assertThat(normalised.parentSpanId()).isEmpty();

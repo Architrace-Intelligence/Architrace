@@ -13,10 +13,11 @@ import picocli.CommandLine.Spec;
 @Command(name = "version", description = "Print the version of this build")
 public class VersionCommand implements Runnable {
 
-  @Spec CommandSpec spec;
+    @Spec
+    CommandSpec spec;
 
-  @Override
-  public void run() {
-    spec.commandLine().getOut().println(BuildVersion.describe());
-  }
+    @Override
+    public void run() {
+        spec.commandLine().getOut().println(BuildVersion.describe());
+    }
 }

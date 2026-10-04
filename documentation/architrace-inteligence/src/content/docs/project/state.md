@@ -23,15 +23,16 @@ Last updated: **2026-10-04**
   CodeRabbit app, make the two GHCR packages public, seed `v0.1.0` (`git tag -a v0.1.0 -m v0.1.0
   f0c43ab && git push origin v0.1.0`). Dependabot #45 is closed. Until the ruleset is active
   the merge gate is discipline, not platform.
-- **M1 PR 1 merged (#50)**; **M1 PR 2 (ARCHI-39, #51) and PR 3 (ARCHI-40) in review**, PR 3
-  branched from PR 2 and opened after it merges. PR 2: `graph` package (sealed `GraphNode` with
-  ADR 0007 ids, `EdgeBuilder`, `PendingSpanIndex`, `LatencyHistogram`, `GraphWindow`,
-  `GraphBuilder`) and `pipeline` package (`SpanQueue`, `GraphWorker`). PR 3: `publish` package
-  (`SnapshotProtoMapper`, `SnapshotQueue`, `PublisherStats`), `ControlPlaneSession` and
-  `ControlPlaneSupervisor`, `TransportClient` reduced to open/close, `graph_batch` removed from
-  the proto (field 2 reserved), the agent's server-side classes and the old session wiring
-  removed, end-to-end runtime test with an in-process stub control plane. Ratchet: line 0.85 /
-  branch 0.84 / method 0.85. Details on the [M1](../features/m1-agent-pipeline/) page.
+- **M1 is done** (PR 1–5 merged as #50–#54): span model and attribute mapping, graph with
+  ADR 0007 ids, paired edges and a pending index, snapshot publisher with a reconnecting
+  session, Prometheus metrics and health, formatter on for the whole module, acceptance run
+  of 6 000 000 spans in 600 s with 0 rejections and 20 MB heap. Details on the
+  [M1](../features/m1-agent-pipeline/) page.
+- **M4 PR 2 (ARCHI-43, #55) in review**: the Projects list on the agreed frames with
+  `react-router` 8 (declarative mode), the shell (rail, top bar, theme), environment and
+  cluster facet chips with counts, text filter, grouping, URL state, scope page placeholder.
+  Details on the [M4](../features/m4-service-map/) page. The routing choice is open for the
+  maintainer to confirm in the review.
 - The maintainer asked on 2026-10-04 to leave the ruleset aside and implement M1 and M4 first;
   testing follows.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
@@ -90,19 +91,16 @@ timeline mode only).
 
 ## Next step
 
-Merge #51 (M1 PR 2), then the PR of ARCHI-40 (M1 PR 3). Then continue M1, one PR each with
-the next free ticket number:
+Merge #55 (M4 PR 2). Then continue, one PR each with the next free ticket number:
 
-1. M1 PR 4: metrics endpoint (Micrometer, Prometheus on `metrics.port`, `/health`) exposing the
-   counters that already exist (`SpanQueue.rejected`, `GraphBuilder.foreignSpans` and
-   `droppedSpans`, `EdgeBuilder.pendingSpans`, `SnapshotQueue.dropped`, `PublisherStats`),
-   rate-limited logging of rejections and drops, load test (10 000 spans/s, heap under 512 MB).
-2. M1 PR 5: formatter on for the agent (the remaining 2-space files: `MainApp`, `cli`,
-   `core.BuildVersion`, `otlp` receiver, `grpc.GrpcAddressParser` and their tests), ratchet at
-   the default, remaining `Thread.sleep` in tests, reference pages, M1 marked done.
-3. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
-
-Then M4 PR 2 (Projects list), M4 PR 3–4, M5, M6, M7.
+1. M4 PR 3: the Service map of a scope on `…/graph` and `…/services`: React Flow with ELK
+   layered layout (decide with a 300-node fixture; Cytoscape.js is the fallback), node cards
+   by type, edges by kind with width by calls and colour by error rate, node-type chips with
+   counts, fit to view, minimap, legend; the scope page of PR 2 becomes the map.
+2. M4 PR 4: lenses (All, Data streams), node and dependency panels in the context rail, time
+   selector (`graph?at=`), URL state for selection and time, polish; then M5, M6, M7.
+3. The agent Dockerfile health check can move to `/health` (M7 owns the image). Take over the
+   Dependabot Gradle bumps of #47 in a maintainer PR on the way.
 
 ## How to resume
 

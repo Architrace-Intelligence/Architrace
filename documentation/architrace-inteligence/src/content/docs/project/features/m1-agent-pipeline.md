@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: in progress (PR 3 of 5 in review, ARCHI-40) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: in progress (PR 5 of 5 in review, ARCHI-42) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 
@@ -94,9 +94,8 @@ snapshot.
 ### Metrics and health
 
 Micrometer registry with Prometheus exposition on `metrics.port` (default 9464) using the JDK
-HTTP server: `/metrics`, `/health`. Metrics: `spans_received`, `spans_rejected`,
-`spans_evicted`, `edges_active`, `snapshots_published`, `snapshots_dropped`,
-`control_plane_connected`.
+HTTP server: `/metrics`, `/health`. The metric names are listed on the
+[Configuration](../../../reference/configuration/#metrics-and-health) page.
 
 ### Configuration v2
 
@@ -297,6 +296,65 @@ What landed and the decisions behind it:
   failure and requeue; the supervisor test covers reconnects after failures and after a server
   completion; the runtime test is the end-to-end check of the M1 plan: OTLP traces exported to
   the real receiver come out as an acknowledged `GraphSnapshot` with the expected edge.
+
+### PR 4: metrics endpoint, drop reporting, load test (ARCHI-41)
+
+What landed and the decisions behind it:
+
+- **Counters where the events happen, meters bound later.** The receiver counts normalised
+  spans, the span queue its rejections, the graph builder foreign and evicted spans and the
+  sizes of the current window, the pending index its held spans, the snapshot queue its
+  drops, the publisher its published, acknowledged and rejected snapshots, its ended sessions
+  and the connection flag. `AgentMetrics` binds these sources to a `MeterRegistry` as
+  `FunctionCounter`s and `Gauge`s, so the hot path touches `LongAdder`s and volatile ints and
+  never a Micrometer object. Counts that only the worker thread writes (`pending`, `active
+  nodes`, `active edges`) are published as volatile values after each batch, sweep and freeze.
+- **Endpoint** (`MetricsServer`): the JDK `HttpServer` on `metrics.port` with virtual-thread
+  handlers. `/metrics` returns the Prometheus text format from `PrometheusMeterRegistry`,
+  `/health` returns `{"status":"UP","controlPlane":"CONNECTED|DISCONNECTED"}` with status 200
+  (liveness; the control plane state is information, not a failure), anything else 404. It is
+  the sixth task of the runtime scope and stops with the agent.
+- **Rate-limited logging by construction** (`DropReporter`): a runtime task wakes every 10 s,
+  computes the delta of every loss counter since its previous report and logs one `WARN` line
+  only when something was lost. No per-event logging, no throttle state in the hot path.
+- **Load test** (`GraphWorkerLoadTest`, tag `load`): a producer offers client/server pairs at
+  10 000 spans/s across 50 services while the worker builds the graph and a freeze is
+  requested every second; it asserts no rejections, an empty pending index and a heap below
+  512 MB after a GC. It is excluded from `test` and run with
+  `./gradlew :architrace-agent:loadTest -Pload.seconds=600` for the ten-minute acceptance run;
+  the default is 10 s. A 5 s run on the development machine: 50 000 spans, 0 rejected,
+  250 edges, 10 MB heap.
+- Dependencies: `micrometer-core` and `micrometer-registry-prometheus` 1.17.1, the version
+  Spring Boot manages for the control plane.
+
+### PR 5: formatter, acceptance run, closing (ARCHI-42)
+
+What landed and the decisions behind it:
+
+- **Formatter on.** `java.format.enabled=false` leaves `architrace-agent/gradle.properties`;
+  palantir-java-format now runs on the whole module like everywhere else. The files written
+  during M1 were already in that format, so the reflow touches only the survivors of the old
+  code base (`MainApp`, the CLI, `BuildVersion`, the OTLP receiver and server,
+  `GrpcAddressParser` and their tests). The SonarCloud new-code gate sees those lines as
+  changed; they are covered by the existing tests.
+- **Acceptance run.** `./gradlew :architrace-agent:loadTest -Pload.seconds=600` on the
+  development machine: 6 000 000 spans in 600 s at 10 000 spans/s, 0 rejected, 0 pending at the end, 600 snapshots, 30 000 edges, 20 MB heap after a GC (`-Xmx512m`), no growth across the run.
+- **Exceptions closed.** The agent module has no coverage ratchet and no formatter switch any
+  more; `AGENTS.md` no longer lists them. Every defect of the inventory (A1–A12) is addressed:
+  A1 and A2 by the publisher and the supervisor, A3 by the span timing and the edge metrics,
+  A4 by the attribute mapping, A5 and A6 by the removals, A7 by configuration v2, A8 by
+  `dry-run`, A9 by the rewritten tests, A10 by Spotless, A11 by the pending index with TTL,
+  A12 by the counted queue rejection.
+
+## Acceptance criteria review
+
+- Standard OTel instrumentation yields service, database, topic and external nodes with sync,
+  publish and consume edges and metrics: covered by `EdgeBuilderTest`, `SpanNormaliserTest`
+  and the end-to-end `AgentRuntimeServiceTest`; the demo stack check is part of M7.
+- 10 000 spans/s sustained: the `loadTest` task, see PR 5.
+- A control plane restart loses at most `queue-size` snapshots, all counted:
+  `ControlPlaneSupervisorTest`, `SnapshotQueueTest`.
+- Coverage ≥ 85 %, no reflection, no dead classes: the module runs on the project defaults.
 
 ## Risks and open points
 

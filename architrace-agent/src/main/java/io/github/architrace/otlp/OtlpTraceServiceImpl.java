@@ -14,18 +14,18 @@ import org.slf4j.LoggerFactory;
 
 public class OtlpTraceServiceImpl extends TraceServiceGrpc.TraceServiceImplBase {
 
-  private static final Logger log = LoggerFactory.getLogger(OtlpTraceServiceImpl.class);
-  private final SpanReceiver receiver;
+    private static final Logger log = LoggerFactory.getLogger(OtlpTraceServiceImpl.class);
+    private final SpanReceiver receiver;
 
-  public OtlpTraceServiceImpl(SpanReceiver receiver) {
-    this.receiver = receiver;
-  }
+    public OtlpTraceServiceImpl(SpanReceiver receiver) {
+        this.receiver = receiver;
+    }
 
-  @Override
-  public void export(ExportTraceServiceRequest request, StreamObserver<ExportTraceServiceResponse> responseObserver) {
-    receiver.receive(request);
+    @Override
+    public void export(ExportTraceServiceRequest request, StreamObserver<ExportTraceServiceResponse> responseObserver) {
+        receiver.receive(request);
 
-    responseObserver.onNext(ExportTraceServiceResponse.newBuilder().build());
-    responseObserver.onCompleted();
-  }
+        responseObserver.onNext(ExportTraceServiceResponse.newBuilder().build());
+        responseObserver.onCompleted();
+    }
 }

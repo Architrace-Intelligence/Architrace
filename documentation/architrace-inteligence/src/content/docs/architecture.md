@@ -42,9 +42,10 @@ flowchart LR
   per-window metrics with a logarithmic latency histogram, frozen into an immutable
   `GraphSnapshot` every interval. Snapshots go through a bounded queue to a control plane
   session that registers the agent with its scope (project, environment, cluster), publishes,
-  heartbeats and reconnects after `control-plane.retry-seconds`. Its configuration v2 is
-  validated as a whole, printed by `dry-run` and overridable with `--prop`. Still missing: the
-  metrics endpoint and the load test (M1, PR 4) and the formatter switch (PR 5).
+  heartbeats and reconnects after `control-plane.retry-seconds`. Prometheus metrics and a
+  health document are served on `metrics.port`; losses are reported in rate-limited log
+  lines. Its configuration v2 is validated as a whole, printed by `dry-run` and overridable
+  with `--prop`. Still missing: the formatter switch and the last cleanup (M1, PR 5).
 - The control plane registers agents, validates and stores `GraphSnapshot` messages in
   PostgreSQL (agents, snapshots, nodes, edges; Liquibase), answers with acknowledgements and
   tracks liveness through heartbeats. `TopologyQuery` answers the current graph of a scope at

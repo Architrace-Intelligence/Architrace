@@ -14,20 +14,20 @@ import picocli.CommandLine;
 
 class VersionCommandTest {
 
-  @Test
-  void printsTheBuildVersionToTheCommandOutput() {
-    StringWriter out = new StringWriter();
-    CommandLine command = new CommandLine(new VersionCommand());
-    command.setOut(new PrintWriter(out, true));
+    @Test
+    void printsTheBuildVersionToTheCommandOutput() {
+        StringWriter out = new StringWriter();
+        CommandLine command = new CommandLine(new VersionCommand());
+        command.setOut(new PrintWriter(out, true));
 
-    int exitCode = command.execute();
+        int exitCode = command.execute();
 
-    assertThat(exitCode).isEqualTo(CommandLine.ExitCode.OK);
-    assertThat(out.toString()).isEqualToIgnoringNewLines("Architrace dev");
-  }
+        assertThat(exitCode).isEqualTo(CommandLine.ExitCode.OK);
+        assertThat(out.toString()).isEqualToIgnoringNewLines("Architrace dev");
+    }
 
-  @Test
-  void providesTheSameVersionForTheStandardOption() {
-    assertThat(new BuildVersionProvider().getVersion()).containsExactly("Architrace dev");
-  }
+    @Test
+    void providesTheSameVersionForTheStandardOption() {
+        assertThat(new BuildVersionProvider().getVersion()).containsExactly("Architrace dev");
+    }
 }

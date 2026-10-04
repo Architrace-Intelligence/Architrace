@@ -80,6 +80,30 @@ The first seven fields are resource attributes, the rest span attributes. A span
 as a database call when `db-system` resolves, else as messaging when `messaging-system`
 resolves, else as HTTP when `http-address` resolves.
 
+### Metrics and health
+
+The agent serves Prometheus metrics at `http://<host>:<metrics.port>/metrics` and a liveness
+document at `/health` (`{"status":"UP","controlPlane":"CONNECTED"}` or `"DISCONNECTED"`).
+Counters end in `_total` in the Prometheus text format.
+
+| Meter | Kind | Meaning |
+|-------|------|---------|
+| `architrace_agent_spans_received` | counter | spans normalised from OTLP exports |
+| `architrace_agent_spans_rejected` | counter | spans refused by the full span queue |
+| `architrace_agent_spans_foreign` | counter | spans of another environment than the agent's |
+| `architrace_agent_spans_evicted` | counter | spans dropped from the pending index without a partner |
+| `architrace_agent_spans_queued` | gauge | spans waiting for the graph worker |
+| `architrace_agent_spans_pending` | gauge | spans held for pairing |
+| `architrace_agent_nodes_active`, `architrace_agent_edges_active` | gauge | nodes and edges of the current window |
+| `architrace_agent_snapshots_published`, `_acknowledged`, `_rejected` | counter | snapshots sent, acknowledged and rejected by the control plane |
+| `architrace_agent_snapshots_dropped` | counter | snapshots dropped from the full snapshot queue |
+| `architrace_agent_snapshots_queued` | gauge | snapshots waiting for a control plane session |
+| `architrace_agent_controlplane_sessions_ended` | counter | control plane sessions that ended (failure or completion) |
+| `architrace_agent_controlplane_connected` | gauge | `1` while a session is registered |
+
+Losses are also logged: every 10 s the agent writes one `WARN` line with the counters that
+moved since the previous line, and nothing when nothing was lost.
+
 ### Example (demo stack)
 
 ```yaml
