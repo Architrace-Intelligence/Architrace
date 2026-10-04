@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: in progress (PR 1 of 5 in review, ARCHI-38) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: in progress (PR 2 of 5 in review, ARCHI-39) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 
@@ -81,14 +81,14 @@ snapshot.
 - The control plane client drains the queue while a session is open; the queue survives
   reconnects. The start-up race in the current runtime disappears because the publisher
   writes to the queue, not to a session.
-- The window owner is a single thread fed by the ring buffer; the snapshot scheduler swaps
-  the window atomically.
+- The window owner is a single thread fed by the span queue; a freeze request is handed to
+  that thread and answered with the frozen snapshot, so no lock guards the window.
 
 ### Eviction and bounds
 
 - `PendingSpanIndex` holds spans waiting for a partner with a TTL (default 120 s), swept every
   10 s. Expired CLIENT spans with an HTTP peer become external edges; others are dropped.
-- The ring buffer (default 65 536) rejects when full; rejections are counted and logged with
+- The span queue (default 65 536) rejects when full; rejections are counted and logged with
   rate limiting.
 
 ### Metrics and health
@@ -201,6 +201,57 @@ What landed and the decisions behind it:
 - **Working assumption**: `project` is an agent setting (default `default`), not a telemetry
   attribute; the scope decision pending since ARCHI-26 is resolved this way unless the
   maintainer objects.
+
+### PR 2: graph model, edge builder, pending index, window (ARCHI-39)
+
+What landed and the decisions behind it:
+
+- **Graph model** (`graph` package): sealed `GraphNode` with `ServiceNode`, `DatabaseNode`,
+  `TopicNode` and `ExternalNode`; every record computes its id from its components exactly as
+  [ADR 0007](../../adr/0007-topology-model/) specifies (`service:{domain}/{name}`,
+  `db:{system}/{namespace}` with the namespace omitted when absent, `topic:{system}/{name}`,
+  `ext:{address}`), so an id can never disagree with the identity it is derived from.
+  `EdgeKey(source, target, kind)`, `EdgeObservation` (one call seen on an edge),
+  `EdgeMetricsSummary` and the immutable `GraphSnapshot` with `SnapshotNode` (versions,
+  deployments as `Placement(cluster, namespace)`) and `SnapshotEdge`, which mirror the protobuf
+  messages one to one for PR 3.
+- **Edge builder**: a switch over the span kind, then over the sealed peer. Database clients,
+  producers and consumers produce their edge immediately; HTTP and peer-less clients and
+  servers with a parent go through the `PendingSpanIndex`, which holds clients by their own
+  span id and servers by their parent id, so the pair forms in either arrival order. Edge
+  metrics are the client's view of a call (its latency and error flag). A match within one
+  service, a root server, an internal span and a messaging span without a destination produce
+  nothing. Expiry turns HTTP clients into `service → external` edges and drops the rest, with a
+  count for the metrics of PR 4.
+- **Latency histogram**: seventeen base-two buckets from 1 ms to 65 536 ms plus overflow; a
+  percentile is the upper bound of the bucket where the cumulative count crosses the rank,
+  capped by the observed maximum, so a single 10 ms call reports 10 ms and not 16 ms.
+- **Window**: `GraphWindow` accumulates per-node versions and placements and per-edge metrics
+  in insertion order; `freeze(end)` copies them into the immutable snapshot. `GraphBuilder`
+  owns the current window, rejects spans of another environment (one snapshot belongs to one
+  environment), applies the edge observations and the sweep results, and rotates the window on
+  `freeze()`.
+- **Queue and worker**: the custom ring buffer is replaced by `SpanQueue` over
+  `ArrayBlockingQueue`. The old buffer was written for one producer, but gRPC delivers export
+  calls on several threads, and it spun the consumer thread at full speed when idle. The bounded
+  queue is thread-safe, `offer` never blocks the OTLP caller (rejections are counted, N2), and
+  the worker blocks in `poll` with a 50 ms timeout instead of spinning. The power-of-two rule
+  of `buffers.ring-size` is gone with the ring. `GraphWorker` is the single owner of the window:
+  it drains batches of up to 512 spans, serves freeze requests (`requestFreeze()` returns a
+  future that the worker completes on its own thread; concurrent requests share one future)
+  and sweeps the pending index every 10 s with the injected `InstantSource`, so TTL behaviour
+  is tested with a mutable clock instead of real time.
+- **Runtime**: the snapshot loop asks the worker for a freeze every interval and hands the
+  snapshot to the transport client, which still discards it; PR 3 adds the queue, the
+  protobuf mapping and the reconnecting session.
+- **Removed**: `model`, `service.graph`, `service.processor`, `snapshot` and the `otlp` graph
+  classes (`GraphAggregator`, `NodeExtractor`, `NodeDescriptor`, the two `GraphNode`s,
+  `GraphSnapshot`, `LatencyHistogram`, `SpanPipeline`, `SpanRingBuffer`); A5 and A11 are closed,
+  A3 is closed for edges (node versions and deployments are recorded too).
+- **Tests**: every rule of the edge table, both arrival orders, the pending index with a fixed
+  clock, histogram percentiles, window accumulation and immutability, the worker's freeze
+  hand-off and sweep with a mutable clock, queue rejection. The ratchet moves to branch 0.84
+  (line and method sit at the 0.85 default).
 
 ## Risks and open points
 

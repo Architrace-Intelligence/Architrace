@@ -16,9 +16,11 @@ description: Monorepo module responsibilities.
 
 ## `architrace-agent`
 
-- CLI entrypoint (`architrace`).
-- OTLP trace receiver implementation.
-- Span-to-graph conversion and control-plane publishing.
+- CLI entrypoint (`architrace`): `run`, `dry-run`, `version`; configuration v2 (`core.config`).
+- OTLP trace receiver (`otlp`) and span normalisation (`span`): `SpanRecord`, attribute mapping.
+- Graph building (`graph`, `pipeline`): nodes and edges, pending index, window, snapshot; the
+  worker thread and the bounded span queue.
+- Control plane client (`controlplane`, `grpc`, `session`): registration, session, publishing.
 
 ## `architrace-control-plane`
 
