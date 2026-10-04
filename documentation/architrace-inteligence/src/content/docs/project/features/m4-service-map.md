@@ -3,7 +3,7 @@ title: M4. Service map UI
 description: An interactive per-environment map of services, data stores, topics and external dependencies.
 ---
 
-Status: in progress (PR 1 of 4 in review, ARCHI-32) · Order: 5 · Requirements: F8
+Status: in progress (PR 2 of 4 in review, ARCHI-43) · Order: 5 · Requirements: F8
 
 ## Goal
 
@@ -118,6 +118,42 @@ What landed and the decisions behind it:
   `architrace-ui/package.json` weekly.
 - **Walking skeleton.** The first screen shows the `Projects` heading and how many scopes the
   control plane reports (or the problem it answered); PR 2 replaces it with the list.
+
+### PR 2: Projects list (ARCHI-43)
+
+What landed and the decisions behind it:
+
+- **Routing.** `react-router` 8 in declarative mode (`BrowserRouter`, `Routes`): `/` is the
+  Projects list, `/scopes/{project}/{environment}/{cluster}` the scope page (a breadcrumb and
+  the request behind the future map until PR 3), anything else falls back to the list. The
+  library is the first dependency decision of the UI after the scaffold: it is the mainstream
+  choice, its `useSearchParams` is exactly the "URL carries the filter" principle, and it
+  stays out of data loading, which TanStack Query already owns.
+- **Shell.** The navigation rail (Projects, Map, theme toggle) and the top bar (title, a tools
+  slot for the filter field, "Open as JSON" to the Query API request behind the screen) from
+  the frames; the context rail waits for the map. The theme toggles `data-theme` on the
+  document and remembers itself in `localStorage` behind a `try`/`catch`, so a blocked storage
+  only loses the preference. Below 860 px the rail becomes a top row, as the design says.
+- **Pure list logic** (`projects/filters.ts`): the filter is a value parsed from and written to
+  the URL (`env`, `cluster`, `q`, `group`; defaults are omitted), and every operation is a pure
+  function over `ScopeSummary[]`: filtering, facet values with per-value counts computed with
+  the other facets applied (so a value that would yield nothing shows `0`, faint, but stays
+  selectable), grouping by project, environment or cluster with sorted keys and rows, and the
+  summary of the count line. The components only render.
+- **Components.** `FacetChip` is a chip with a popover of toggles (`aria-pressed`), closed by
+  Escape or a click outside; `ScopeGroups` renders one `section` per group with a real table,
+  the first column linking to the scope page; environment as a badge, cluster in mono, agents
+  as `n live`, `n live of m` or a `stale` badge, the last snapshot as relative time computed
+  once per mount. The count line is an `output` element, so assistive technology announces
+  filter changes.
+- **Not in this PR.** Region and findings columns of the frames: the API has no region source
+  and findings come with M6. The Ask bar is a plain filter field; questions come with an
+  insights provider (N9).
+- **Tests.** The pure logic has unit tests for every function; the page tests drive the real
+  router and the typed client with a stubbed `fetch` through user events (chips, popover,
+  grouping, search, clear, empty and error states, link targets); the shell test covers the
+  theme and the map entry. Testing Library's `user-event` is the only new dev dependency.
+  Coverage of the UI stays above 95 % on every counter.
 
 ## Risks and open points
 

@@ -4,6 +4,7 @@
  */
 
 import { type Mock, vi } from "vitest";
+import type { ScopeSummary } from "../api/client";
 
 export function respondWithJson(body: unknown, status = 200, contentType = "application/json") {
   return vi.fn<typeof fetch>(() =>
@@ -37,7 +38,12 @@ export const problem = {
   instance: "/api/v1/scopes/webshop/PROD/k8s-prod-eu2/graph",
 };
 
-export function scopeSummary(project: string, environment: string, cluster: string) {
+export function scopeSummary(
+  project: string,
+  environment: string,
+  cluster: string,
+  overrides: Partial<Omit<ScopeSummary, "scope">> = {},
+): ScopeSummary {
   return {
     scope: { project, environment, cluster },
     agents: 2,
@@ -46,5 +52,27 @@ export function scopeSummary(project: string, environment: string, cluster: stri
     dataStreams: 3,
     namespaces: 4,
     lastSnapshotAt: "2026-10-01T12:00:00Z",
+    ...overrides,
   };
 }
+
+export const demoScopes: ScopeSummary[] = [
+  scopeSummary("webshop", "PROD", "k8s-prod-eu1", { services: 8, dataStreams: 2, namespaces: 6 }),
+  scopeSummary("webshop", "PROD", "k8s-prod-eu2", { agents: 1, liveAgents: 1, services: 3 }),
+  scopeSummary("webshop", "DEV", "k8s-dev-eu1", { agents: 1, liveAgents: 1, services: 7 }),
+  scopeSummary("webshop", "DEV", "k8s-dev-ci", {
+    agents: 1,
+    liveAgents: 0,
+    services: 0,
+    dataStreams: 0,
+    namespaces: 0,
+    lastSnapshotAt: "2026-10-01T10:00:00Z",
+  }),
+  scopeSummary("billing", "PROD", "k8s-prod-eu1", { agents: 1, liveAgents: 1, services: 4 }),
+  scopeSummary("billing", "STAGE", "k8s-stage-eu1", {
+    agents: 0,
+    liveAgents: 0,
+    services: 0,
+    dataStreams: 0,
+  }),
+];
