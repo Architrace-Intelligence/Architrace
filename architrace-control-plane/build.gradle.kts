@@ -50,6 +50,7 @@ dependencies {
 
 extra["grpc-java.version"] = libs.versions.grpc.get()
 extra["jackson-2-bom.version"] = libs.versions.jackson.get()
+extra["jackson-bom.version"] = libs.versions.jackson3.get()
 extra["netty.version"] = libs.versions.netty.get()
 extra["protobuf-java.version"] = libs.versions.protobuf.asProvider().get()
 extra["tomcat.version"] = libs.versions.tomcat.get()

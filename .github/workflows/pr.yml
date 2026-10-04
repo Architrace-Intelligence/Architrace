@@ -136,7 +136,7 @@ jobs:
         run: echo "::warning::OWASP Dependency-Check skipped because NVD_API_KEY is not available to this run."
 
       - name: Upload the Dependency-Check results to code scanning
-        if: ${{ !cancelled() && env.NVD_API_KEY != '' && github.actor != 'dependabot[bot]' }}
+        if: ${{ !cancelled() && github.actor != 'dependabot[bot]' && hashFiles('build/reports/dependency-check/dependency-check-report.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: build/reports/dependency-check/dependency-check-report.sarif
