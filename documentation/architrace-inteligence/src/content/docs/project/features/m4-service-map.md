@@ -266,6 +266,13 @@ What landed and the decisions behind it:
 - **`usePopover`** was extracted from the facet chip for the time selector. It takes the
   container ref as an argument instead of returning one, because the React Compiler lint rules
   treat a hook result that carries a ref as a ref and forbid reading it during render.
+- **SonarCloud.** The analysis of PR 3 raised seven code smells and `main` carried five; this
+  PR resolves them: groups of controls are `fieldset` elements with a `legend` (floated so it
+  lays out as a flex item) instead of `div role="group"` (S6819), text next to an inline element
+  lives in its own `span` so the whitespace is explicit (S6772), and the unused logger of the
+  agent's OTLP service is removed (S1068). The remaining finding on the root `build.gradle.kts`
+  (text:S8569, "lock file missing") is a false positive: the root project resolves no
+  configurations, so Gradle writes no lockfile for it.
 - **Not in M4.** Findings and insights in the rail (M6), agent liveness in the scope panel
   (M7 demo), node dragging, a web worker for ELK.
 - **Tests.** `model.test.ts` covers the URL round trip, the details, the stream summaries and

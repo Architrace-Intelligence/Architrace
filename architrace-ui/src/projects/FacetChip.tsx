@@ -33,12 +33,8 @@ export function FacetChip({ label, values, onToggle }: FacetChipProps) {
         )}
       </button>
       {popover.open && (
-        <div
-          className="popover"
-          id={popover.id}
-          role="group"
-          aria-label={`Filter by ${label.toLowerCase()}`}
-        >
+        <fieldset className="popover" id={popover.id}>
+          <legend className="sr-only">Filter by {label.toLowerCase()}</legend>
           {values.length === 0 && <span className="faint pop-empty">No values</span>}
           {values.map((value) => (
             <button
@@ -54,7 +50,7 @@ export function FacetChip({ label, values, onToggle }: FacetChipProps) {
               <span className="pop-count">{value.count}</span>
             </button>
           ))}
-        </div>
+        </fieldset>
       )}
     </span>
   );

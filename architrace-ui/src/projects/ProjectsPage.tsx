@@ -110,8 +110,8 @@ function ScopeList({ all, filter, onChange }: ScopeListProps) {
           </button>
         )}
         <div className="toolbar-right">
-          <div className="seg" role="group" aria-label="Group by">
-            <span className="seg-label">Group by</span>
+          <fieldset className="seg">
+            <legend className="seg-label">Group by</legend>
             {GROUP_BY_OPTIONS.map((option) => (
               <button
                 key={option}
@@ -124,7 +124,7 @@ function ScopeList({ all, filter, onChange }: ScopeListProps) {
                 {GROUP_LABELS[option]}
               </button>
             ))}
-          </div>
+          </fieldset>
         </div>
       </div>
       <output className="count-line">{describeSummary(summary)}</output>

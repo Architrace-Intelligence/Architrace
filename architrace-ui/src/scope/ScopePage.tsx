@@ -116,8 +116,8 @@ function MapView({ graph, state, onChange, onSelect }: MapViewProps) {
             onChange(toggleNodeType(state, type));
           }}
         />
-        <div className="seg" role="group" aria-label="Lens">
-          <span className="seg-label">Lens</span>
+        <fieldset className="seg">
+          <legend className="seg-label">Lens</legend>
           <button
             type="button"
             aria-pressed={state.lens === "all"}
@@ -136,7 +136,7 @@ function MapView({ graph, state, onChange, onSelect }: MapViewProps) {
           >
             Data streams
           </button>
-        </div>
+        </fieldset>
         <output className="count-line toolbar-right">
           {state.query.trim() === ""
             ? describeGraph(visible)
