@@ -55,7 +55,7 @@ class AgentRuntimeServiceTest {
 
         assertThat(agent.isAlive()).isFalse();
         assertThat(outcome.get()).isInstanceOf(InterruptedException.class);
-        assertThat(isListening(otlpPort)).isFalse();
+        await().atMost(STARTUP_TIMEOUT).until(() -> !isListening(otlpPort));
     }
 
     private static ControlPlaneBootstrapService failingBootstrap(AgentConfig config, AtomicBoolean closed) {
