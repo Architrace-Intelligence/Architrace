@@ -4,15 +4,16 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { describeError, type TopologyGraph } from "../api/client";
-import { graphQuery } from "../api/queries";
+import { graphQuery, scopesQuery } from "../api/queries";
 import { Shell } from "../app/Shell";
 import { ContextPanel } from "../map/ContextPanel";
 import {
   countByType,
   describeGraph,
   describeMatches,
+  graphNamespaces,
   type MapState,
   parseMapState,
   type Selection,
@@ -24,33 +25,35 @@ import { NodeTypeChips } from "../map/NodeTypeChips";
 import { ServiceMap } from "../map/ServiceMap";
 import { TimeSelector } from "../map/TimeSelector";
 import { scopePath } from "../projects/filters";
+import { ScopeSwitcher } from "./ScopeSwitcher";
 
 export function ScopePage() {
   const { project = "", environment = "", cluster = "" } = useParams();
   const scope = { project, environment, cluster };
   const path = scopePath(scope);
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const state = parseMapState(params);
   const graph = useQuery(graphQuery(scope, state.at));
+  const scopes = useQuery(scopesQuery());
   const update = (next: MapState) => {
     setParams(toMapParams(next), { replace: true });
   };
   const select = (selection: Selection | undefined) => {
     update({ ...state, selection });
   };
-  const request = `/api/v1${path}/graph${state.at === undefined ? "" : `?at=${encodeURIComponent(state.at)}`}`;
+  const atQuery = state.at === undefined ? "" : `?at=${encodeURIComponent(state.at)}`;
+  const request = `/api/v1${path}/graph${atQuery}`;
 
   const tools = (
     <>
-      <nav className="breadcrumb" aria-label="Scope">
-        <Link to="/">Projects</Link>
-        <span aria-hidden="true">/</span>
-        <span>{project}</span>
-        <span aria-hidden="true">/</span>
-        <span className="badge b-kind">{environment}</span>
-        <span aria-hidden="true">/</span>
-        <span className="mono">{cluster}</span>
-      </nav>
+      <ScopeSwitcher
+        current={scope}
+        scopes={scopes.data?.map((summary) => summary.scope) ?? []}
+        onSwitch={(target) => {
+          void navigate({ pathname: scopePath(target), search: params.toString() });
+        }}
+      />
       <input
         className="ask-input"
         type="search"
@@ -106,9 +109,32 @@ function MapView({ graph, state, onChange, onSelect }: MapViewProps) {
     );
   }
   const visible = visibleGraph(graph, state);
+  const namespaces = graphNamespaces(graph);
   return (
     <>
       <div className="toolbar">
+        {namespaces.length > 0 && (
+          <label className="select-wrap">
+            <span className="sr-only">Namespace</span>
+            <select
+              className="chip-select"
+              value={state.namespace ?? ""}
+              onChange={(event) => {
+                onChange({
+                  ...state,
+                  namespace: event.target.value === "" ? undefined : event.target.value,
+                });
+              }}
+            >
+              <option value="">All namespaces</option>
+              {namespaces.map((namespace) => (
+                <option key={namespace} value={namespace}>
+                  {namespace}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <NodeTypeChips
           counts={countByType(graph.nodes)}
           filter={state}

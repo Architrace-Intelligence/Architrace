@@ -14,7 +14,7 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { type KeyboardEvent, useMemo } from "react";
+import { useMemo } from "react";
 import { plural } from "../projects/format";
 import { layoutGraph, NODE_HEIGHT, NODE_WIDTH, type Positions } from "./layout";
 import { MapLegend } from "./MapLegend";
@@ -82,7 +82,7 @@ function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
           position: positions.get(node.id) ?? { x: 0, y: 0 },
           width: NODE_WIDTH,
           height: NODE_HEIGHT,
-          data: { node },
+          data: { node, onSelect },
           selected: nodeLook?.selected ?? false,
           className: classNames([
             [nodeLook?.dimmed ?? false, "dimmed"],
@@ -90,7 +90,7 @@ function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
           ]),
         };
       }),
-    [graph, positions, look],
+    [graph, positions, look, onSelect],
   );
   const edges = useMemo<Edge[]>(
     () =>
@@ -120,24 +120,8 @@ function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
       }),
     [graph, look],
   );
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === "Escape") {
-      onSelect(undefined);
-      return;
-    }
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-    const wrapper =
-      event.target instanceof HTMLElement ? event.target.closest(".react-flow__node") : null;
-    const id = wrapper?.getAttribute("data-id");
-    if (id !== null && id !== undefined) {
-      event.preventDefault();
-      onSelect({ kind: "node", id });
-    }
-  };
   return (
-    <section className="map" aria-label="Service map canvas" onKeyDown={onKeyDown}>
+    <section className="map" aria-label="Service map canvas">
       <svg className="map-markers" aria-hidden="true">
         <defs>
           {MARKERS.map((marker) => (
@@ -168,6 +152,7 @@ function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
         maxZoom={2}
         nodesDraggable={false}
         nodesConnectable={false}
+        nodesFocusable={false}
         elementsSelectable={false}
         edgesFocusable={false}
         onNodeClick={(_, node) => {

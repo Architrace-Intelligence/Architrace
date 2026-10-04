@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: in progress (PR 5 of 5 in review, ARCHI-42) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: done (PR 1–5 merged as #50–#54; the demo-stack check is part of M7) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 

@@ -14,6 +14,24 @@ export function respondWithJson(body: unknown, status = 200, contentType = "appl
   );
 }
 
+export function respondByPath(routes: Readonly<Record<string, unknown>>) {
+  return vi.fn<typeof fetch>((input) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    const body = Object.entries(routes).find(([suffix]) => url.pathname.endsWith(suffix))?.[1];
+    return Promise.resolve(
+      body === undefined
+        ? new Response(JSON.stringify({ title: "Not Found", status: 404 }), {
+            status: 404,
+            headers: { "content-type": "application/problem+json" },
+          })
+        : new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+    );
+  });
+}
+
 export function respondWithText(body: string, status: number, statusText: string) {
   return vi.fn<typeof fetch>(() =>
     Promise.resolve(

@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | in progress | M1, M2, M3 and M4 PR 1–2 done; M0 PR 1–5 merged (maintainer checklist open); M4 PR 3 (ARCHI-44, #56) and PR 4 (ARCHI-45, stacked) in review |
+| 3 | Implementation (feature by feature)     | in progress | M1, M2, M3 and M4 PR 1–2 done; M0 PR 1–5 merged (maintainer checklist open); M4 PR 3 (#56), PR 4 (#57) and PR 5 (ARCHI-46) in review as a stack |
 | 4 | Testing, hardening, release 1.0         | todo        |                                                        |
 
 ## Process foundation
@@ -47,7 +47,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | done | agreed | ARCHI-38, ARCHI-39, ARCHI-40, ARCHI-41, ARCHI-42 | PR 1–5 merged (#50, #51, #52, #53, #54): span model, graph, publisher, metrics, formatter; acceptance run 6 000 000 spans in 600 s |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
-| [M4 Service map UI](../features/m4-service-map/) | in progress | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32, ARCHI-43, ARCHI-44, ARCHI-45 | PR 1 (#39) and PR 2 (#55) merged: `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate, Projects list, shell, routing; PR 3 (#56, Service map with React Flow and ELK) and PR 4 (lenses, context rail, find, time, selection in the URL) in review |
+| [M4 Service map UI](../features/m4-service-map/) | in progress | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32, ARCHI-43, ARCHI-44, ARCHI-45, ARCHI-46 | PR 1 (#39) and PR 2 (#55) merged: `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate, Projects list, shell, routing; PR 3 (#56, Service map with React Flow and ELK), PR 4 (#57, lenses, context rail, find, time, selection in the URL) and PR 5 (scope switcher, namespace filter) in review as a stack |
 | [M5 Drift](../features/m5-drift/) | todo | agreed · UI design in review | | |
 | [M6 Architecture rules](../features/m6-architecture-rules/) | todo | agreed · UI design in review | | |
 | [M7 Packaging and demo](../features/m7-packaging-demo/) | in progress | agreed | ARCHI-36 | images delivered with M0 PR 4; demo stack and guides pending |
@@ -97,3 +97,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-04 | M4 PR 2 merged (#55) |
 | 2026-10-04 | M4 PR 3: Service map of a scope with React Flow and the ELK layered layout, node cards by type, edges by kind and health, node-type chips in the URL, legend, minimap, decision taken on a 300-node fixture (ARCHI-44) |
 | 2026-10-04 | M4 PR 4: lenses, context rail with scope, node and dependency panels, find-in-map, time selector, selection and time in the URL, keyboard selection, copy link (ARCHI-45) |
+| 2026-10-04 | M4 PR 5: scope switcher in the breadcrumb, namespace filter, M1 and M2 pages brought up to date (ARCHI-46) |
