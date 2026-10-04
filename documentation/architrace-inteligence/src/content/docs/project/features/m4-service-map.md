@@ -260,10 +260,10 @@ What landed and the decisions behind it:
   goes into `graphQuery(scope, at)` and therefore into `GET …/graph?at=` and the "Open as
   JSON" link. Live is the absence of `at`. Layouts stay cached by node and edge ids, so a graph
   that did not change between two instants does not lay out twice.
-- **Keyboard.** The card itself is the focusable button (`role="button"`, `aria-pressed` for
-  the selection); React Flow's own node focus is switched off so there is one focus stop per
-  node. Enter and Space select the card, Escape clears the selection (React Flow calls
-  `onNodeClick` for pointers only), and the rail rows are buttons.
+- **Keyboard.** The card is a native `button` (`aria-pressed` for the selection) between the
+  two React Flow handles; React Flow's own node focus is switched off so there is one focus
+  stop per node. Enter and Space click the button, which React Flow reports as a node click,
+  Escape clears the selection, and the rail rows are buttons.
 - **Copy link** sits in the top bar of every screen (the URL is the view): the clipboard API,
   "Copied" for a moment. **Find in map** is the Ask bar slot of this screen; it dims
   non-matching nodes and the count line reports the matches.
