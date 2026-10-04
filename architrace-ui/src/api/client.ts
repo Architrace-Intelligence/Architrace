@@ -15,6 +15,10 @@ export type TopologyEdge = components["schemas"]["TopologyEdge"];
 export type EdgeMetrics = components["schemas"]["EdgeMetrics"];
 export type NodeType = components["schemas"]["NodeType"];
 export type EdgeKind = components["schemas"]["EdgeKind"];
+export type TopologyDiff = components["schemas"]["TopologyDiff"];
+export type GraphRef = components["schemas"]["GraphRef"];
+export type NodeChange = components["schemas"]["NodeChange"];
+export type EdgeRef = components["schemas"]["EdgeRef"];
 
 export class ProblemError extends Error {
   readonly problem: Problem;
@@ -44,6 +48,42 @@ export async function getGraph(
   const { data, error, response } = await client.GET(
     "/scopes/{project}/{environment}/{cluster}/graph",
     { params: { path: scope, query: at === undefined ? undefined : { at } }, signal },
+  );
+  return unwrap(data, error, response);
+}
+
+export async function getEnvironmentDiff(
+  right: Scope,
+  leftEnvironment: string,
+  leftCluster: string,
+  at: string | undefined,
+  signal?: AbortSignal,
+): Promise<TopologyDiff> {
+  const { data, error, response } = await client.GET(
+    "/scopes/{project}/{environment}/{cluster}/diff/environments",
+    {
+      params: {
+        path: right,
+        query:
+          at === undefined
+            ? { leftEnvironment, leftCluster }
+            : { leftEnvironment, leftCluster, at },
+      },
+      signal,
+    },
+  );
+  return unwrap(data, error, response);
+}
+
+export async function getTimelineDiff(
+  scope: Scope,
+  from: string,
+  to: string | undefined,
+  signal?: AbortSignal,
+): Promise<TopologyDiff> {
+  const { data, error, response } = await client.GET(
+    "/scopes/{project}/{environment}/{cluster}/diff/timeline",
+    { params: { path: scope, query: to === undefined ? { from } : { from, to } }, signal },
   );
   return unwrap(data, error, response);
 }

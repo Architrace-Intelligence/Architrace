@@ -4,6 +4,7 @@
  */
 
 import { Route, Routes } from "react-router";
+import { DriftPage } from "../drift/DriftPage";
 import { ProjectsPage } from "../projects/ProjectsPage";
 import { ScopePage } from "../scope/ScopePage";
 
@@ -12,6 +13,7 @@ export function App() {
     <Routes>
       <Route path="/" element={<ProjectsPage />} />
       <Route path="/scopes/:project/:environment/:cluster" element={<ScopePage />} />
+      <Route path="/scopes/:project/:environment/:cluster/drift" element={<DriftPage />} />
       <Route path="*" element={<ProjectsPage />} />
     </Routes>
   );

@@ -4,7 +4,13 @@
  */
 
 import { type Mock, vi } from "vitest";
-import type { ScopeSummary, TopologyEdge, TopologyGraph, TopologyNode } from "../api/client";
+import type {
+  ScopeSummary,
+  TopologyDiff,
+  TopologyEdge,
+  TopologyGraph,
+  TopologyNode,
+} from "../api/client";
 
 export function respondWithJson(body: unknown, status = 200, contentType = "application/json") {
   return vi.fn<typeof fetch>(() =>
@@ -165,3 +171,63 @@ export const demoGraph: TopologyGraph = {
 };
 
 export const emptyGraph: TopologyGraph = { ...demoGraph, nodes: [], edges: [] };
+
+export const demoDiff: TopologyDiff = {
+  left: {
+    scope: { project: "webshop", environment: "DEV", cluster: "k8s-dev-ci" },
+    at: "2026-10-01T12:00:00Z",
+  },
+  right: {
+    scope: { project: "webshop", environment: "PROD", cluster: "k8s-prod-eu1" },
+    at: "2026-10-01T12:00:00Z",
+  },
+  nodesAdded: [
+    node("SERVICE", "service:notification-service", "notification-service", {
+      deployments: [{ cluster: "k8s-prod-eu1", namespace: "notify" }],
+    }),
+    node("TOPIC", "topic:kafka/payment-events", "payment-events"),
+  ],
+  nodesRemoved: [
+    node("DATABASE", "db:postgresql/catalog", "postgresql/catalog"),
+    node("SERVICE", "service:search-service", "search-service", {
+      versions: ["2.3.0"],
+      deployments: [{ cluster: "k8s-dev-ci", namespace: "search" }],
+    }),
+  ],
+  nodesChanged: [
+    {
+      id: "service:orders-service",
+      type: "SERVICE",
+      name: "orders-service",
+      versionsBefore: ["2.9.0"],
+      versionsAfter: ["2.8.1"],
+      deploymentsBefore: [{ cluster: "k8s-dev-ci", namespace: "orders" }],
+      deploymentsAfter: [{ cluster: "k8s-prod-eu1", namespace: "orders" }],
+    },
+  ],
+  edgesAdded: [
+    {
+      sourceId: "service:payments-service",
+      targetId: "topic:kafka/payment-events",
+      kind: "PUBLISH",
+    },
+    {
+      sourceId: "topic:kafka/payment-events",
+      targetId: "service:notification-service",
+      kind: "CONSUME",
+    },
+  ],
+  edgesRemoved: [
+    { sourceId: "service:search-service", targetId: "db:postgresql/catalog", kind: "SYNC" },
+    { sourceId: "service:search-service", targetId: "db:postgresql/orders", kind: "SYNC" },
+  ],
+};
+
+export const emptyDiff: TopologyDiff = {
+  ...demoDiff,
+  nodesAdded: [],
+  nodesRemoved: [],
+  nodesChanged: [],
+  edgesAdded: [],
+  edgesRemoved: [],
+};

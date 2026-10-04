@@ -24,7 +24,8 @@ export default defineConfig({
           label: 'Guides',
           items: [
             { label: 'Local Development', slug: 'guides/local-development' },
-            { label: 'Docker Demo', slug: 'guides/docker-demo' }
+            { label: 'Docker Demo', slug: 'guides/docker-demo' },
+            { label: 'Comparing Environments and Releases', slug: 'guides/drift' }
           ]
         },
         {

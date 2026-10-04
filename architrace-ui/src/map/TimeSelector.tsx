@@ -10,6 +10,10 @@ import { formatInstant } from "./metrics";
 interface TimeSelectorProps {
   readonly at: string | undefined;
   readonly onChange: (at: string | undefined) => void;
+  readonly prefix?: string;
+  readonly liveLabel?: string;
+  readonly allowLive?: boolean;
+  readonly formLabel?: string;
 }
 
 function toInputValue(at: string | undefined): string {
@@ -20,7 +24,14 @@ function toInputValue(at: string | undefined): string {
   return Number.isNaN(millis) ? "" : new Date(millis).toISOString().slice(0, 19);
 }
 
-export function TimeSelector({ at, onChange }: TimeSelectorProps) {
+export function TimeSelector({
+  at,
+  onChange,
+  prefix = "At",
+  liveLabel = "Live",
+  allowLive = true,
+  formLabel = "Point in time",
+}: TimeSelectorProps) {
   const container = useRef<HTMLSpanElement>(null);
   const popover = usePopover(container);
   const [draft, setDraft] = useState(() => toInputValue(at));
@@ -38,13 +49,13 @@ export function TimeSelector({ at, onChange }: TimeSelectorProps) {
         }}
       >
         <span className={live ? "dot dot-ok" : "dot dot-time"} aria-hidden="true" />
-        {live ? "Live" : `At ${formatInstant(at)}`}
+        {live ? liveLabel : `${prefix} ${formatInstant(at)}`}
       </button>
       {popover.open && (
         <form
           className="popover popover-form popover-right"
           id={popover.id}
-          aria-label="Point in time"
+          aria-label={formLabel}
           onSubmit={(event) => {
             event.preventDefault();
             onChange(new Date(`${draft}Z`).toISOString());
@@ -64,16 +75,18 @@ export function TimeSelector({ at, onChange }: TimeSelectorProps) {
             />
           </label>
           <div className="popover-actions">
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => {
-                onChange(undefined);
-                popover.close();
-              }}
-            >
-              Live
-            </button>
+            {allowLive && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  onChange(undefined);
+                  popover.close();
+                }}
+              >
+                {liveLabel}
+              </button>
+            )}
             <button type="submit" className="btn btn-sm" disabled={draft === ""}>
               Apply
             </button>

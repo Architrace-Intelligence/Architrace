@@ -48,7 +48,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
 | [M4 Service map UI](../features/m4-service-map/) | done | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32, ARCHI-43, ARCHI-44, ARCHI-45, ARCHI-46 | PR 1–5 merged (#39, #55, #56, #58, #59): `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate, Projects list, shell, routing, Service map with React Flow and ELK, lenses, context rail, find, time, selection in the URL, scope switcher, namespace filter; follow-ups B1 and B3 from the real-data round |
-| [M5 Drift](../features/m5-drift/) | in progress | agreed · UI design in review | ARCHI-48 | PR 1 (diff domain, algorithm, `diff/environments` and `diff/timeline` endpoints) delivered; PR 2 (Drift screen) next |
+| [M5 Drift](../features/m5-drift/) | review | agreed · UI design in review | ARCHI-48, ARCHI-49 | PR 1 (diff domain, algorithm, `diff/environments` and `diff/timeline` endpoints) and PR 2 (Drift screen: modes, sides in the URL, counters, grouped list, map overlays, rail, user guide) |
 | [M6 Architecture rules](../features/m6-architecture-rules/) | todo | agreed · UI design in review | | candidates B2 and B3 from the real-data round |
 | [M7 Packaging and demo](../features/m7-packaging-demo/) | in progress | agreed | ARCHI-36 | images delivered with M0 PR 4; demo stack and guides pending; B5, B6 and B7 from the real-data round |
 
@@ -101,3 +101,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-04 | M4 PR 4 re-opened from `main` and merged (#58); M4 PR 5 merged (#59): M4 complete |
 | 2026-10-04 | First real-data test round: Architrace unchanged against a private eight-service stack with Kafka, Kafka Streams, a Debezium outbox and Redis; backlog B1–B7 recorded in Requirements §9 (ARCHI-47) |
 | 2026-10-04 | M5 PR 1: drift domain and `GraphDiffer`, `DriftQuery`, environment and timeline diff endpoints in the Query API, reference and feature pages (ARCHI-48) |
+| 2026-10-04 | M5 PR 2: Drift screen with environment and timeline modes, both sides in the URL, counters, grouped list, map overlays with ghosts, context rail sentences, guide page (ARCHI-49) |

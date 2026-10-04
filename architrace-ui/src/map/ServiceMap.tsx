@@ -20,6 +20,8 @@ import { layoutGraph, NODE_HEIGHT, NODE_WIDTH, type Positions } from "./layout";
 import { MapLegend } from "./MapLegend";
 import { describeMetrics } from "./metrics";
 import {
+  type DriftOverlay,
+  type EdgeChangeKind,
   type EdgeHealth,
   edgeHealth,
   edgeId,
@@ -28,20 +30,30 @@ import {
   type MapState,
   NODE_TYPE_TOKENS,
   type Selection,
+  type SideLabels,
   type VisibleGraph,
 } from "./model";
 import { type CardNode, NodeCard } from "./NodeCard";
 
 const CARD_TYPES = { card: NodeCard };
-const MARKERS: readonly (EdgeHealth | "touch")[] = ["ok", "warn", "bad", "touch"];
+const MARKERS: readonly (EdgeHealth | "touch" | EdgeChangeKind)[] = [
+  "ok",
+  "warn",
+  "bad",
+  "touch",
+  "added",
+  "removed",
+];
 
 interface ServiceMapProps {
   readonly graph: VisibleGraph;
   readonly state: MapState;
   readonly onSelect: (selection: Selection | undefined) => void;
+  readonly overlay?: DriftOverlay;
+  readonly sides?: SideLabels;
 }
 
-export function ServiceMap({ graph, state, onSelect }: ServiceMapProps) {
+export function ServiceMap({ graph, state, onSelect, overlay, sides }: ServiceMapProps) {
   const key = [...graph.nodes.map((node) => node.id), ...graph.edges.map(edgeId)].join("|");
   const layout = useQuery({
     queryKey: ["layout", key],
@@ -59,7 +71,15 @@ export function ServiceMap({ graph, state, onSelect }: ServiceMapProps) {
     );
   }
   return (
-    <MapCanvas key={key} graph={graph} positions={layout.data} state={state} onSelect={onSelect} />
+    <MapCanvas
+      key={key}
+      graph={graph}
+      positions={layout.data}
+      state={state}
+      onSelect={onSelect}
+      overlay={overlay}
+      sides={sides}
+    />
   );
 }
 
@@ -68,29 +88,33 @@ interface MapCanvasProps {
   readonly positions: Positions;
   readonly state: MapState;
   readonly onSelect: (selection: Selection | undefined) => void;
+  readonly overlay: DriftOverlay | undefined;
+  readonly sides: SideLabels | undefined;
 }
 
-function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
+function MapCanvas({ graph, positions, state, onSelect, overlay, sides }: MapCanvasProps) {
   const look = useMemo(() => looks(graph, state), [graph, state]);
   const nodes = useMemo<CardNode[]>(
     () =>
       graph.nodes.map((node) => {
         const nodeLook = look.nodes.get(node.id);
+        const change = overlay?.nodes.get(node.id);
         return {
           id: node.id,
           type: "card",
           position: positions.get(node.id) ?? { x: 0, y: 0 },
           width: NODE_WIDTH,
           height: NODE_HEIGHT,
-          data: { node, onSelect },
+          data: { node, onSelect, change, subtitle: overlay?.subtitles.get(node.id) },
           selected: nodeLook?.selected ?? false,
           className: classNames([
             [nodeLook?.dimmed ?? false, "dimmed"],
             [nodeLook?.match ?? false, "match"],
+            [change !== undefined, `drift-${change ?? ""}`],
           ]),
         };
       }),
-    [graph, positions, look, onSelect],
+    [graph, positions, look, onSelect, overlay],
   );
   const edges = useMemo<Edge[]>(
     () =>
@@ -99,6 +123,8 @@ function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
         const health = edgeHealth(edge.metrics);
         const edgeLook = look.edges.get(id);
         const touching = edgeLook?.touching ?? false;
+        const change = overlay?.edges.get(id);
+        const marker = change ?? (touching ? "touch" : health);
         return {
           id,
           source: edge.sourceId,
@@ -108,17 +134,18 @@ function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
             [true, `health-${health}`],
             [touching, "touching"],
             [edgeLook?.dimmed ?? false, "dimmed"],
+            [change !== undefined, `drift-${change ?? ""}`],
           ]),
           style: { strokeWidth: edgeWidth(edge.metrics.calls) },
-          markerEnd: touching ? "arrow-touch" : `arrow-${health}`,
-          label: touching ? describeMetrics(edge.metrics) : undefined,
+          markerEnd: `arrow-${marker}`,
+          label: touching && overlay === undefined ? describeMetrics(edge.metrics) : undefined,
           labelStyle: { fill: "var(--ink)", fontSize: 11 },
           labelBgStyle: { fill: "var(--bg-2)", stroke: "var(--accent)" },
           labelBgPadding: [6, 3],
           labelBgBorderRadius: 11,
         };
       }),
-    [graph, look],
+    [graph, look, overlay],
   );
   return (
     <section className="map" aria-label="Service map canvas">
@@ -174,7 +201,7 @@ function MapCanvas({ graph, positions, state, onSelect }: MapCanvasProps) {
           nodeClassName={(node) => `mini-${NODE_TYPE_TOKENS[node.data.node.type]}`}
         />
         <Panel position="bottom-left">
-          <MapLegend />
+          <MapLegend sides={sides} />
         </Panel>
       </ReactFlow>
     </section>

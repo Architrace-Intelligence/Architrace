@@ -26,10 +26,12 @@ Last updated: **2026-10-04**
 - **M1 and M4 are done**, see the [M1](../features/m1-agent-pipeline/) and
   [M4](../features/m4-service-map/) pages. Lesson recorded on 2026-10-04: **no stacked pull
   requests**, one pull request against `main` at a time.
-- **M5 is in progress.** PR 1 (ARCHI-48) delivers the `drift` package (`GraphRef`,
+- **M5 is in review.** PR 1 (ARCHI-48, #61) delivers the `drift` package (`GraphRef`,
   `NodeChange`, `TopologyDiff`, `DiffMode`, `GraphDiffer`, `DriftQuery`), the endpoints
   `diff/environments` and `diff/timeline` under a scope, the OpenAPI schemas and the
-  reference page; see the [M5](../features/m5-drift/) page. Working assumption to confirm:
+  reference page. PR 2 (ARCHI-49) delivers the Drift screen (modes, sides in the URL,
+  counters, grouped list, map overlays, rail, guide page); it is opened against `main` once
+  #61 is merged. See the [M5](../features/m5-drift/) page. Working assumption to confirm:
   environment mode compares versions only, timeline mode versions and deployments.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
@@ -64,7 +66,9 @@ UI conventions since ARCHI-32: feature folders under `src/`; server state only t
 everything from the one `…/graph` request; a layout is a TanStack query keyed by node and edge
 ids; edge kind and health are class names styled through the tokens; React Flow's `--xy-*`
 variables map onto the tokens in `base.css`; the jsdom stubs React Flow needs live in
-`src/test/setup.ts`.
+`src/test/setup.ts`. Since ARCHI-49: the Drift screen is a route of the scope that is its
+right side; defaults that the URL lacks are filled by a replace `Navigate`, never by effects;
+the map draws a diff through an overlay prop, not through a second map.
 
 Build conventions since ARCHI-33: new Java modules apply `architrace.java` (or
 `architrace.spring-boot`); third-party plugins are applied by id, their versions live in the
@@ -96,14 +100,11 @@ timeline mode only).
 
 ## Next step
 
-Merge the M5 PR 1 of ARCHI-48 (drift domain and endpoints). Then continue, one PR each with the
+Merge #61 (M5 PR 1), then open and merge the M5 PR 2 of ARCHI-49 (Drift screen; branch
+`ARCHI-49-drift-screen`, rebased onto `main` after #61). Then continue, one PR each with the
 next free ticket number:
 
-1. M5 PR 2 (Drift screen): route `/scopes/{project}/{environment}/{cluster}/drift` with mode,
-   left side, time bounds, view and selection in the URL; counters, grouped list with "Show on
-   map", map view with drift overlays and legend, context rail with deterministic sentences,
-   "Drift" in the navigation rail, user guide page. Plan on the M5 page, PR 2.
-2. M6 Architecture rules (with the candidates B2 and B3), M7 Packaging and demo (B5 health
+1. M6 Architecture rules (with the candidates B2 and B3), M7 Packaging and demo (B5 health
    check on `/health`, B6 deployment guide for Spring Boot services, B7 demo TTL; the demo stack
    exercises the map and the drift with real data).
 3. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)

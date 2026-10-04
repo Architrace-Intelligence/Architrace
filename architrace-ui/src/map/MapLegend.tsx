@@ -3,9 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES } from "./model";
+import { GLYPHS, NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES, type SideLabels } from "./model";
 
-export function MapLegend() {
+interface MapLegendProps {
+  readonly sides?: SideLabels;
+}
+
+export function MapLegend({ sides }: MapLegendProps) {
   return (
     <fieldset className="legend">
       <legend className="sr-only">Legend</legend>
@@ -17,28 +21,67 @@ export function MapLegend() {
           </div>
         ))}
       </div>
-      <div className="legend-col">
-        <div className="legend-row">
-          <span className="line-sample" aria-hidden="true" />
-          <span>sync call</span>
-        </div>
-        <div className="legend-row">
-          <span className="line-sample line-dashed" aria-hidden="true" />
-          <span>publish / consume</span>
-        </div>
-        <div className="legend-row">
-          <span className="line-sample line-thick" aria-hidden="true" />
-          <span>width grows with calls</span>
-        </div>
-        <div className="legend-row">
-          <span className="line-sample line-warn" aria-hidden="true" />
-          <span>errors ≥ 1 %</span>
-        </div>
-        <div className="legend-row">
-          <span className="line-sample line-bad" aria-hidden="true" />
-          <span>errors ≥ 3 %</span>
-        </div>
-      </div>
+      {sides === undefined ? <TrafficLegend /> : <DriftLegend sides={sides} />}
     </fieldset>
+  );
+}
+
+function TrafficLegend() {
+  return (
+    <div className="legend-col">
+      <div className="legend-row">
+        <span className="line-sample" aria-hidden="true" />
+        <span>sync call</span>
+      </div>
+      <div className="legend-row">
+        <span className="line-sample line-dashed" aria-hidden="true" />
+        <span>publish / consume</span>
+      </div>
+      <div className="legend-row">
+        <span className="line-sample line-thick" aria-hidden="true" />
+        <span>width grows with calls</span>
+      </div>
+      <div className="legend-row">
+        <span className="line-sample line-warn" aria-hidden="true" />
+        <span>errors ≥ 1 %</span>
+      </div>
+      <div className="legend-row">
+        <span className="line-sample line-bad" aria-hidden="true" />
+        <span>errors ≥ 3 %</span>
+      </div>
+    </div>
+  );
+}
+
+function DriftLegend({ sides }: { readonly sides: SideLabels }) {
+  return (
+    <div className="legend-col">
+      <div className="legend-row">
+        <span className="glyph glyph-sm b-added" aria-hidden="true">
+          {GLYPHS.added}
+        </span>
+        <span>only in {sides.right}</span>
+      </div>
+      <div className="legend-row">
+        <span className="glyph glyph-sm b-removed" aria-hidden="true">
+          {GLYPHS.removed}
+        </span>
+        <span>only in {sides.left} (ghost)</span>
+      </div>
+      <div className="legend-row">
+        <span className="glyph glyph-sm b-changed" aria-hidden="true">
+          {GLYPHS.changed}
+        </span>
+        <span>version differs</span>
+      </div>
+      <div className="legend-row">
+        <span className="line-sample line-added" aria-hidden="true" />
+        <span>dependency only in {sides.right}</span>
+      </div>
+      <div className="legend-row">
+        <span className="line-sample line-removed" aria-hidden="true" />
+        <span>dependency only in {sides.left}</span>
+      </div>
+    </div>
   );
 }
