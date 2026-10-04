@@ -362,3 +362,6 @@ What landed and the decisions behind it:
   external edges instead of service edges, which is the honest result.
 - Topic naming across brokers (Kafka topic vs RabbitMQ exchange/queue) is normalised by
   `messaging.system` + destination; refinements are post-MVP.
+- From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
+  Kafka Streams internal topics should be folded or hidden by a configurable pattern list
+  (B1), and the latency histogram should keep sub-millisecond resolution (B4).
