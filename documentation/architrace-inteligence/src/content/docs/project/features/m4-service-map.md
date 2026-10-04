@@ -211,8 +211,9 @@ What landed and the decisions behind it:
   positions come from the layout and are not persisted anywhere.
 - **Tests.** The pure logic has unit tests; `layout.test.ts` checks that dependencies layer
   left to right on the demo graph and that the 300-node fixture lands on 300 distinct positions
-  within a 5 s ceiling (the ceiling guards against a slow strategy, not the 2 s acceptance
-  criterion, which is measured in the browser); the page tests drive the real router and the
+  (correctness only: the same layout took 1.2 s on the maintainer's machine and 9.4 s on a
+  GitHub runner, so the 2 s acceptance criterion is measured in the browser, not asserted in
+  CI); the page tests drive the real router and the
   typed client with a stubbed `fetch` through the chips, the hidden set in the URL, the empty
   scope and the problem response, and count the rendered edges by class. React Flow needs a
   `ResizeObserver`, `DOMMatrixReadOnly` and element sizes that jsdom lacks; `src/test/setup.ts`
