@@ -16,7 +16,7 @@ Last updated: **2026-10-04**
   M6, M7.
 - Merged: M0 PR 1–5 (#26, #42, #44, #48, #49), the dependency update (ARCHI-35, #46), the UI
   design (#30), M1 (#50–#54), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1–5 (#39, #55, #56, #58,
-  #59), the real-data backlog (ARCHI-47, #60). The `main` pipeline is green end to end; both
+  #59), the real-data backlog (ARCHI-47, #60), M5 PR 1 (ARCHI-48, #61). The `main` pipeline is green end to end; both
   images are in GHCR.
 - **M0 is complete in the repository.** What remains is the maintainer checklist on the
   [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
@@ -26,13 +26,13 @@ Last updated: **2026-10-04**
 - **M1 and M4 are done**, see the [M1](../features/m1-agent-pipeline/) and
   [M4](../features/m4-service-map/) pages. Lesson recorded on 2026-10-04: **no stacked pull
   requests**, one pull request against `main` at a time.
-- **M5 is in review.** PR 1 (ARCHI-48, #61) delivers the `drift` package (`GraphRef`,
-  `NodeChange`, `TopologyDiff`, `DiffMode`, `GraphDiffer`, `DriftQuery`), the endpoints
-  `diff/environments` and `diff/timeline` under a scope, the OpenAPI schemas and the
-  reference page. PR 2 (ARCHI-49) delivers the Drift screen (modes, sides in the URL,
-  counters, grouped list, map overlays, rail, guide page); it is opened against `main` once
-  #61 is merged. See the [M5](../features/m5-drift/) page. Working assumption to confirm:
-  environment mode compares versions only, timeline mode versions and deployments.
+- **M5 is in review.** PR 1 (ARCHI-48, #61, merged) delivered the `drift` package
+  (`GraphRef`, `NodeChange`, `TopologyDiff`, `DiffMode`, `GraphDiffer`, `DriftQuery`), the
+  endpoints `diff/environments` and `diff/timeline` under a scope, the OpenAPI schemas and
+  the reference page. PR 2 (ARCHI-49, #62) delivers the Drift screen (modes, sides in the
+  URL, counters, grouped list, map overlays, rail, guide page). See the
+  [M5](../features/m5-drift/) page. Working assumption to confirm: environment mode compares
+  versions only, timeline mode versions and deployments.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -100,8 +100,7 @@ timeline mode only).
 
 ## Next step
 
-Merge #61 (M5 PR 1), then open and merge the M5 PR 2 of ARCHI-49 (Drift screen; branch
-`ARCHI-49-drift-screen`, rebased onto `main` after #61). Then continue, one PR each with the
+Merge #62 (M5 PR 2, the Drift screen); that closes M5. Then continue, one PR each with the
 next free ticket number:
 
 1. M6 Architecture rules (with the candidates B2 and B3), M7 Packaging and demo (B5 health
