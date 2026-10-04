@@ -14,6 +14,9 @@ import io.github.architrace.core.config.AgentConfig;
 import io.github.architrace.graph.EdgeBuilder;
 import io.github.architrace.graph.GraphBuilder;
 import io.github.architrace.graph.PendingSpanIndex;
+import io.github.architrace.metrics.AgentMetrics;
+import io.github.architrace.metrics.DropReporter;
+import io.github.architrace.metrics.MetricsServer;
 import io.github.architrace.otlp.OtlpTraceReceiverServer;
 import io.github.architrace.otlp.OtlpTraceServiceImpl;
 import io.github.architrace.otlp.SpanReceiver;
@@ -22,6 +25,8 @@ import io.github.architrace.pipeline.SpanQueue;
 import io.github.architrace.publish.PublisherStats;
 import io.github.architrace.publish.SnapshotQueue;
 import io.github.architrace.span.SpanNormaliser;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import java.time.Duration;
 import java.time.InstantSource;
 import java.util.Objects;
@@ -33,6 +38,7 @@ import java.util.concurrent.TimeoutException;
 public final class AgentRuntimeService {
 
     static final Duration SWEEP_INTERVAL = Duration.ofSeconds(10);
+    static final Duration REPORT_INTERVAL = Duration.ofSeconds(10);
 
     private final ControlPlaneClientFactory clientFactory;
 
@@ -57,14 +63,37 @@ public final class AgentRuntimeService {
                         identity, clientFactory.create(config.controlPlane().server()), snapshots, stats, clock),
                 config.controlPlane().retryDelay(),
                 stats);
+        var metrics = new AgentMetrics(receiver, spans, builder, snapshots, stats);
+        var registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        metrics.bindTo(registry);
+        var reporter = new DropReporter(metrics);
         try (var scope = StructuredTaskScope.open(StructuredTaskScope.Joiner.awaitAllSuccessfulOrThrow())) {
             scope.fork(() -> runReceiver(config.otlp().port(), receiver));
             scope.fork(worker::run);
             scope.fork(supervisor::run);
             scope.fork(
                     () -> runSnapshotLoop(worker, snapshots, config.snapshot().interval()));
+            scope.fork(() -> runMetricsServer(config.metrics().port(), registry, stats));
+            scope.fork(() -> runReporter(reporter));
             scope.join();
         }
+    }
+
+    private static Void runMetricsServer(int port, PrometheusMeterRegistry registry, PublisherStats stats)
+            throws InterruptedException {
+        try (var server = new MetricsServer(port, registry, stats)) {
+            server.start();
+            server.await();
+        }
+        return null;
+    }
+
+    private static Void runReporter(DropReporter reporter) throws InterruptedException {
+        while (!Thread.currentThread().isInterrupted()) {
+            Thread.sleep(REPORT_INTERVAL);
+            reporter.report();
+        }
+        return null;
     }
 
     private Void runReceiver(int port, SpanReceiver spanReceiver) throws InterruptedException {

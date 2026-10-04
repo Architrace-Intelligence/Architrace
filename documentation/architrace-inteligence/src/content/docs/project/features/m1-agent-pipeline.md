@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: in progress (PR 3 of 5 in review, ARCHI-40) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: in progress (PR 4 of 5 in review, ARCHI-41) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 
@@ -94,9 +94,8 @@ snapshot.
 ### Metrics and health
 
 Micrometer registry with Prometheus exposition on `metrics.port` (default 9464) using the JDK
-HTTP server: `/metrics`, `/health`. Metrics: `spans_received`, `spans_rejected`,
-`spans_evicted`, `edges_active`, `snapshots_published`, `snapshots_dropped`,
-`control_plane_connected`.
+HTTP server: `/metrics`, `/health`. The metric names are listed on the
+[Configuration](../../../reference/configuration/#metrics-and-health) page.
 
 ### Configuration v2
 
@@ -297,6 +296,36 @@ What landed and the decisions behind it:
   failure and requeue; the supervisor test covers reconnects after failures and after a server
   completion; the runtime test is the end-to-end check of the M1 plan: OTLP traces exported to
   the real receiver come out as an acknowledged `GraphSnapshot` with the expected edge.
+
+### PR 4: metrics endpoint, drop reporting, load test (ARCHI-41)
+
+What landed and the decisions behind it:
+
+- **Counters where the events happen, meters bound later.** The receiver counts normalised
+  spans, the span queue its rejections, the graph builder foreign and evicted spans and the
+  sizes of the current window, the pending index its held spans, the snapshot queue its
+  drops, the publisher its published, acknowledged and rejected snapshots, its ended sessions
+  and the connection flag. `AgentMetrics` binds these sources to a `MeterRegistry` as
+  `FunctionCounter`s and `Gauge`s, so the hot path touches `LongAdder`s and volatile ints and
+  never a Micrometer object. Counts that only the worker thread writes (`pending`, `active
+  nodes`, `active edges`) are published as volatile values after each batch, sweep and freeze.
+- **Endpoint** (`MetricsServer`): the JDK `HttpServer` on `metrics.port` with virtual-thread
+  handlers. `/metrics` returns the Prometheus text format from `PrometheusMeterRegistry`,
+  `/health` returns `{"status":"UP","controlPlane":"CONNECTED|DISCONNECTED"}` with status 200
+  (liveness; the control plane state is information, not a failure), anything else 404. It is
+  the sixth task of the runtime scope and stops with the agent.
+- **Rate-limited logging by construction** (`DropReporter`): a runtime task wakes every 10 s,
+  computes the delta of every loss counter since its previous report and logs one `WARN` line
+  only when something was lost. No per-event logging, no throttle state in the hot path.
+- **Load test** (`GraphWorkerLoadTest`, tag `load`): a producer offers client/server pairs at
+  10 000 spans/s across 50 services while the worker builds the graph and a freeze is
+  requested every second; it asserts no rejections, an empty pending index and a heap below
+  512 MB after a GC. It is excluded from `test` and run with
+  `./gradlew :architrace-agent:loadTest -Pload.seconds=600` for the ten-minute acceptance run;
+  the default is 10 s. A 5 s run on the development machine: 50 000 spans, 0 rejected,
+  250 edges, 10 MB heap.
+- Dependencies: `micrometer-core` and `micrometer-registry-prometheus` 1.17.1, the version
+  Spring Boot manages for the control plane.
 
 ## Risks and open points
 
