@@ -30,16 +30,18 @@ Last updated: **2026-10-04**
   [M1](../features/m1-agent-pipeline/) page.
 - **M4 PR 2 is merged (#55)**: the Projects list, the shell and `react-router` 8 in declarative
   mode; the merge confirmed the routing choice.
-- **M4 PR 3 (ARCHI-44, #56) in review**: the Service map of a scope with React Flow 12 and the
+- **M4 PR 3 (ARCHI-44, #56) is merged**: the Service map of a scope with React Flow 12 and the
   ELK layered layout, decided on the 300-node fixture (layout 0.5 s, initial bundle 156 kB
-  gzipped, ELK as a lazy 436 kB chunk): node cards by type, edges by kind with width by calls
-  and colour by error rate, node-type chips with counts carried in the URL, legend, minimap,
-  fit to view.
-- **M4 PR 4 (ARCHI-45) stacked on #56** (the maintainer allowed a stack to finish M4): lenses,
-  the context rail with the scope, node and dependency panels, find-in-map, time selector
-  (`graph?at=`), selection and time in the URL, keyboard selection, copy link. **Merge #56
-  first**; the PR 4 branch is based on `ARCHI-44-service-map` and retargets to `main` once
-  #56 is merged and its branch deleted. Details on the [M4](../features/m4-service-map/) page.
+  gzipped, ELK as a lazy 436 kB chunk).
+- **M4 PR 4 (ARCHI-45) in review against `main`**: lenses, the context rail with the scope,
+  node and dependency panels, find-in-map, time selector (`graph?at=`), selection and time in
+  the URL, keyboard selection, copy link, the SonarCloud findings of the map and the agent. Its
+  first pull request (#57) was stacked on the PR 3 branch and got merged into that branch
+  instead of `main`; the same commits are re-opened from a branch off `main`. Lesson recorded:
+  **no stacked pull requests**, one pull request against `main` at a time.
+- **M4 PR 5 (ARCHI-46)** is ready locally (scope switcher in the breadcrumb, namespace filter,
+  M1 and M2 pages brought up to date) and opens against `main` once PR 4 is merged; M4 is
+  complete with it. Details on the [M4](../features/m4-service-map/) page.
 - The maintainer asked on 2026-10-04 to leave the ruleset aside and implement M1 and M4 first;
   testing follows.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
@@ -102,8 +104,8 @@ timeline mode only).
 
 ## Next step
 
-Merge #56 (M4 PR 3), then the PR 4 of ARCHI-45; M4 is complete with it. Then continue, one PR
-each with the next free ticket number:
+Merge the PR 4 of ARCHI-45, then the PR 5 of ARCHI-46 (opened right after); M4 is complete with
+them. Then continue, one PR each with the next free ticket number:
 
 1. M5 Drift: `TopologyDiff` on the control plane (environment and timeline modes), the Query
    API endpoint, the Drift screen (grouped list, map overlays) as designed.
