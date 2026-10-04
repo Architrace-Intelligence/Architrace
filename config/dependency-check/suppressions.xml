@@ -1,3 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes>
+            io.opentelemetry.proto:opentelemetry-proto only carries the generated protobuf classes of the OTLP
+            contract. The CPE opentelemetry:opentelemetry matches the Go, .NET, C++ and JavaScript SDKs
+            (CVE-2026-39882, CVE-2026-40894, CVE-2026-41178, CVE-2026-44967, CVE-2026-54285), none of which is
+            on the classpath.
+        </notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentelemetry\.proto/opentelemetry\-proto@.*$</packageUrl>
+        <cpe>cpe:/a:opentelemetry:opentelemetry</cpe>
+    </suppress>
 </suppressions>
