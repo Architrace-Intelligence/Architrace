@@ -23,8 +23,10 @@ Last updated: **2026-10-04**
   CodeRabbit app, make the two GHCR packages public, seed `v0.1.0` (`git tag -a v0.1.0 -m v0.1.0
   f0c43ab && git push origin v0.1.0`). Dependabot #45 is closed. Until the ruleset is active
   the merge gate is discipline, not platform.
-- **M1 PR 1 merged (#50)**; **M1 PR 2 (ARCHI-39, #51), PR 3 (ARCHI-40) and PR 4 (ARCHI-41) in
-  review**, each branched from the previous one and opened after it merges. PR 4: `metrics`
+- **M1 PR 1 (#50) and PR 2 (#51) merged**; **PR 3 (ARCHI-40, #52), PR 4 (ARCHI-41) and PR 5
+  (ARCHI-42) in review**, each branched from the previous one and opened after it merges.
+  PR 5: formatter switch removed, whole module in palantir format, acceptance load run
+  recorded on the M1 page, M1 done once it merges. PR 4: `metrics`
   package (`AgentMetrics` binding, `MetricsServer` with `/metrics` and `/health`,
   `DropReporter`), counters on the receiver, queues, builder and publisher, `loadTest` Gradle
   task (tag `load`, `-Pload.seconds`). PR 2: `graph` package (sealed `GraphNode` with
@@ -93,16 +95,24 @@ timeline mode only).
 
 ## Next step
 
-Merge #51 (M1 PR 2), then the PRs of ARCHI-40 (M1 PR 3) and ARCHI-41 (M1 PR 4), in that
-order. Then continue, one PR each with the next free ticket number:
+Merge #52 (M1 PR 3), then the PRs of ARCHI-41 (M1 PR 4) and ARCHI-42 (M1 PR 5), in that
+order; M1 is done with the last one. Then continue, one PR each with the next free ticket
+number:
 
-1. M1 PR 5: formatter on for the agent (the remaining 2-space files: `MainApp`, `cli`,
-   `core.BuildVersion`, `otlp` receiver and server, `grpc.GrpcAddressParser` and their tests),
-   the ten-minute load run recorded on the M1 page, M1 marked done; the agent Dockerfile
-   health check can move to `/health` (M7 owns the image).
-2. M4 PR 2: Projects list (scopes with agents, services, data streams, last snapshot) on the
-   agreed UI design; then M4 PR 3–4 (Service map), M5, M6, M7.
-3. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
+1. M4 PR 2: the Projects list on the agreed frames. Shell (navigation rail with Projects,
+   Map and the theme toggle; top bar with the title and the filter field), toolbar with the
+   Environment and Cluster chips (multi-select popovers with per-value counts), Clear all,
+   Group by project / environment / cluster, count line, one group per key with rows showing
+   environment or project, cluster, namespaces, services, data streams, agents (live, stale),
+   last snapshot as relative time; a row links to `/scopes/{project}/{environment}/{cluster}`
+   (placeholder page until PR 3). Filters, grouping and search live in the URL. Routing with
+   `react-router` (declarative mode); the first real dependency decision of the UI since the
+   scaffold, to be confirmed by the maintainer in the review. Region and findings columns of
+   the frames wait for M6 and for a region source.
+2. M4 PR 3: Service map on `…/graph` and `…/services` with ELK layout (library decision with
+   a 300-node fixture), PR 4: lenses, panels, time selector, polish; then M5, M6, M7.
+3. The agent Dockerfile health check can move to `/health` (M7 owns the image). Take over the
+   Dependabot Gradle bumps of #47 in a maintainer PR on the way.
 
 Then M4 PR 2 (Projects list), M4 PR 3–4, M5, M6, M7.
 

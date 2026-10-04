@@ -11,34 +11,34 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class RecordingObserver<T> implements StreamObserver<T> {
 
-  private final List<T> values = new CopyOnWriteArrayList<>();
-  private final List<Throwable> errors = new CopyOnWriteArrayList<>();
-  private volatile boolean completed;
+    private final List<T> values = new CopyOnWriteArrayList<>();
+    private final List<Throwable> errors = new CopyOnWriteArrayList<>();
+    private volatile boolean completed;
 
-  @Override
-  public void onNext(T value) {
-    values.add(value);
-  }
+    @Override
+    public void onNext(T value) {
+        values.add(value);
+    }
 
-  @Override
-  public void onError(Throwable throwable) {
-    errors.add(throwable);
-  }
+    @Override
+    public void onError(Throwable throwable) {
+        errors.add(throwable);
+    }
 
-  @Override
-  public void onCompleted() {
-    completed = true;
-  }
+    @Override
+    public void onCompleted() {
+        completed = true;
+    }
 
-  public List<T> values() {
-    return List.copyOf(values);
-  }
+    public List<T> values() {
+        return List.copyOf(values);
+    }
 
-  public List<Throwable> errors() {
-    return List.copyOf(errors);
-  }
+    public List<Throwable> errors() {
+        return List.copyOf(errors);
+    }
 
-  public boolean isCompleted() {
-    return completed;
-  }
+    public boolean isCompleted() {
+        return completed;
+    }
 }

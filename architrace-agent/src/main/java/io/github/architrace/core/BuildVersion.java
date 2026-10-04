@@ -7,17 +7,17 @@ package io.github.architrace.core;
 
 public final class BuildVersion {
 
-  public static final String DEVELOPMENT = "dev";
-  private static final String PRODUCT = "Architrace";
+    public static final String DEVELOPMENT = "dev";
+    private static final String PRODUCT = "Architrace";
 
-  private BuildVersion() {}
+    private BuildVersion() {}
 
-  public static String current() {
-    String version = BuildVersion.class.getPackage().getImplementationVersion();
-    return version == null ? DEVELOPMENT : version;
-  }
+    public static String current() {
+        String version = BuildVersion.class.getPackage().getImplementationVersion();
+        return version == null ? DEVELOPMENT : version;
+    }
 
-  public static String describe() {
-    return PRODUCT + " " + current();
-  }
+    public static String describe() {
+        return PRODUCT + " " + current();
+    }
 }

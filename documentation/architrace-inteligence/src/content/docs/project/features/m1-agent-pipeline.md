@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: in progress (PR 4 of 5 in review, ARCHI-41) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: in progress (PR 5 of 5 in review, ARCHI-42) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 
@@ -326,6 +326,35 @@ What landed and the decisions behind it:
   250 edges, 10 MB heap.
 - Dependencies: `micrometer-core` and `micrometer-registry-prometheus` 1.17.1, the version
   Spring Boot manages for the control plane.
+
+### PR 5: formatter, acceptance run, closing (ARCHI-42)
+
+What landed and the decisions behind it:
+
+- **Formatter on.** `java.format.enabled=false` leaves `architrace-agent/gradle.properties`;
+  palantir-java-format now runs on the whole module like everywhere else. The files written
+  during M1 were already in that format, so the reflow touches only the survivors of the old
+  code base (`MainApp`, the CLI, `BuildVersion`, the OTLP receiver and server,
+  `GrpcAddressParser` and their tests). The SonarCloud new-code gate sees those lines as
+  changed; they are covered by the existing tests.
+- **Acceptance run.** `./gradlew :architrace-agent:loadTest -Pload.seconds=600` on the
+  development machine: 6 000 000 spans in 600 s at 10 000 spans/s, 0 rejected, 0 pending at the end, 600 snapshots, 30 000 edges, 20 MB heap after a GC (`-Xmx512m`), no growth across the run.
+- **Exceptions closed.** The agent module has no coverage ratchet and no formatter switch any
+  more; `AGENTS.md` no longer lists them. Every defect of the inventory (A1–A12) is addressed:
+  A1 and A2 by the publisher and the supervisor, A3 by the span timing and the edge metrics,
+  A4 by the attribute mapping, A5 and A6 by the removals, A7 by configuration v2, A8 by
+  `dry-run`, A9 by the rewritten tests, A10 by Spotless, A11 by the pending index with TTL,
+  A12 by the counted queue rejection.
+
+## Acceptance criteria review
+
+- Standard OTel instrumentation yields service, database, topic and external nodes with sync,
+  publish and consume edges and metrics: covered by `EdgeBuilderTest`, `SpanNormaliserTest`
+  and the end-to-end `AgentRuntimeServiceTest`; the demo stack check is part of M7.
+- 10 000 spans/s sustained: the `loadTest` task, see PR 5.
+- A control plane restart loses at most `queue-size` snapshots, all counted:
+  `ControlPlaneSupervisorTest`, `SnapshotQueueTest`.
+- Coverage ≥ 85 %, no reflection, no dead classes: the module runs on the project defaults.
 
 ## Risks and open points
 
