@@ -144,8 +144,20 @@ thousand nodes stay well under 100 ms. The timer `architrace.topology.query` rec
 3. Current graph and scope queries, retention job, metrics, architecture page update
    (ARCHI-29, delivered).
 
+## Acceptance criteria review
+
+- Two agents of one scope produce one merged current graph: the current-graph query tests
+  (nodes united by id, edges by source, target and kind) and the ingestion tests.
+- A restart keeps the history and the agent reconnects: snapshots are rows in PostgreSQL, the
+  agent side is covered by `ControlPlaneSupervisorTest` (M1); a demo-stack restart check is
+  part of M7.
+- Retention removes old snapshots only: the retention job test with an injected clock.
+- Coverage ≥ 85 % and PostgreSQL integration tests in CI: the module runs on the project
+  defaults with Testcontainers on the `build` job.
+
 ## Risks and open points
 
-- Spring gRPC 1.0 and Spring Boot 4 compatibility matrix must be checked in PR 1.
+- Spring gRPC 1.0 and Spring Boot 4 compatibility: checked in PR 1 and settled by the
+  dependency update ARCHI-35 (Spring Boot 4.1.1 with the Boot gRPC starter).
 - Very chatty agents (short intervals, many agents) are mitigated by batching inserts; the
   schema already avoids per-node rows for metrics history.

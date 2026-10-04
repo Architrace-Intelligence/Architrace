@@ -33,15 +33,16 @@ Last updated: **2026-10-04**
 - **M4 PR 3 (ARCHI-44, #56) is merged**: the Service map of a scope with React Flow 12 and the
   ELK layered layout, decided on the 300-node fixture (layout 0.5 s, initial bundle 156 kB
   gzipped, ELK as a lazy 436 kB chunk).
-- **M4 PR 4 (ARCHI-45) in review against `main`**: lenses, the context rail with the scope,
-  node and dependency panels, find-in-map, time selector (`graph?at=`), selection and time in
-  the URL, keyboard selection, copy link, the SonarCloud findings of the map and the agent. Its
-  first pull request (#57) was stacked on the PR 3 branch and got merged into that branch
-  instead of `main`; the same commits are re-opened from a branch off `main`. Lesson recorded:
-  **no stacked pull requests**, one pull request against `main` at a time.
-- **M4 PR 5 (ARCHI-46)** is ready locally (scope switcher in the breadcrumb, namespace filter,
-  M1 and M2 pages brought up to date) and opens against `main` once PR 4 is merged; M4 is
-  complete with it. Details on the [M4](../features/m4-service-map/) page.
+- **M4 PR 4 (ARCHI-45, #58) is merged**: lenses, the context rail with the scope, node and dependency
+  panels, find-in-map, time selector (`graph?at=`), selection and time in the URL, keyboard
+  selection, copy link, the SonarCloud findings of the map and the agent. Its first pull
+  request (#57) was stacked on the PR 3 branch and got merged into that branch instead of
+  `main`; #58 carries the same commits from a branch off `main`. Lesson recorded: **no stacked
+  pull requests**, one pull request against `main` at a time.
+- **M4 PR 5 (ARCHI-46) in review against `main`**: the scope switcher in the breadcrumb (project,
+  environment and cluster from `GET /scopes`, the view state travels along), the namespace
+  filter (`ns=`), the M1 and M2 pages brought up to date. M4 is complete with it. Details on the
+  [M4](../features/m4-service-map/) page.
 - The maintainer asked on 2026-10-04 to leave the ruleset aside and implement M1 and M4 first;
   testing follows.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
@@ -104,8 +105,8 @@ timeline mode only).
 
 ## Next step
 
-Merge the PR 4 of ARCHI-45, then the PR 5 of ARCHI-46 (opened right after); M4 is complete with
-them. Then continue, one PR each with the next free ticket number:
+Merge the PR 5 of ARCHI-46; M4 is complete with it. Then continue, one PR each with the next
+free ticket number:
 
 1. M5 Drift: `TopologyDiff` on the control plane (environment and timeline modes), the Query
    API endpoint, the Drift screen (grouped list, map overlays) as designed.

@@ -3,7 +3,7 @@ title: M4. Service map UI
 description: An interactive per-environment map of services, data stores, topics and external dependencies.
 ---
 
-Status: in progress (PR 3 in review as #56, PR 4 stacked on it as ARCHI-45) · Order: 5 · Requirements: F8
+Status: in progress (PR 3 in review as #56, PR 4 as #57 and PR 5 as ARCHI-46 stacked on it) · Order: 5 · Requirements: F8
 
 ## Goal
 
@@ -57,22 +57,24 @@ including the first load of the ELK chunk; the map pans and zooms freely afterwa
 
 ### Views
 
-| View | Content |
-|------|---------|
-| Environment switcher | environments from the API, remembered in the URL |
-| Service map | nodes styled by type (service, database, topic, external), edges styled by kind (sync solid, publish and consume dashed), edge width by calls, colour by error rate; minimap; fit to view |
-| Filters | domain multi-select, node type toggles, text search with highlight, "hide externals" |
-| Node panel | identity, versions seen, clusters and namespaces, inbound and outbound dependencies with metrics |
-| Edge panel | calls, errors, error rate, p50 / p95 / p99 / max latency for the window |
-| Time selector | "live" (latest) or a timestamp; the map re-queries `graph?at=` |
+| View | Content | Delivered |
+|------|---------|-----------|
+| Scope switcher | project, environment and cluster from `GET /scopes` in the breadcrumb; the scope is the path | PR 5 |
+| Service map | nodes styled by type (service, database, topic, external), edges styled by kind (sync solid, publish and consume dashed), edge width by calls, colour by error rate; minimap; fit to view | PR 3 |
+| Filters | namespace select (the "domain" of the first design), node type toggles (External included, so "hide externals" is a chip), find-in-map with highlight, the Data streams lens | PR 3–5 |
+| Node panel | identity, versions seen, clusters and namespaces, labels, inbound and outbound dependencies with metrics, streams | PR 4 |
+| Edge panel | calls, errors, error rate, p50 / p95 / p99 / max latency for the window | PR 4 |
+| Time selector | "live" (latest) or a timestamp; the map re-queries `graph?at=` | PR 4 |
 
-URL carries environment, filters and time so a view can be shared.
+URL carries the scope (path), filters, namespace, lens, find text, time and selection so a view
+can be shared.
 
 ### Quality
 
 - Component tests for filters and panels; a rendering test with a fixture graph.
 - Lighthouse budget: initial bundle under 500 kB gzipped.
-- Accessibility: keyboard navigation between nodes, visible focus, sufficient contrast.
+- Accessibility: keyboard navigation between nodes, visible focus, sufficient contrast (the
+  contrast comes from the design tokens and was not measured separately; post-MVP).
 
 ## Acceptance criteria
 
@@ -93,8 +95,10 @@ the Projects list and the Service map of a scope.
    shell (navigation rail, top bar).
 3. ARCHI-44 (#56): Service map on `GET …/graph` with React Flow and ELK, node-type chips,
    legend, minimap, fit to view.
-4. ARCHI-45 (stacked on #56): lenses, context rail with the scope, node and dependency panels,
-   find-in-map, time selector, selection and time in the URL, keyboard selection, copy link.
+4. ARCHI-45 (#57, stacked on #56): lenses, context rail with the scope, node and dependency
+   panels, find-in-map, time selector, selection and time in the URL, keyboard selection, copy
+   link.
+5. ARCHI-46 (stacked on #57): scope switcher in the breadcrumb, namespace filter; closes M4.
 
 Ticket numbers are assigned when a branch is created (next free `ARCHI-<n>`); the remaining M0
 pull requests and M1 come first (maintainer, 2026-10-02).
@@ -281,6 +285,31 @@ What landed and the decisions behind it:
   `Shell.test.tsx` the copy link; `ScopePage.test.tsx` selection from the URL and by click,
   keyboard selection, the lens, find and the point in time through the real router, React Flow
   and the typed client with a stubbed `fetch`.
+
+### PR 5: Scope switcher and namespace filter (ARCHI-46)
+
+What landed and the decisions behind it:
+
+- **Scope switcher.** The breadcrumb of the map asks `GET /scopes` (the same query the Projects
+  list uses, so it is cached between the two screens) and turns each segment into a popover of
+  the values that exist: projects, then the environments of the current project, then the
+  clusters of the current project and environment. Choosing a value navigates to the scope
+  that shares the most with the current one (`switchScope`: same environment and cluster,
+  else same environment, else same cluster, else the first) and keeps the query string, so the
+  lens, the hidden types, the find text, the time and even the selection survive the switch:
+  node ids carry no environment (ADR 0007), so a selected service stays selected in the other
+  environment when it exists there. A segment without alternatives renders as plain text, and
+  a scope the control plane does not list keeps a static breadcrumb.
+- **Namespace filter.** A select above the map lists the namespaces of the graph (from the
+  deployments of its nodes) and `ns=<namespace>` in the URL narrows the map to the services
+  deployed there plus everything they touch, so cross-namespace calls, data stores, topics and
+  external hosts stay visible. Nodes without deployments are never hidden by the filter on their
+  own; it is the services that anchor the neighbourhood.
+- **Tests.** `switcher.test.ts` covers the options and every preference of `switchScope` on
+  the demo scopes; the page tests switch environment and project from the breadcrumb and
+  assert the request for the new scope and the preserved lens, keep the breadcrumb static for an
+  unlisted scope, and narrow the map by namespace from the URL and back through the select.
+  The `fetch` stub now routes by path (`respondByPath`) because the screen makes two requests.
 
 ## Risks and open points
 
