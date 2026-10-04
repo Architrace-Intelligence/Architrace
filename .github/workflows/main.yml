@@ -1,0 +1,382 @@
+name: Main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up the build
+        uses: ./.github/actions/setup-build
+        with:
+          dependency-graph: generate-and-submit
+
+      - name: Build and run the quality gates
+        run: ./gradlew build --continue
+
+      - name: Upload the reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reports
+          path: |
+            **/build/reports/**
+            **/build/test-results/**
+            architrace-ui/build/coverage/lcov.info
+            !.gradle/**
+            !**/node_modules/**
+
+      - name: Upload the jars
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: jars
+          if-no-files-found: error
+          path: |
+            architrace-agent/build/libs/*-all.jar
+            architrace-control-plane/build/libs/*.jar
+
+  quality:
+    name: quality
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up the build
+        uses: ./.github/actions/setup-build
+
+      - name: Download the reports
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: reports
+
+      - name: Analyse with SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew compileJava compileTestJava sonar
+
+      - name: Wait for the SonarCloud quality gate
+        uses: SonarSource/sonarqube-quality-gate-action@7a5fffe8e523c40e0c740b6bc2712ab503e52efa # v1.2.1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          scanMetadataReportFile: build/sonar/report-task.txt
+
+  security:
+    name: security
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up the build
+        uses: ./.github/actions/setup-build
+
+      - name: Set up the Snyk CLI
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/setup@b075801f26076be9bb50521154cafab73f44da0c # 2026-09-29
+
+      - name: Test the dependencies with Snyk
+        if: env.SNYK_TOKEN != ''
+        env:
+          SNYK_ORG: ${{ vars.SNYK_ORG }}
+        run: snyk test --all-projects --exclude=otel-test-app,build-logic --severity-threshold=high --org="$SNYK_ORG"
+
+      - name: Record the dependency snapshot in Snyk
+        if: ${{ !cancelled() && env.SNYK_TOKEN != '' }}
+        env:
+          SNYK_ORG: ${{ vars.SNYK_ORG }}
+        run: snyk monitor --all-projects --exclude=otel-test-app,build-logic --org="$SNYK_ORG"
+
+      - name: Report the skipped Snyk test
+        if: env.SNYK_TOKEN == ''
+        run: echo "::notice::Snyk test skipped because SNYK_TOKEN is not available to this run."
+
+      - name: Compute the NVD cache key
+        id: nvd
+        if: ${{ !cancelled() && env.NVD_API_KEY != '' }}
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the NVD data
+        if: ${{ !cancelled() && env.NVD_API_KEY != '' }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: dependency-check-data-${{ steps.nvd.outputs.week }}
+          restore-keys: dependency-check-data-
+
+      - name: Check the dependencies against the NVD
+        if: ${{ !cancelled() && env.NVD_API_KEY != '' }}
+        run: ./gradlew dependencyCheckAggregate --no-parallel
+
+      - name: Report the skipped Dependency-Check
+        if: ${{ !cancelled() && env.NVD_API_KEY == '' }}
+        run: echo "::warning::OWASP Dependency-Check skipped because NVD_API_KEY is not available to this run."
+
+      - name: Upload the Dependency-Check results to code scanning
+        if: ${{ !cancelled() && hashFiles('build/reports/dependency-check/dependency-check-report.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: build/reports/dependency-check/dependency-check-report.sarif
+          category: dependency-check
+
+      - name: Install gitleaks
+        if: ${{ !cancelled() }}
+        working-directory: ${{ runner.temp }}
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl --proto '=https' --tlsv1.2 -sSfL -o "$archive" "$base/$archive"
+          curl --proto '=https' --tlsv1.2 -sSfL -o checksums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " $archive\$" checksums.txt | sha256sum --check --strict
+          mkdir -p gitleaks-bin
+          tar -xzf "$archive" -C gitleaks-bin gitleaks
+
+      - name: Scan the pushed commits for secrets
+        if: ${{ !cancelled() }}
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BEFORE_SHA" 2>/dev/null; then
+            range="$BEFORE_SHA..$HEAD_SHA"
+          else
+            range=""
+          fi
+          "$RUNNER_TEMP/gitleaks-bin/gitleaks" git --redact --no-banner --exit-code 1 --log-opts="$range" .
+
+  release:
+    name: release
+    needs: [build, quality, security]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      released: ${{ steps.decide.outputs.released }}
+      version: ${{ steps.decide.outputs.version }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up the build
+        uses: ./.github/actions/setup-build
+
+      - name: Decide whether this commit releases
+        id: decide
+        run: |
+          latest="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          version="$(./gradlew -q printReleaseVersion | tail -n 1)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ -z "$latest" ]; then
+            echo "::notice::No release tag exists yet; create v0.1.0 on main to enable automatic releases."
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          elif [ "v$version" = "$latest" ]; then
+            echo "::notice::Nothing releasable since $latest."
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Releasing v$version (previous: $latest)."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write the release notes
+        if: steps.decide.outputs.released == 'true'
+        run: ./gradlew -q releaseNotes
+
+      - name: Tag the release
+        if: steps.decide.outputs.released == 'true'
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Build the release jars
+        if: steps.decide.outputs.released == 'true'
+        run: ./gradlew assemble
+
+      - name: Publish the GitHub release
+        if: steps.decide.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: >
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file build/release-notes.md
+          architrace-agent/build/libs/architrace-agent-"$VERSION"-all.jar
+          architrace-control-plane/build/libs/architrace-control-plane-"$VERSION".jar
+
+      - name: Upload the release jars
+        if: steps.decide.outputs.released == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-jars
+          if-no-files-found: error
+          path: |
+            architrace-agent/build/libs/*-all.jar
+            architrace-control-plane/build/libs/*.jar
+
+  images:
+    name: images (${{ matrix.module }})
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [architrace-agent, architrace-control-plane]
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.module }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download the jars
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.release.outputs.released == 'true' && 'release-jars' || 'jars' }}
+
+      - name: Name the image
+        id: image
+        run: echo "name=${IMAGE,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Compute the image tags
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=${{ needs.release.outputs.version }},enable=${{ needs.release.outputs.released == 'true' }}
+            type=raw,value=latest,enable=${{ needs.release.outputs.released == 'true' }}
+
+      - name: Build the image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.module }}
+          load: true
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: VERSION=${{ needs.release.outputs.version }}
+
+      - name: Scan the image for code scanning
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          format: sarif
+          output: trivy-${{ matrix.module }}.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload the Trivy results to code scanning
+        if: ${{ !cancelled() && hashFiles(format('trivy-{0}.sarif', matrix.module)) != '' }}
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: trivy-${{ matrix.module }}.sarif
+          category: trivy-${{ matrix.module }}
+
+      - name: Gate the image on critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          skip-setup-trivy: true
+
+      - name: Push the image
+        run: docker image push --all-tags "${{ steps.image.outputs.name }}"
+
+  docs:
+    name: docs
+    needs: [build, quality, security]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: documentation/architrace-inteligence
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: documentation/architrace-inteligence/package-lock.json
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+        with:
+          enablement: true
+          token: ${{ secrets.PAGES_DEPLOY_TOKEN || github.token }}
+
+      - name: Install the dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build the site
+        run: npm run build
+
+      - name: Upload the Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: documentation/architrace-inteligence/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
