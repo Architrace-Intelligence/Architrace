@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | in progress | M2, M3 and M4 PR 1 done; M0 PR 1–5 merged (maintainer checklist open); M1 PR 1 merged, PR 2 (ARCHI-39) in review |
+| 3 | Implementation (feature by feature)     | in progress | M2, M3 and M4 PR 1 done; M0 PR 1–5 merged (maintainer checklist open); M1 PR 1 merged, PR 2 (ARCHI-39) and PR 3 (ARCHI-40) in review |
 | 4 | Testing, hardening, release 1.0         | todo        |                                                        |
 
 ## Process foundation
@@ -44,7 +44,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | Feature | State | Design | PR | Notes |
 |---------|-------|--------|----|-------|
 | [M0 Engineering platform](../features/m0-engineering-platform/) | done | agreed | ARCHI-24, ARCHI-33, ARCHI-34, ARCHI-36, ARCHI-37 | PR 1 (hygiene, #26), PR 2 (`build-logic`, versioning, #42), PR 3 (PR pipeline, scanners, #44), PR 4 (main pipeline, release, images, #48), PR 5 (ruleset, settings, CodeRabbit, site pages, #49) merged; the maintainer applies the ruleset and settings, installs CodeRabbit and seeds `v0.1.0` |
-| [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | in progress | agreed | ARCHI-38, ARCHI-39 | PR 1 (span model, mapping, normaliser, configuration v2, #50) merged; PR 2 (graph model, edge builder, pending index, window) in review |
+| [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | in progress | agreed | ARCHI-38, ARCHI-39, ARCHI-40 | PR 1 (span model, mapping, normaliser, configuration v2, #50) merged; PR 2 (graph model, edge builder, pending index, window, #51) and PR 3 (publisher, reconnecting session, contract cleanup) in review |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
 | [M4 Service map UI](../features/m4-service-map/) | in progress | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32 | PR 1 of 4 merged (#39): `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate |
@@ -88,3 +88,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-04 | M1 PR 1: `SpanRecord` with sealed peers, attribute mapping over current and legacy conventions, normaliser, configuration v2 with `dry-run` and `--prop`, agent tests without reflection (ARCHI-38) |
 | 2026-10-04 | M1 PR 1 merged (#50) |
 | 2026-10-04 | M1 PR 2: sealed `GraphNode` with ADR 0007 ids, edge builder with pending index and TTL, logarithmic latency histogram, `GraphWindow` and immutable `GraphSnapshot`, bounded span queue and single-owner worker; legacy resolvers removed (ARCHI-39) |
+| 2026-10-04 | M1 PR 3: snapshot → protobuf mapping, bounded snapshot queue, control plane session with registration, publishing, acks and heartbeats, supervisor that reconnects, `graph_batch` removed from the contract, server code removed from the agent, end-to-end runtime test (ARCHI-40) |

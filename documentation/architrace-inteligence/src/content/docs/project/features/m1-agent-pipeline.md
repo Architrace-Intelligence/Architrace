@@ -3,7 +3,7 @@ title: M1. Agent pipeline completion
 description: Standard OpenTelemetry in, complete metric-bearing graph snapshots out.
 ---
 
-Status: in progress (PR 2 of 5 in review, ARCHI-39) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
+Status: in progress (PR 3 of 5 in review, ARCHI-40) · Order: 2 · Requirements: F1–F5, N1, N2, N6; defects A1–A12
 
 ## Goal
 
@@ -252,6 +252,51 @@ What landed and the decisions behind it:
   clock, histogram percentiles, window accumulation and immutability, the worker's freeze
   hand-off and sweep with a mutable clock, queue rejection. The ratchet moves to branch 0.84
   (line and method sit at the 0.85 default).
+
+### PR 3: snapshot publisher, reconnecting session, contract cleanup (ARCHI-40)
+
+What landed and the decisions behind it:
+
+- **Protobuf mapping** (`publish.SnapshotProtoMapper`): one static function from the
+  immutable `GraphSnapshot` to the `GraphSnapshot` message; node types and edge kinds are
+  exhaustive switches over the sealed types, versions and deployments are emitted sorted so
+  two snapshots of the same window compare equal byte for byte.
+- **Snapshot queue** (`publish.SnapshotQueue`): a bounded deque (`snapshot.queue-size`,
+  default 64). `offer` drops the oldest entry when full and counts it; `requeue` puts a
+  snapshot whose send failed back at the front and, if the queue is full meanwhile, drops that
+  snapshot as the oldest one. The queue lives in the runtime, not in a session, so it survives
+  reconnects (acceptance: a control plane restart loses at most `queue-size` windows, all
+  counted).
+- **Session** (`controlplane.ControlPlaneSession`): one gRPC stream per session. It registers,
+  then runs three subtasks in a structured scope: the publisher drains the queue and sends
+  snapshots, the heartbeat task sends `Heartbeat` at the interval the control plane announces
+  in its `ConfigUpdate` (default 30 s), and a third task waits for the stream to end. A stream
+  completion ends the session normally, a stream error or a failed send fails it; either way
+  the scope cancels the other tasks and the channel is closed. Inbound commands update the
+  heartbeat interval and count acknowledged and rejected snapshots (`PublisherStats`).
+- **Supervisor** (`controlplane.ControlPlaneSupervisor`): runs sessions one after another,
+  sleeps `control-plane.retry-seconds` between them and never gives up until the agent is
+  interrupted. The previous runtime stopped supervising after the first failed session, which
+  is why an agent started before its control plane never recovered (A2 in full).
+- **Runtime**: the snapshot loop freezes the window every interval and offers the result to the
+  queue; the supervisor, the worker and the receiver are the four tasks of the runtime scope.
+  `TransportClient` shrank to `open` and `close`; the channel is built per session by
+  `ControlPlaneClientFactory`.
+- **Contract**: `graph_batch`, `GraphBatch`, `GraphNode` and `GraphEdge` are removed from
+  `architrace-agent.proto`; field number 2 and the name are reserved. The control plane no
+  longer has a branch for the deprecated payload. No released agent ever sent a batch, so
+  nothing breaks ([ADR 0008](../../adr/0008-contract-first-apis/) allows this before the first
+  release).
+- **Removed from the agent**: the old `session`, `inbound` and `outbound` packages, the Guice
+  wiring of control message handlers (the injector now runs without a module), the lifecycle,
+  registration and bootstrap services, and the server-side `ControlPlaneServiceImpl` and
+  `ControlPlaneRegistry` (A6).
+- **Tests**: a `StubControlPlane` over in-process gRPC records what the agent sends and answers
+  with config updates, acks or rejections, completes or fails the stream on demand. The session
+  test covers registration, publishing, acknowledgement, heartbeats, rejection counting, stream
+  failure and requeue; the supervisor test covers reconnects after failures and after a server
+  completion; the runtime test is the end-to-end check of the M1 plan: OTLP traces exported to
+  the real receiver come out as an acknowledged `GraphSnapshot` with the expected edge.
 
 ## Risks and open points
 
