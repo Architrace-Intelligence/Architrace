@@ -29,6 +29,14 @@ public final class GraphWindow {
         return start;
     }
 
+    public int nodeCount() {
+        return nodes.size();
+    }
+
+    public int edgeCount() {
+        return edges.size();
+    }
+
     public void recordService(SpanRecord span) {
         NodeState state =
                 state(new ServiceNode(span.service().domain(), span.service().name()));

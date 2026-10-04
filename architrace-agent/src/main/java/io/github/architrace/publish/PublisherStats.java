@@ -5,6 +5,7 @@
 
 package io.github.architrace.publish;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
 public final class PublisherStats {
@@ -13,6 +14,7 @@ public final class PublisherStats {
     private final LongAdder acknowledged = new LongAdder();
     private final LongAdder rejected = new LongAdder();
     private final LongAdder sessions = new LongAdder();
+    private final AtomicBoolean connected = new AtomicBoolean();
 
     public void published() {
         published.increment();
@@ -44,5 +46,13 @@ public final class PublisherStats {
 
     public long endedSessions() {
         return sessions.sum();
+    }
+
+    public void connected(boolean value) {
+        connected.set(value);
+    }
+
+    public boolean isConnected() {
+        return connected.get();
     }
 }

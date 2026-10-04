@@ -16,6 +16,8 @@ dependencies {
     implementation(libs.guice)
     implementation(libs.jackson.databind)
     implementation(libs.jackson.dataformat.yaml)
+    implementation(libs.micrometer.core)
+    implementation(libs.micrometer.registry.prometheus)
     implementation(libs.grpc.netty.shaded)
     implementation(libs.grpc.protobuf)
     implementation(libs.grpc.services)
@@ -67,6 +69,25 @@ protobuf {
             }
         }
     }
+}
+
+tasks.test {
+    useJUnitPlatform {
+        excludeTags("load")
+    }
+}
+
+tasks.register<Test>("loadTest") {
+    description = "Runs the load tests of the agent pipeline (-Pload.seconds=<n>, default 10)"
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform {
+        includeTags("load")
+    }
+    systemProperty("load.seconds", project.findProperty("load.seconds") ?: "10")
+    jvmArgs("--enable-preview", "-Xmx512m")
+    outputs.upToDateWhen { false }
 }
 
 tasks.named("build") {

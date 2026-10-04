@@ -59,11 +59,14 @@ public final class ControlPlaneSession {
             StreamObserver<AgentRegisterRequestedEvent> requests =
                     transport.open(new SessionInbound(closed, heartbeatInterval, stats));
             requests.onNext(registration());
+            stats.connected(true);
             log.info("Control plane session opened for agent '{}'", identity.name());
             scope.fork(() -> publish(requests, closed));
             scope.fork(() -> heartbeat(requests, closed));
             scope.fork(() -> awaitClosed(closed));
             scope.join();
+        } finally {
+            stats.connected(false);
         }
     }
 
