@@ -3,18 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ControlPlaneStatus } from "./ControlPlaneStatus";
+import { Route, Routes } from "react-router";
+import { ProjectsPage } from "../projects/ProjectsPage";
+import { ScopePage } from "../scope/ScopePage";
 
 export function App() {
   return (
-    <div className="shell">
-      <header className="topbar">
-        <span className="wordmark">Architrace</span>
-        <h1 className="title">Projects</h1>
-      </header>
-      <main className="content">
-        <ControlPlaneStatus />
-      </main>
-    </div>
+    <Routes>
+      <Route path="/" element={<ProjectsPage />} />
+      <Route path="/scopes/:project/:environment/:cluster" element={<ScopePage />} />
+      <Route path="*" element={<ProjectsPage />} />
+    </Routes>
   );
 }

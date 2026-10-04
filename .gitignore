@@ -46,3 +46,5 @@ design/ui-prototype/project/
 
 # Kotlin compiler session data
 .kotlin/
+
+node_modules/
