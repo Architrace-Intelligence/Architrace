@@ -3,7 +3,7 @@ title: M5. Drift
 description: What differs between two environments, or between two points in time of one environment.
 ---
 
-Status: in progress (PR 1 delivered as ARCHI-48, PR 2 open) · Order: 6 · Requirements: F9
+Status: in progress (PR 1 delivered as ARCHI-48, PR 2 as ARCHI-49) · Order: 6 · Requirements: F9
 
 ## Goal
 
@@ -82,11 +82,17 @@ The right side is the scope in the path, so both endpoints sit next to the graph
 
 ### UI
 
-- Drift page: pick mode (environments or timeline), pick sides, see summary counters and
-  grouped lists (services, data stores, topics, externals; added, removed, changed).
-- "Show on map" opens the service map with overlays: added green, removed red (ghost nodes
-  from the left side), changed amber; the legend explains colours.
-- Deep links carry both sides so a drift view can be shared in a review.
+- Drift page at `/scopes/{project}/{environment}/{cluster}/drift`: the scope in the path is
+  the right side. Mode (environments or timeline), left side (`left`, `leftCluster`), time
+  (`at`, or `from` and `to`), view (`list` or `map`) and selection (`node`) live in the URL;
+  a missing left side or `from` is filled with a default (another environment of the project,
+  one day ago) by a replace navigation, so a copied link always carries both sides.
+- Five counters, then a grouped list (services, data stores, data streams, external,
+  dependencies; added, removed, changed) with "Show on map", or the map view: the right
+  side's graph plus the removed nodes and edges as ghosts, overlays from the diff (added
+  green, removed red dashed, changed amber with both versions on the card), a drift legend.
+- The context rail states the comparison, describes the selected node and turns the diff into
+  deterministic sentences. User guide: [Comparing environments and releases](../../../guides/drift/).
 
 ## Acceptance criteria
 
@@ -110,10 +116,20 @@ The right side is the scope in the path, so both endpoints sit next to the graph
    difference on ids and edge keys; exhaustive `switch` on the mode without `default`; the
    right side as the REST resource and the left side as parameters, so drift lives under the
    scope it describes.
-2. **PR 2 (ARCHI-49): Drift screen.** Route `/scopes/{project}/{environment}/{cluster}/drift`
-   with the mode, the left side, the time bounds, the view (list or map) and the selection in
-   the URL; segmented controls for mode and view; five counters; grouped list with
-   "Show on map"; map view reusing the service map with drift overlays (added, removed as
-   ghost, changed) and a drift legend; context rail with the comparison, the selected
-   difference and deterministic summary sentences; "Drift" in the navigation rail; user guide
-   page.
+2. **PR 2 (ARCHI-49): Drift screen.** `drift/model.ts` holds the URL state (`parseDriftState`,
+   `toDriftParams`), the defaults (`defaultLeft` prefers another environment, `defaultFrom` is
+   one day ago), the side labels, the counters, the grouped rows, the map overlay, the union
+   graph with ghosts and the summary sentences, all as pure functions over the `TopologyDiff`
+   of the API and the right side's `TopologyGraph`. `DriftPage` composes the shell, the
+   pickers (`ScopeSwitcher` for the right side, a select for the left, swap, the time
+   selectors), `DriftList`, the map and `DriftPanel`. The service map gained an optional
+   overlay (`ChangeKind` per node and edge, a subtitle per changed node) and a legend variant,
+   the node card a flag glyph, the time selector a prefix, a live label and a no-live mode.
+   Tests: `model.test.ts` (round trip, defaults, labels, groups, overlay, union, sentences,
+   selection) and `DriftPage.test.tsx` (default left side and request, left switch and swap
+   through the URL, map view with ghosts, flags, legend and selection, timeline mode with
+   the time selectors, single-scope project, aligned sides, failing control plane and graph).
+   Patterns: the URL as the only client state with declarative `Navigate` for defaults;
+   derived server state through `queryOptions` factories and `enabled` flags; the diff
+   rendered by the same map through an overlay instead of a second map component; pure
+   functions for every sentence the rail says, so an agent can later cite them.

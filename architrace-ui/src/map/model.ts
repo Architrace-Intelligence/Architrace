@@ -109,6 +109,23 @@ export interface Looks {
   readonly edges: ReadonlyMap<string, EdgeLook>;
 }
 
+export type ChangeKind = "added" | "removed" | "changed";
+
+export const GLYPHS: Record<ChangeKind, string> = { added: "+", removed: "−", changed: "Δ" };
+
+export type EdgeChangeKind = Exclude<ChangeKind, "changed">;
+
+export interface DriftOverlay {
+  readonly nodes: ReadonlyMap<string, ChangeKind>;
+  readonly edges: ReadonlyMap<string, EdgeChangeKind>;
+  readonly subtitles: ReadonlyMap<string, string>;
+}
+
+export interface SideLabels {
+  readonly left: string;
+  readonly right: string;
+}
+
 export function parseMapState(params: URLSearchParams): MapState {
   const requested = params.getAll("hide");
   const node = params.get("node");

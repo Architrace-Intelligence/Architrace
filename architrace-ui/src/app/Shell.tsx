@@ -11,14 +11,14 @@ interface ShellProps {
   readonly title: string;
   readonly tools?: ReactNode;
   readonly apiRequest: string;
-  readonly mapPath?: string;
+  readonly scopePath?: string;
   readonly aside?: ReactNode;
   readonly children: ReactNode;
 }
 
 const COPIED_MILLIS = 1_500;
 
-export function Shell({ title, tools, apiRequest, mapPath, aside, children }: ShellProps) {
+export function Shell({ title, tools, apiRequest, scopePath, aside, children }: ShellProps) {
   const [theme, toggleTheme] = useTheme();
   return (
     <div className="app">
@@ -29,19 +29,8 @@ export function Shell({ title, tools, apiRequest, mapPath, aside, children }: Sh
         <NavLink className="rail-item" to="/" end>
           Projects
         </NavLink>
-        {mapPath === undefined ? (
-          <span
-            className="rail-item rail-item-disabled"
-            aria-disabled="true"
-            title="Open a scope first"
-          >
-            Map
-          </span>
-        ) : (
-          <NavLink className="rail-item" to={mapPath}>
-            Map
-          </NavLink>
-        )}
+        <ScopeLink label="Map" to={scopePath} />
+        <ScopeLink label="Drift" to={scopePath === undefined ? undefined : `${scopePath}/drift`} />
         <span className="rail-spacer" />
         <button
           type="button"
@@ -71,6 +60,30 @@ export function Shell({ title, tools, apiRequest, mapPath, aside, children }: Sh
         )}
       </div>
     </div>
+  );
+}
+
+interface ScopeLinkProps {
+  readonly label: string;
+  readonly to: string | undefined;
+}
+
+function ScopeLink({ label, to }: ScopeLinkProps) {
+  if (to === undefined) {
+    return (
+      <span
+        className="rail-item rail-item-disabled"
+        aria-disabled="true"
+        title="Open a scope first"
+      >
+        {label}
+      </span>
+    );
+  }
+  return (
+    <NavLink className="rail-item" to={to} end>
+      {label}
+    </NavLink>
   );
 }
 

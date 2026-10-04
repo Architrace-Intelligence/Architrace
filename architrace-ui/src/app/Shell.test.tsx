@@ -60,7 +60,7 @@ describe("Shell", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
 
-  it("disables the map entry until a scope is open", () => {
+  it("disables the map and drift entries until a scope is open", () => {
     const { unmount } = renderAt(
       "/",
       <Shell title="Projects" apiRequest="/api/v1/scopes">
@@ -68,6 +68,7 @@ describe("Shell", () => {
       </Shell>,
     );
     expect(screen.getByText("Map")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Drift")).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByRole("link", { name: "Projects" })).toHaveAttribute("aria-current", "page");
     unmount();
 
@@ -76,12 +77,17 @@ describe("Shell", () => {
       <Shell
         title="Service map"
         apiRequest="/api/v1/scopes"
-        mapPath="/scopes/webshop/PROD/k8s-prod-eu1"
+        scopePath="/scopes/webshop/PROD/k8s-prod-eu1"
       >
         content
       </Shell>,
     );
     expect(screen.getByRole("link", { name: "Map" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Drift" })).toHaveAttribute(
+      "href",
+      "/scopes/webshop/PROD/k8s-prod-eu1/drift",
+    );
+    expect(screen.getByRole("link", { name: "Drift" })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("link", { name: "Projects" })).not.toHaveAttribute("aria-current");
   });
 

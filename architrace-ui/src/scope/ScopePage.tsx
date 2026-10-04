@@ -78,7 +78,7 @@ export function ScopePage() {
     ) : undefined;
 
   return (
-    <Shell title="Service map" tools={tools} apiRequest={request} mapPath={path} aside={aside}>
+    <Shell title="Service map" tools={tools} apiRequest={request} scopePath={path} aside={aside}>
       {graph.isPending && <output className="status">Loading the graph…</output>}
       {graph.isError && (
         <p className="status status-error" role="alert">

@@ -1078,3 +1078,233 @@ button.node {
   font-size: 13px;
   font-weight: 500;
 }
+
+.glyph {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13px;
+  flex: none;
+}
+
+.glyph-sm {
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+}
+
+.b-added {
+  background: color-mix(in srgb, var(--added) 18%, transparent);
+  color: var(--added);
+}
+
+.b-removed {
+  background: color-mix(in srgb, var(--removed) 18%, transparent);
+  color: var(--removed);
+}
+
+.b-changed {
+  background: color-mix(in srgb, var(--changed) 18%, transparent);
+  color: var(--changed);
+}
+
+.semantics {
+  margin-left: 4px;
+}
+
+.right-side {
+  height: 30px;
+  font-size: 13px;
+}
+
+.counters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 170px;
+}
+
+.counter-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.counter-text b {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.counter-text span {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+details.group > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+details.group > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.group > summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid var(--ink-3);
+  transition: transform 0.15s;
+}
+
+details.group[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.group:not([open]) > summary {
+  border-bottom: 0;
+}
+
+.diff-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+
+.diff-row:first-of-type {
+  border-top: 0;
+}
+
+.diff-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.diff-text b {
+  font-weight: 600;
+}
+
+.diff-text span {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.sides {
+  align-items: center;
+}
+
+.sides .badge {
+  white-space: normal;
+  height: auto;
+  min-height: 20px;
+  padding: 2px 7px;
+}
+
+.panel-selected {
+  border-bottom: 1px solid var(--line);
+  gap: 8px;
+}
+
+.sentence {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sentence .panel-row {
+  align-items: flex-start;
+}
+
+.sentence b {
+  font-weight: 600;
+}
+
+.note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+button.node {
+  position: relative;
+}
+
+.node-flag {
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.react-flow__node.drift-added .node {
+  border-color: var(--added);
+}
+
+.react-flow__node.drift-changed .node {
+  border-color: var(--changed);
+}
+
+.react-flow__node.drift-removed .node {
+  border-style: dashed;
+  border-color: var(--removed);
+  opacity: 0.75;
+}
+
+.react-flow__edge.drift-added .react-flow__edge-path {
+  stroke: var(--added);
+}
+
+.react-flow__edge.drift-removed .react-flow__edge-path {
+  stroke: var(--removed);
+  stroke-dasharray: 6 5;
+}
+
+.arrow-added {
+  fill: var(--added);
+}
+
+.arrow-removed {
+  fill: var(--removed);
+}
+
+.line-added {
+  border-top-color: var(--added);
+}
+
+.line-removed {
+  border-top-color: var(--removed);
+  border-top-style: dashed;
+}
