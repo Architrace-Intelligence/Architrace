@@ -48,6 +48,7 @@ export type Selection =
 
 export interface MapState {
   readonly hidden: readonly NodeType[];
+  readonly namespace: string | undefined;
   readonly lens: Lens;
   readonly query: string;
   readonly at: string | undefined;
@@ -56,6 +57,7 @@ export interface MapState {
 
 export const INITIAL_MAP_STATE: MapState = {
   hidden: [],
+  namespace: undefined,
   lens: "all",
   query: "",
   at: undefined,
@@ -111,8 +113,10 @@ export function parseMapState(params: URLSearchParams): MapState {
   const requested = params.getAll("hide");
   const node = params.get("node");
   const edge = params.get("edge");
+  const namespace = params.get("ns");
   return {
     hidden: NODE_TYPES.filter((type) => requested.includes(type)),
+    namespace: namespace === null || namespace === "" ? undefined : namespace,
     lens: params.get("lens") === "streams" ? "streams" : "all",
     query: params.get("q") ?? "",
     at: parseAt(params.get("at")),
@@ -136,6 +140,9 @@ export function toMapParams(state: MapState): URLSearchParams {
   state.hidden.forEach((type) => {
     params.append("hide", type);
   });
+  if (state.namespace !== undefined) {
+    params.set("ns", state.namespace);
+  }
   if (state.lens !== "all") {
     params.set("lens", state.lens);
   }
@@ -168,10 +175,34 @@ export function countByType(nodes: readonly TopologyNode[]): Record<NodeType, nu
 }
 
 export function visibleGraph(graph: TopologyGraph, state: MapState): VisibleGraph {
-  const nodes = graph.nodes.filter((node) => !state.hidden.includes(node.type));
+  const shown = graph.nodes.filter((node) => !state.hidden.includes(node.type));
+  const nodes =
+    state.namespace === undefined ? shown : neighbourhood(graph, shown, state.namespace);
   const ids = new Set(nodes.map((node) => node.id));
   const edges = graph.edges.filter((edge) => ids.has(edge.sourceId) && ids.has(edge.targetId));
   return { nodes, edges };
+}
+
+function neighbourhood(
+  graph: TopologyGraph,
+  shown: readonly TopologyNode[],
+  namespace: string,
+): TopologyNode[] {
+  const inside = new Set(
+    shown.filter((node) => namespacesOf(node).includes(namespace)).map((node) => node.id),
+  );
+  const adjacent = new Set(
+    graph.edges
+      .filter((edge) => inside.has(edge.sourceId) || inside.has(edge.targetId))
+      .flatMap((edge) => [edge.sourceId, edge.targetId]),
+  );
+  return shown.filter((node) => inside.has(node.id) || adjacent.has(node.id));
+}
+
+export function graphNamespaces(graph: TopologyGraph): string[] {
+  return [...new Set(graph.nodes.flatMap(namespacesOf))].sort((left, right) =>
+    left.localeCompare(right),
+  );
 }
 
 export function errorRate(metrics: EdgeMetrics): number {

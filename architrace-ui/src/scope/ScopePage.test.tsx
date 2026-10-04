@@ -7,7 +7,14 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../app/App";
-import { demoGraph, emptyGraph, problem, requestOf, respondWithJson } from "../test/http";
+import {
+  demoGraph,
+  demoScopes,
+  emptyGraph,
+  problem,
+  respondByPath,
+  respondWithJson,
+} from "../test/http";
 import { renderAt } from "../test/render";
 
 const SCOPE = "/scopes/web%20shop/PROD/k8s-prod-eu1";
@@ -32,9 +39,15 @@ function count(selector: string): number {
   return document.querySelectorAll(selector).length;
 }
 
+function requestPaths(fetch: ReturnType<typeof respondByPath>): string[] {
+  return fetch.mock.calls.flatMap(([input]) =>
+    input instanceof Request ? [new URL(input.url).pathname + new URL(input.url).search] : [],
+  );
+}
+
 describe("ScopePage", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", respondWithJson(demoGraph));
+    vi.stubGlobal("fetch", respondByPath({ "/graph": demoGraph, "/scopes": demoScopes }));
   });
 
   afterEach(() => {
@@ -42,7 +55,7 @@ describe("ScopePage", () => {
   });
 
   it("draws the graph of the scope with node cards, type chips, a count line and a legend", async () => {
-    const fetch = respondWithJson(demoGraph);
+    const fetch = respondByPath({ "/graph": demoGraph, "/scopes": demoScopes });
     vi.stubGlobal("fetch", fetch);
     renderAt(SCOPE, <App />);
 
@@ -57,12 +70,12 @@ describe("ScopePage", () => {
     expect(screen.getByRole("link", { name: "Map" })).toHaveAttribute("aria-current", "page");
 
     expect(await screen.findByText("orders-service")).toBeInTheDocument();
-    expect(new URL(requestOf(fetch).url).pathname).toBe(
-      "/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/graph",
-    );
+    expect(requestPaths(fetch)).toContain("/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/graph");
     expect(screen.getByText("v2.8.1")).toBeInTheDocument();
     expect(screen.getByText("v4.1.2, v4.1.3")).toBeInTheDocument();
-    expect(screen.getByText("notify")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: "Service map canvas" })).getByText("notify"),
+    ).toBeInTheDocument();
     expect(screen.getByText("db:postgresql/orders")).toBeInTheDocument();
     expect(screen.getByTitle("external:api.stripe.com")).toHaveTextContent("api.stripe.com");
     expect(chips().getByRole("button", { name: "Services 5" })).toHaveAttribute(
@@ -128,7 +141,7 @@ describe("ScopePage", () => {
   });
 
   it("explains a scope without snapshots", async () => {
-    vi.stubGlobal("fetch", respondWithJson(emptyGraph));
+    vi.stubGlobal("fetch", respondByPath({ "/graph": emptyGraph, "/scopes": demoScopes }));
     renderAt(SCOPE, <App />);
 
     expect(
@@ -202,7 +215,7 @@ describe("ScopePage", () => {
 
   it("switches the lens, finds nodes and asks for a point in time", async () => {
     const user = userEvent.setup();
-    const fetch = respondWithJson(demoGraph);
+    const fetch = respondByPath({ "/graph": demoGraph, "/scopes": demoScopes });
     vi.stubGlobal("fetch", fetch);
     renderAt(SCOPE, <App />);
     await screen.findByText("orders-service");
@@ -234,15 +247,75 @@ describe("ScopePage", () => {
       await screen.findByRole("button", { name: "At 2026-10-01 12:00:00 UTC" }),
     ).toBeInTheDocument();
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(requestPaths(fetch)).toContain(
+        "/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/graph?at=2026-10-01T12%3A00%3A00.000Z",
+      );
     });
-    const request = fetch.mock.calls[1]?.[0];
-    expect(request instanceof Request ? new URL(request.url).search : "").toBe(
-      "?at=2026-10-01T12%3A00%3A00.000Z",
-    );
     expect(screen.getByRole("link", { name: "Open as JSON" })).toHaveAttribute(
       "href",
       "/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/graph?at=2026-10-01T12%3A00%3A00.000Z",
     );
+  });
+
+  it("switches the scope from the breadcrumb and keeps the view state", async () => {
+    const user = userEvent.setup();
+    const fetch = respondByPath({ "/graph": demoGraph, "/scopes": demoScopes });
+    vi.stubGlobal("fetch", fetch);
+    renderAt("/scopes/webshop/PROD/k8s-prod-eu1?lens=streams", <App />);
+    await screen.findByText("orders-service");
+    const crumbs = within(screen.getByRole("navigation", { name: "Scope" }));
+
+    await user.click(await crumbs.findByRole("button", { name: "Environment PROD" }));
+    const options = within(screen.getByRole("group", { name: "Switch environment" }));
+    expect(options.getByRole("button", { name: "PROD" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(options.getByRole("button", { name: "DEV" }));
+
+    expect(await crumbs.findByRole("button", { name: "Environment DEV" })).toBeInTheDocument();
+    expect(crumbs.getByRole("button", { name: "Cluster k8s-dev-ci" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(requestPaths(fetch)).toContain("/api/v1/scopes/webshop/DEV/k8s-dev-ci/graph");
+    });
+    expect(
+      within(screen.getByRole("group", { name: "Lens" })).getByRole("button", {
+        name: "Data streams",
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(crumbs.getByRole("button", { name: "Project webshop" }));
+    await user.click(
+      within(screen.getByRole("group", { name: "Switch project" })).getByRole("button", {
+        name: "billing",
+      }),
+    );
+    await waitFor(() => {
+      expect(requestPaths(fetch)).toContain("/api/v1/scopes/billing/PROD/k8s-prod-eu1/graph");
+    });
+  });
+
+  it("keeps the breadcrumb static for a scope the control plane does not list", async () => {
+    renderAt(SCOPE, <App />);
+    await screen.findByText("orders-service");
+    const crumbs = within(screen.getByRole("navigation", { name: "Scope" }));
+
+    expect(crumbs.getByRole("button", { name: "Project web shop" })).toBeInTheDocument();
+    expect(crumbs.queryByRole("button", { name: /^Environment/ })).not.toBeInTheDocument();
+    expect(crumbs.getByText("k8s-prod-eu1")).toBeInTheDocument();
+  });
+
+  it("narrows the map to a namespace and its neighbourhood", async () => {
+    const user = userEvent.setup();
+    renderAt(`${SCOPE}?ns=payments`, <App />);
+
+    expect(await screen.findByText("payments-service")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Namespace" })).toHaveValue("payments");
+    expect(screen.queryByText("orders-service")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "2 services · 1 data store · 1 data stream · 1 external host · 4 dependencies (3 sync, 1 stream)",
+      ),
+    ).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Namespace" }), "");
+    expect(await screen.findByText("orders-service")).toBeInTheDocument();
   });
 });

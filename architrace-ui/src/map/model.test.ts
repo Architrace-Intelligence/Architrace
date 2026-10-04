@@ -15,6 +15,7 @@ import {
   edgeId,
   edgeWidth,
   errorRate,
+  graphNamespaces,
   INITIAL_MAP_STATE,
   looks,
   matchesQuery,
@@ -53,6 +54,7 @@ describe("map state", () => {
 
     expect(state).toEqual({
       hidden: ["SERVICE", "TOPIC"],
+      namespace: undefined,
       lens: "streams",
       query: "ord",
       at: "2026-10-01T12:00:00Z",
@@ -65,10 +67,13 @@ describe("map state", () => {
     expect(toMapParams(INITIAL_MAP_STATE).toString()).toBe("");
   });
 
-  it("ignores an invalid time, an unknown lens and an empty selection", () => {
-    expect(parseMapState(new URLSearchParams("at=yesterday&lens=sideways&node=&edge="))).toEqual(
-      INITIAL_MAP_STATE,
-    );
+  it("ignores an invalid time, an unknown lens, an empty namespace and an empty selection", () => {
+    expect(
+      parseMapState(new URLSearchParams("at=yesterday&lens=sideways&ns=&node=&edge=")),
+    ).toEqual(INITIAL_MAP_STATE);
+    const namespaced = parseMapState(new URLSearchParams("ns=orders"));
+    expect(namespaced.namespace).toBe("orders");
+    expect(toMapParams(namespaced).toString()).toBe("ns=orders");
   });
 
   it("prefers the node over the edge and keeps an edge selection", () => {
@@ -110,6 +115,29 @@ describe("visibleGraph", () => {
     expect(visible.nodes.map((candidate) => candidate.type)).not.toContain("DATABASE");
     expect(visible.edges).toHaveLength(5);
     expect(visible.edges.every((edge) => edge.kind === "SYNC")).toBe(true);
+  });
+
+  it("keeps the services of a namespace and everything they touch", () => {
+    const visible = visibleGraph(demoGraph, { ...INITIAL_MAP_STATE, namespace: "orders" });
+
+    expect(visible.nodes.map((candidate) => candidate.name).sort()).toEqual([
+      "api-gateway",
+      "inventory-service",
+      "order-events",
+      "orders-service",
+      "postgresql/orders",
+    ]);
+    expect(visible.edges).toHaveLength(5);
+    expect(graphNamespaces(demoGraph)).toEqual([
+      "edge",
+      "inventory",
+      "notify",
+      "orders",
+      "payments",
+    ]);
+    expect(visibleGraph(demoGraph, { ...INITIAL_MAP_STATE, namespace: "nowhere" }).nodes).toEqual(
+      [],
+    );
   });
 
   it("describes the visible graph and the matches of a query in one line", () => {
