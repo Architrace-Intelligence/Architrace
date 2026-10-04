@@ -20,7 +20,6 @@ import io.github.architrace.grpc.proto.AgentHealthResponse;
 import io.github.architrace.grpc.proto.AgentRegister;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
-import io.github.architrace.grpc.proto.GraphBatch;
 import io.github.architrace.grpc.proto.GraphSnapshot;
 import io.github.architrace.grpc.proto.Heartbeat;
 import io.grpc.Status;
@@ -113,14 +112,10 @@ class AgentStreamServiceTest {
         StreamObserver<AgentRegisterRequestedEvent> requests = service.connect(responses);
         requests.onNext(register("prod-eu1-a"));
 
-        requests.onNext(AgentRegisterRequestedEvent.newBuilder()
-                .setGraphBatch(GraphBatch.getDefaultInstance())
-                .build());
         requests.onNext(AgentRegisterRequestedEvent.getDefaultInstance());
 
-        assertThat(responses.values).hasSize(3);
-        assertThat(responses.values.get(1).getSnapshotRejected().getReason()).contains("deprecated");
-        assertThat(responses.values.get(2).getSnapshotRejected().getReason()).contains("empty");
+        assertThat(responses.values).hasSize(2);
+        assertThat(responses.values.get(1).getSnapshotRejected().getReason()).contains("empty");
     }
 
     @Test

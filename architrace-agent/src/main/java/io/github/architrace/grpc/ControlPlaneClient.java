@@ -5,33 +5,25 @@
 
 package io.github.architrace.grpc;
 
-import com.google.inject.Inject;
-import io.github.architrace.graph.GraphSnapshot;
 import io.github.architrace.grpc.proto.AgentRegisterRequestedEvent;
 import io.github.architrace.grpc.proto.ControlPlaneCommand;
 import io.github.architrace.grpc.proto.ControlPlaneServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class ControlPlaneClient implements TransportClient {
+public final class ControlPlaneClient implements TransportClient {
 
     private final ManagedChannel channel;
-    private final ControlPlaneServiceGrpc.ControlPlaneServiceStub stub;
 
-    private StreamObserver<AgentRegisterRequestedEvent> outboundObserver;
-
-    @Inject
     public ControlPlaneClient(ManagedChannel channel) {
-        this.channel = channel;
-        this.stub = ControlPlaneServiceGrpc.newStub(channel);
+        this.channel = Objects.requireNonNull(channel, "channel");
     }
 
     @Override
-    public StreamObserver<AgentRegisterRequestedEvent> open(StreamObserver<ControlPlaneCommand> inboundObserver) {
-        this.outboundObserver = stub.connect(inboundObserver);
-
-        return outboundObserver;
+    public StreamObserver<AgentRegisterRequestedEvent> open(StreamObserver<ControlPlaneCommand> inbound) {
+        return ControlPlaneServiceGrpc.newStub(channel).connect(inbound);
     }
 
     @Override
@@ -42,17 +34,5 @@ public class ControlPlaneClient implements TransportClient {
         } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
-    }
-
-    @Override
-    public void send(GraphSnapshot snapshot) {
-        if (outboundObserver == null) {
-            return;
-        }
-
-        AgentRegisterRequestedEvent event =
-                AgentRegisterRequestedEvent.newBuilder().build();
-
-        outboundObserver.onNext(event);
     }
 }
