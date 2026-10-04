@@ -36,10 +36,14 @@ export async function listScopes(signal?: AbortSignal): Promise<ScopeSummary[]> 
   return unwrap(data, error, response);
 }
 
-export async function getGraph(scope: Scope, signal?: AbortSignal): Promise<TopologyGraph> {
+export async function getGraph(
+  scope: Scope,
+  at: string | undefined,
+  signal?: AbortSignal,
+): Promise<TopologyGraph> {
   const { data, error, response } = await client.GET(
     "/scopes/{project}/{environment}/{cluster}/graph",
-    { params: { path: scope }, signal },
+    { params: { path: scope, query: at === undefined ? undefined : { at } }, signal },
   );
   return unwrap(data, error, response);
 }

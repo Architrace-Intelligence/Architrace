@@ -4,17 +4,18 @@
  */
 
 import type { NodeType } from "../api/client";
-import { type MapFilter, NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES } from "./model";
+import { type MapState, NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES } from "./model";
 
 interface NodeTypeChipsProps {
   readonly counts: Record<NodeType, number>;
-  readonly filter: MapFilter;
+  readonly filter: MapState;
   readonly onToggle: (type: NodeType) => void;
 }
 
 export function NodeTypeChips({ counts, filter, onToggle }: NodeTypeChipsProps) {
   return (
-    <div className="chips" role="group" aria-label="Node types">
+    <fieldset className="chips">
+      <legend className="sr-only">Node types</legend>
       {NODE_TYPES.map((type) => {
         const shown = !filter.hidden.includes(type);
         return (
@@ -33,6 +34,6 @@ export function NodeTypeChips({ counts, filter, onToggle }: NodeTypeChipsProps) 
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

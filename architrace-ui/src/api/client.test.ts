@@ -75,18 +75,27 @@ describe("getGraph", () => {
     vi.stubGlobal("fetch", fetch);
 
     await expect(
-      getGraph({ project: "web shop", environment: "PROD", cluster: "k8s/prod" }),
+      getGraph({ project: "web shop", environment: "PROD", cluster: "k8s/prod" }, undefined),
     ).resolves.toEqual(demoGraph);
 
-    expect(new URL(requestOf(fetch).url).pathname).toBe(
-      "/api/v1/scopes/web%20shop/PROD/k8s%2Fprod/graph",
-    );
+    const url = new URL(requestOf(fetch).url);
+    expect(url.pathname).toBe("/api/v1/scopes/web%20shop/PROD/k8s%2Fprod/graph");
+    expect(url.search).toBe("");
+  });
+
+  it("asks for the graph at a point in time", async () => {
+    const fetch = respondWithJson(demoGraph);
+    vi.stubGlobal("fetch", fetch);
+
+    await getGraph(demoGraph.scope, "2026-10-01T12:00:00Z");
+
+    expect(new URL(requestOf(fetch).url).search).toBe("?at=2026-10-01T12%3A00%3A00Z");
   });
 
   it("turns a problem response into a ProblemError", async () => {
     vi.stubGlobal("fetch", respondWithJson(problem, 404, "application/problem+json"));
 
-    const error = await getGraph(demoGraph.scope).catch((cause: unknown) => cause);
+    const error = await getGraph(demoGraph.scope, undefined).catch((cause: unknown) => cause);
 
     expect(error).toBeInstanceOf(ProblemError);
     expect((error as ProblemError).problem).toEqual(problem);
