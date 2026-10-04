@@ -29,11 +29,12 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class AgentRuntimeService {
 
     private final ControlPlaneBootstrapService bootstrapService;
-    private volatile ControlPlaneLifecycle activeLifecycle;
+    private final AtomicReference<ControlPlaneLifecycle> activeLifecycle = new AtomicReference<>();
 
     @Inject
     public AgentRuntimeService(ControlPlaneBootstrapService bootstrapService) {
@@ -87,13 +88,13 @@ public final class AgentRuntimeService {
         ControlPlaneLifecycle lifecycle = null;
         try {
             lifecycle = bootstrapService.bootstrap(config);
-            activeLifecycle = lifecycle;
+            activeLifecycle.set(lifecycle);
             lifecycle.run();
         } catch (RuntimeException _) {
             Thread.currentThread().interrupt();
             return false;
         } finally {
-            activeLifecycle = null;
+            activeLifecycle.set(null);
             if (lifecycle != null) {
                 lifecycle.close();
             }
@@ -115,7 +116,7 @@ public final class AgentRuntimeService {
         while (!Thread.currentThread().isInterrupted()) {
             Thread.sleep(interval);
             GraphSnapshot snapshot = aggregator.snapshotAndReset();
-            ControlPlaneLifecycle lifecycle = activeLifecycle;
+            ControlPlaneLifecycle lifecycle = activeLifecycle.get();
             if (lifecycle != null) {
                 lifecycle.getTransportClient().send(snapshot);
             }

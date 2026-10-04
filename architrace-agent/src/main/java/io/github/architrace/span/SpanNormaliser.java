@@ -41,7 +41,7 @@ public final class SpanNormaliser {
         return service(resource).stream()
                 .flatMap(service -> resourceSpans.getScopeSpansList().stream()
                         .flatMap(scopeSpans -> scopeSpans.getSpansList().stream())
-                        .map(span -> record(span, service, deployment)));
+                        .map(span -> toRecord(span, service, deployment)));
     }
 
     private Optional<ServiceIdentity> service(Attributes resource) {
@@ -60,7 +60,7 @@ public final class SpanNormaliser {
                 resolve(resource, MappedField.INSTANCE));
     }
 
-    private SpanRecord record(Span span, ServiceIdentity service, Deployment deployment) {
+    private SpanRecord toRecord(Span span, ServiceIdentity service, Deployment deployment) {
         Attributes attributes = Attributes.of(span.getAttributesList());
         return new SpanRecord(
                 hex(span.getTraceId()),

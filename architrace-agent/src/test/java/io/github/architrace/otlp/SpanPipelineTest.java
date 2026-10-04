@@ -6,6 +6,7 @@
 package io.github.architrace.otlp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import io.github.architrace.model.EdgeKey;
 import io.github.architrace.service.graph.AsyncDependencyResolver;
@@ -21,6 +22,7 @@ import io.github.architrace.span.Peer;
 import io.github.architrace.span.SpanKind;
 import io.github.architrace.span.SpanRecord;
 import io.github.architrace.testsupport.TestSpans;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -92,7 +94,7 @@ class SpanPipelineTest {
                 TestSpans.child(SpanKind.SERVER, TRACE, "s1", "c1", "orders")));
         Thread worker = Thread.ofVirtual().start(batchProcessor::run);
 
-        Thread.sleep(100);
+        await().atMost(Duration.ofSeconds(2)).until(() -> !snapshots.snapshot().edges().isEmpty());
         worker.interrupt();
         worker.join(2_000);
 

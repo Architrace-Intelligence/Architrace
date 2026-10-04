@@ -114,8 +114,9 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   and structure carry the meaning. The only allowed header is the SPDX license header enforced
   by Spotless; the copyright holder is `Dmytro Hryshchenko`.
 - Prefer small, single-purpose classes; constructor injection; no static mutable state.
-- Tests: JUnit 6, AssertJ, Mockito. Test behaviour through public API; never use reflection
-  to reach private members. Keep coverage above the configured JaCoCo thresholds.
+- Tests: JUnit 6, AssertJ, Mockito, Awaitility for asynchronous conditions (never
+  `Thread.sleep`). Test behaviour through public API; never use reflection to reach private
+  members. Keep coverage above the configured JaCoCo thresholds.
 - All quality gates must pass locally before a PR is opened. `check` runs Spotless, Checkstyle,
   the tests with the JaCoCo coverage gate, the UI gate and the build-logic tests:
 

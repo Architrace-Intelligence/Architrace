@@ -29,6 +29,7 @@ dependencies {
 
     runtimeOnly(libs.logback.classic)
 
+    testImplementation(libs.awaitility)
     testImplementation(libs.logback.classic)
 }
 

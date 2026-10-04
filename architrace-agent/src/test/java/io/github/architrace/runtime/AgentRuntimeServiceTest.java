@@ -6,6 +6,7 @@
 package io.github.architrace.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import io.github.architrace.controlplane.AgentIdentity;
 import io.github.architrace.controlplane.ControlPlaneBootstrapService;
@@ -47,8 +48,8 @@ class AgentRuntimeServiceTest {
             }
         });
 
-        awaitListening(otlpPort);
-        awaitTrue(lifecycleClosed);
+        await().atMost(STARTUP_TIMEOUT).until(() -> isListening(otlpPort));
+        await().atMost(STARTUP_TIMEOUT).untilTrue(lifecycleClosed);
         agent.interrupt();
         agent.join(STARTUP_TIMEOUT.toMillis());
 
@@ -68,26 +69,6 @@ class AgentRuntimeServiceTest {
                         List.of());
             }
         };
-    }
-
-    private static void awaitListening(int port) throws InterruptedException {
-        long deadline = System.nanoTime() + STARTUP_TIMEOUT.toNanos();
-        while (!isListening(port)) {
-            if (System.nanoTime() > deadline) {
-                throw new AssertionError("OTLP receiver did not start on port " + port);
-            }
-            Thread.sleep(20);
-        }
-    }
-
-    private static void awaitTrue(AtomicBoolean flag) throws InterruptedException {
-        long deadline = System.nanoTime() + STARTUP_TIMEOUT.toNanos();
-        while (!flag.get()) {
-            if (System.nanoTime() > deadline) {
-                throw new AssertionError("Condition not met in time");
-            }
-            Thread.sleep(20);
-        }
     }
 
     private static boolean isListening(int port) {
@@ -118,6 +99,8 @@ class AgentRuntimeServiceTest {
         }
 
         @Override
-        public void send(GraphSnapshot snapshot) {}
+        public void send(GraphSnapshot snapshot) {
+            throw new UnsupportedOperationException("no session was ever opened");
+        }
     }
 }

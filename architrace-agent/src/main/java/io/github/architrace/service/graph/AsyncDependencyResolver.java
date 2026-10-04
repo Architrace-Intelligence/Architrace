@@ -7,6 +7,7 @@ package io.github.architrace.service.graph;
 
 import io.github.architrace.model.AsyncKey;
 import io.github.architrace.span.Peer;
+import io.github.architrace.span.SpanKind;
 import io.github.architrace.span.SpanRecord;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,12 +22,10 @@ public class AsyncDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void route(SpanRecord span, AsyncKey key) {
-        switch (span.kind()) {
-            case PRODUCER -> waitingProducers.put(key, span);
-            case CONSUMER ->
-                Optional.ofNullable(waitingProducers.remove(key))
-                        .ifPresent(producer -> buildDependency(producer, span));
-            case CLIENT, SERVER, INTERNAL -> {}
+        if (span.kind() == SpanKind.PRODUCER) {
+            waitingProducers.put(key, span);
+        } else if (span.kind() == SpanKind.CONSUMER) {
+            Optional.ofNullable(waitingProducers.remove(key)).ifPresent(producer -> buildDependency(producer, span));
         }
     }
 

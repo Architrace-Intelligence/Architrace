@@ -40,19 +40,19 @@ class SpanNormaliserTest {
 
         List<SpanRecord> records = sut.normalise(request(standardResource("checkout"), server));
 
-        assertThat(records).singleElement().satisfies(record -> {
-            assertThat(record.traceId()).isEqualTo(TRACE_ID);
-            assertThat(record.spanId()).isEqualTo(SERVER_SPAN_ID);
-            assertThat(record.parentSpanId()).contains(CLIENT_SPAN_ID);
-            assertThat(record.kind()).isEqualTo(SpanKind.SERVER);
-            assertThat(record.startEpochNanos()).isEqualTo(5_000_000_000L);
-            assertThat(record.endEpochNanos()).isEqualTo(5_120_000_000L);
-            assertThat(record.latencyMillis()).isEqualTo(120L);
-            assertThat(record.error()).isTrue();
-            assertThat(record.service()).isEqualTo(new ServiceIdentity("PROD", "shop", "checkout", "1.4.2"));
-            assertThat(record.deployment())
+        assertThat(records).singleElement().satisfies(normalised -> {
+            assertThat(normalised.traceId()).isEqualTo(TRACE_ID);
+            assertThat(normalised.spanId()).isEqualTo(SERVER_SPAN_ID);
+            assertThat(normalised.parentSpanId()).contains(CLIENT_SPAN_ID);
+            assertThat(normalised.kind()).isEqualTo(SpanKind.SERVER);
+            assertThat(normalised.startEpochNanos()).isEqualTo(5_000_000_000L);
+            assertThat(normalised.endEpochNanos()).isEqualTo(5_120_000_000L);
+            assertThat(normalised.latencyMillis()).isEqualTo(120L);
+            assertThat(normalised.error()).isTrue();
+            assertThat(normalised.service()).isEqualTo(new ServiceIdentity("PROD", "shop", "checkout", "1.4.2"));
+            assertThat(normalised.deployment())
                     .isEqualTo(new Deployment("eu-1", Optional.of("checkout"), Optional.of("checkout-7d9f")));
-            assertThat(record.peer()).isEqualTo(new Peer.None());
+            assertThat(normalised.peer()).isEqualTo(new Peer.None());
         });
     }
 
@@ -62,12 +62,14 @@ class SpanNormaliserTest {
                 List.of(text("serviceName", "orders"), text("domainId", "sales"), text("namespace", "team-a")),
                 span(Span.SpanKind.SPAN_KIND_INTERNAL, TRACE_ID, SERVER_SPAN_ID)));
 
-        assertThat(records).singleElement().satisfies(record -> {
-            assertThat(record.service()).isEqualTo(new ServiceIdentity("DEV", "sales", "orders", "unknown"));
-            assertThat(record.deployment()).isEqualTo(new Deployment("local", Optional.of("team-a"), Optional.empty()));
-            assertThat(record.parentSpanId()).isEmpty();
-            assertThat(record.kind()).isEqualTo(SpanKind.INTERNAL);
-            assertThat(record.error()).isFalse();
+        assertThat(records).singleElement().satisfies(normalised -> {
+            assertThat(normalised.service())
+                    .isEqualTo(new ServiceIdentity("DEV", "sales", "orders", "unknown"));
+            assertThat(normalised.deployment())
+                    .isEqualTo(new Deployment("local", Optional.of("team-a"), Optional.empty()));
+            assertThat(normalised.parentSpanId()).isEmpty();
+            assertThat(normalised.kind()).isEqualTo(SpanKind.INTERNAL);
+            assertThat(normalised.error()).isFalse();
         });
     }
 
@@ -77,9 +79,9 @@ class SpanNormaliserTest {
                 List.of(text("service.name", "orders")),
                 span(Span.SpanKind.SPAN_KIND_UNSPECIFIED, TRACE_ID, SERVER_SPAN_ID)));
 
-        assertThat(records).singleElement().satisfies(record -> {
-            assertThat(record.service().domain()).isEqualTo("default");
-            assertThat(record.kind()).isEqualTo(SpanKind.INTERNAL);
+        assertThat(records).singleElement().satisfies(normalised -> {
+            assertThat(normalised.service().domain()).isEqualTo("default");
+            assertThat(normalised.kind()).isEqualTo(SpanKind.INTERNAL);
         });
     }
 
@@ -176,7 +178,7 @@ class SpanNormaliserTest {
 
         assertThat(records)
                 .singleElement()
-                .extracting(record -> record.service().domain())
+                .extracting(normalised -> normalised.service().domain())
                 .isEqualTo("payments");
     }
 

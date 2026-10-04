@@ -25,10 +25,10 @@ public class SyncDependencyResolver extends AbstractDependencyResolver {
         if (!registry.registerIfAbsent(span)) {
             return;
         }
-        switch (span.kind()) {
-            case SERVER -> handleServer(span);
-            case CLIENT -> handleClient(span);
-            case PRODUCER, CONSUMER, INTERNAL -> {}
+        if (span.kind() == SpanKind.SERVER) {
+            handleServer(span);
+        } else if (span.kind() == SpanKind.CLIENT) {
+            handleClient(span);
         }
     }
 

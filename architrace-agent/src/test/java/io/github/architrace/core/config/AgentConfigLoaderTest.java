@@ -205,18 +205,22 @@ class AgentConfigLoaderTest {
     @Test
     void overridesAreValidatedLikeFileValues() throws IOException {
         Path path = write("minimal.yaml", MINIMAL);
+        Map<String, String> zeroPort = Map.of("otlp.port", "0");
+        Map<String, String> emptySegment = Map.of("otlp..port", "1");
+        Map<String, String> brokenValue = Map.of("otlp.port", "[1");
+        Map<String, String> blankName = Map.of("agent.name", "");
 
         assertThatExceptionOfType(AgentConfigException.class)
-                .isThrownBy(() -> sut.load(path, Map.of("otlp.port", "0")))
+                .isThrownBy(() -> sut.load(path, zeroPort))
                 .withMessage("Invalid config field: otlp.port must be between 1 and 65535");
         assertThatExceptionOfType(AgentConfigException.class)
-                .isThrownBy(() -> sut.load(path, Map.of("otlp..port", "1")))
+                .isThrownBy(() -> sut.load(path, emptySegment))
                 .withMessage("Invalid override key: 'otlp..port'");
         assertThatExceptionOfType(AgentConfigException.class)
-                .isThrownBy(() -> sut.load(path, Map.of("otlp.port", "[1")))
+                .isThrownBy(() -> sut.load(path, brokenValue))
                 .withMessageStartingWith("Invalid override value for 'otlp.port': ");
         assertThatExceptionOfType(AgentConfigException.class)
-                .isThrownBy(() -> sut.load(path, Map.of("agent.name", "")))
+                .isThrownBy(() -> sut.load(path, blankName))
                 .withMessage("Missing required config field: agent.name");
     }
 
@@ -227,8 +231,10 @@ class AgentConfigLoaderTest {
         String rendered = sut.render(config);
         AgentConfig reloaded = sut.load(write("rendered.yaml", rendered), Map.of());
 
-        assertThat(rendered).startsWith("project: webshop\n").contains("attribute-mapping:\n");
-        assertThat(rendered).doesNotContain("---");
+        assertThat(rendered)
+                .startsWith("project: webshop\n")
+                .contains("attribute-mapping:\n")
+                .doesNotContain("---");
         assertThat(reloaded).isEqualTo(config);
     }
 
