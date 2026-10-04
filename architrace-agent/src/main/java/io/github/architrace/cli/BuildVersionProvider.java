@@ -10,8 +10,8 @@ import picocli.CommandLine.IVersionProvider;
 
 public class BuildVersionProvider implements IVersionProvider {
 
-  @Override
-  public String[] getVersion() {
-    return new String[] {BuildVersion.describe()};
-  }
+    @Override
+    public String[] getVersion() {
+        return new String[] {BuildVersion.describe()};
+    }
 }

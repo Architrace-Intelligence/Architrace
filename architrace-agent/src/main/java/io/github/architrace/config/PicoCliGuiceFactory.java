@@ -11,15 +11,14 @@ import picocli.CommandLine.IFactory;
 
 public class PicoCliGuiceFactory implements IFactory {
 
-  private final Injector injector;
+    private final Injector injector;
 
-  public PicoCliGuiceFactory(Injector injector) {
-    this.injector = Objects.requireNonNull(injector, "injector");
-  }
+    public PicoCliGuiceFactory(Injector injector) {
+        this.injector = Objects.requireNonNull(injector, "injector");
+    }
 
-  @Override
-  public <K> K create(Class<K> cls) {
-    return injector.getInstance(cls);
-  }
+    @Override
+    public <K> K create(Class<K> cls) {
+        return injector.getInstance(cls);
+    }
 }
-
