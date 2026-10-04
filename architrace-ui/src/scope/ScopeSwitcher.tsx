@@ -21,6 +21,12 @@ const LEVEL_LABELS: Record<ScopeLevel, string> = {
   cluster: "Cluster",
 };
 
+const VALUE_CLASSES: Record<ScopeLevel, string | undefined> = {
+  project: undefined,
+  environment: "badge b-kind",
+  cluster: "mono",
+};
+
 export function ScopeSwitcher({ current, scopes, onSwitch }: ScopeSwitcherProps) {
   return (
     <nav className="breadcrumb" aria-label="Scope">
@@ -57,8 +63,7 @@ function ScopeSwitch({ level, current, options, onPick }: ScopeSwitchProps) {
   const popover = usePopover(container);
   const value = current[level];
   const alternatives = options.filter((option) => option !== value);
-  const valueClass =
-    level === "environment" ? "badge b-kind" : level === "cluster" ? "mono" : undefined;
+  const valueClass = VALUE_CLASSES[level];
   if (alternatives.length === 0) {
     return <span className={valueClass}>{value}</span>;
   }
