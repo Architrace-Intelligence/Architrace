@@ -30,11 +30,16 @@ Last updated: **2026-10-04**
   [M1](../features/m1-agent-pipeline/) page.
 - **M4 PR 2 is merged (#55)**: the Projects list, the shell and `react-router` 8 in declarative
   mode; the merge confirmed the routing choice.
-- **M4 PR 3 (ARCHI-44) in review**: the Service map of a scope with React Flow 12 and the ELK
-  layered layout, decided on the 300-node fixture (layout 0.5 s, initial bundle 156 kB gzipped,
-  ELK as a lazy 436 kB chunk): node cards by type, edges by kind with width by calls and colour
-  by error rate, node-type chips with counts carried in the URL, legend, minimap, fit to view.
-  Details on the [M4](../features/m4-service-map/) page.
+- **M4 PR 3 (ARCHI-44, #56) in review**: the Service map of a scope with React Flow 12 and the
+  ELK layered layout, decided on the 300-node fixture (layout 0.5 s, initial bundle 156 kB
+  gzipped, ELK as a lazy 436 kB chunk): node cards by type, edges by kind with width by calls
+  and colour by error rate, node-type chips with counts carried in the URL, legend, minimap,
+  fit to view.
+- **M4 PR 4 (ARCHI-45) stacked on #56** (the maintainer allowed a stack to finish M4): lenses,
+  the context rail with the scope, node and dependency panels, find-in-map, time selector
+  (`graph?at=`), selection and time in the URL, keyboard selection, copy link. **Merge #56
+  first**; the PR 4 branch is based on `ARCHI-44-service-map` and retargets to `main` once
+  #56 is merged and its branch deleted. Details on the [M4](../features/m4-service-map/) page.
 - The maintainer asked on 2026-10-04 to leave the ruleset aside and implement M1 and M4 first;
   testing follows.
 - The agent session cannot write repository settings or rulesets (its tool permissions stop at
@@ -97,13 +102,14 @@ timeline mode only).
 
 ## Next step
 
-Merge M4 PR 3 (ARCHI-44). Then continue, one PR each with the next free ticket number:
+Merge #56 (M4 PR 3), then the PR 4 of ARCHI-45; M4 is complete with it. Then continue, one PR
+each with the next free ticket number:
 
-1. M4 PR 4: lenses (All, Data streams), node and dependency panels in the context rail derived
-   from the graph edges, find-in-map, time selector (`graph?at=`), URL state for selection and
-   time, keyboard navigation between nodes, polish; then M5, M6, M7.
-2. The agent Dockerfile health check can move to `/health` (M7 owns the image). Take over the
-   Dependabot Gradle bumps of #47 in a maintainer PR on the way.
+1. M5 Drift: `TopologyDiff` on the control plane (environment and timeline modes), the Query
+   API endpoint, the Drift screen (grouped list, map overlays) as designed.
+2. M6 Architecture rules, M7 Packaging and demo (the agent Dockerfile health check moves to
+   `/health`; the demo stack of M7 exercises the map with real data).
+3. Take over the Dependabot Gradle bumps of #47 in a maintainer PR on the way.
 
 ## How to resume
 

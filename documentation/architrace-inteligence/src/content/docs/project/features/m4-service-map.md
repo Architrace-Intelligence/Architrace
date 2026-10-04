@@ -3,7 +3,7 @@ title: M4. Service map UI
 description: An interactive per-environment map of services, data stores, topics and external dependencies.
 ---
 
-Status: in progress (PR 3 of 4 in review, ARCHI-44) · Order: 5 · Requirements: F8
+Status: in progress (PR 3 in review as #56, PR 4 stacked on it as ARCHI-45) · Order: 5 · Requirements: F8
 
 ## Goal
 
@@ -78,7 +78,8 @@ URL carries environment, filters and time so a view can be shared.
 
 - A 300-node, 900-edge fixture renders in under 2 s and stays interactive (measured 1.4 s in
   the production build, see Graph rendering).
-- Filters, search and the time selector change the map without a full reload.
+- Filters, search and the time selector change the map without a full reload (every control
+  writes the URL through the router; the page tests assert it).
 - The UI is served from the control plane jar at `/` with no separate deployment.
 
 ## Delivery plan
@@ -90,9 +91,10 @@ the Projects list and the Service map of a scope.
    UI quality gate.
 2. ARCHI-43 (merged as #55): Projects list on `GET /scopes` with filters and grouping, with the
    shell (navigation rail, top bar).
-3. ARCHI-44: Service map on `GET …/graph` with React Flow and ELK, node-type chips, legend,
-   minimap, fit to view.
-4. Lenses, node and dependency panels, time selector, URL state for selection and time, polish.
+3. ARCHI-44 (#56): Service map on `GET …/graph` with React Flow and ELK, node-type chips,
+   legend, minimap, fit to view.
+4. ARCHI-45 (stacked on #56): lenses, context rail with the scope, node and dependency panels,
+   find-in-map, time selector, selection and time in the URL, keyboard selection, copy link.
 
 Ticket numbers are assigned when a branch is created (next free `ARCHI-<n>`); the remaining M0
 pull requests and M1 come first (maintainer, 2026-10-02).
@@ -222,6 +224,56 @@ What landed and the decisions behind it:
 - **Not in this PR.** Selection and the context rail, the Data streams lens, find-in-map, the
   time selector and URL state for selection and time come with PR 4. The Ask bar slot of the top
   bar holds the breadcrumb on this screen.
+
+### PR 4: Lenses, panels and time (ARCHI-45)
+
+What landed and the decisions behind it:
+
+- **One URL state.** `MapState` (`map/model.ts`) holds everything the screen remembers: the
+  hidden node types (`hide`), the lens (`lens=streams`), the find text (`q`), the point in time
+  (`at`) and the selection (`node=<id>` or `edge=<source>><target>:<kind>`, a discriminated
+  union). `parseMapState` and `toMapParams` are the only two places that know the parameter
+  names; defaults are omitted, an invalid `at` is ignored, and a selection that is not in the
+  visible graph is ignored by the rendering.
+- **Looks as one pure pass.** `looks(visible, state)` derives per-node flags (`selected`,
+  `dimmed`, `match`) and per-edge flags (`touching`, `dimmed`) from the selection, the query
+  and the lens together: a selected node lights itself, its neighbours and the touching edges;
+  a selected edge lights its two ends; a query lights its matches; the Data streams lens
+  recedes synchronous calls and every node without a stream. Components only turn flags into
+  class names, and the metric pills of the design are React Flow edge labels placed on the
+  touching edges.
+- **Context rail.** The shell gains an `aside` slot (360 px, hidden below 1180 px). The
+  scope panel summarises the graph and lists its data streams with producers and consumers;
+  the node panel shows identity, namespaces, versions, clusters, labels, inbound and outbound
+  totals, the streams a service publishes and consumes (or the producers and consumers of a
+  topic) and its synchronous dependencies; the dependency panel shows calls, errors, error
+  rate with the health badge and the latency percentiles. Every row is a button that moves
+  the selection, so the rail is navigable without the canvas: a dependency row opens the edge,
+  an end of an edge opens the node, a stream opens the topic. The panels derive everything
+  from the graph through `nodeDetails`, `edgeDetails` and `streams`; `GET …/services` is still
+  not needed.
+- **Time.** The time selector is a popover with a `datetime-local` field read as UTC; `at`
+  goes into `graphQuery(scope, at)` and therefore into `GET …/graph?at=` and the "Open as
+  JSON" link. Live is the absence of `at`. Layouts stay cached by node and edge ids, so a graph
+  that did not change between two instants does not lay out twice.
+- **Keyboard.** React Flow makes every card focusable; Enter and Space select the focused
+  card through a key handler on the canvas (React Flow calls `onNodeClick` for pointers only),
+  Escape clears the selection, and the rail rows are buttons. The visible focus ring follows
+  the card, not the React Flow wrapper.
+- **Copy link** sits in the top bar of every screen (the URL is the view): the clipboard API,
+  "Copied" for a moment. **Find in map** is the Ask bar slot of this screen; it dims
+  non-matching nodes and the count line reports the matches.
+- **`usePopover`** was extracted from the facet chip for the time selector. It takes the
+  container ref as an argument instead of returning one, because the React Compiler lint rules
+  treat a hook result that carries a ref as a ref and forbid reading it during render.
+- **Not in M4.** Findings and insights in the rail (M6), agent liveness in the scope panel
+  (M7 demo), node dragging, a web worker for ELK.
+- **Tests.** `model.test.ts` covers the URL round trip, the details, the stream summaries and
+  every rule of `looks`; `metrics.test.ts` the formatting; `ContextPanel.test.tsx` the three
+  panels and their buttons; `TimeSelector.test.tsx` apply, prefill, live and Escape;
+  `Shell.test.tsx` the copy link; `ScopePage.test.tsx` selection from the URL and by click,
+  keyboard selection, the lens, find and the point in time through the real router, React Flow
+  and the typed client with a stubbed `fetch`.
 
 ## Risks and open points
 
