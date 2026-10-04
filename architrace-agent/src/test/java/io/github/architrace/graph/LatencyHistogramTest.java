@@ -24,7 +24,7 @@ class LatencyHistogramTest {
     @Test
     void percentilesAreEstimatedFromLogarithmicBucketUpperBounds() {
         LatencyHistogram histogram = new LatencyHistogram();
-        LongStream.rangeClosed(1, 100).forEach(histogram::record);
+        LongStream.rangeClosed(1, 100).forEach(histogram::observe);
 
         assertThat(histogram.total()).isEqualTo(100);
         assertThat(histogram.percentileMillis(0.50)).isEqualTo(64);
@@ -36,7 +36,7 @@ class LatencyHistogramTest {
     @Test
     void singleObservationIsBoundedByTheObservedMaximum() {
         LatencyHistogram histogram = new LatencyHistogram();
-        histogram.record(10);
+        histogram.observe(10);
 
         assertThat(histogram.percentileMillis(0.5)).isEqualTo(10);
         assertThat(histogram.percentileMillis(0.99)).isEqualTo(10);
@@ -45,8 +45,8 @@ class LatencyHistogramTest {
     @Test
     void latenciesBeyondTheLastBucketReportTheMaximum() {
         LatencyHistogram histogram = new LatencyHistogram();
-        histogram.record(1);
-        histogram.record(250_000);
+        histogram.observe(1);
+        histogram.observe(250_000);
 
         assertThat(histogram.percentileMillis(0.5)).isEqualTo(1);
         assertThat(histogram.percentileMillis(0.99)).isEqualTo(250_000);
@@ -55,9 +55,9 @@ class LatencyHistogramTest {
     @Test
     void edgeMetricsSummariseCallsErrorsAndLatencies() {
         EdgeMetrics metrics = new EdgeMetrics();
-        metrics.record(5, false);
-        metrics.record(40, true);
-        metrics.record(900, false);
+        metrics.observe(5, false);
+        metrics.observe(40, true);
+        metrics.observe(900, false);
 
         assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(3, 1, 64, 900, 900, 900));
     }

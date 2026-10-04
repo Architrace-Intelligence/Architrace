@@ -36,11 +36,11 @@ public final class GraphWindow {
         state.deployments().add(Placement.of(span.deployment()));
     }
 
-    public void record(EdgeObservation observation) {
+    public void observe(EdgeObservation observation) {
         state(observation.edge().source());
         state(observation.edge().target());
         edges.computeIfAbsent(observation.edge(), _ -> new EdgeMetrics())
-                .record(observation.latencyMillis(), observation.error());
+                .observe(observation.latencyMillis(), observation.error());
     }
 
     public GraphSnapshot freeze(Instant end) {

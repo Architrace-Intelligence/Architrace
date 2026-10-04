@@ -19,7 +19,7 @@ public final class LatencyHistogram {
     private long total;
     private long maxMillis;
 
-    public void record(long latencyMillis) {
+    public void observe(long latencyMillis) {
         counts[bucketOf(latencyMillis)]++;
         total++;
         maxMillis = Math.max(maxMillis, latencyMillis);

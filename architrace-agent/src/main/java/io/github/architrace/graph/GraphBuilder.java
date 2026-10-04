@@ -32,12 +32,12 @@ public final class GraphBuilder {
             return;
         }
         window.recordService(span);
-        edges.onSpan(span).forEach(window::record);
+        edges.onSpan(span).forEach(window::observe);
     }
 
     public void sweep(Instant now) {
         EdgeBuilder.Expiry expiry = edges.expire(now);
-        expiry.externalEdges().forEach(window::record);
+        expiry.externalEdges().forEach(window::observe);
         droppedSpans += expiry.droppedSpans();
     }
 

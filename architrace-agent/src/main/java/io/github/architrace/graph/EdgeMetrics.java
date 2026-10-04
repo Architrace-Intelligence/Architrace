@@ -10,8 +10,8 @@ public final class EdgeMetrics {
     private final LatencyHistogram histogram = new LatencyHistogram();
     private long errors;
 
-    public void record(long latencyMillis, boolean error) {
-        histogram.record(latencyMillis);
+    public void observe(long latencyMillis, boolean error) {
+        histogram.observe(latencyMillis);
         if (error) {
             errors++;
         }
