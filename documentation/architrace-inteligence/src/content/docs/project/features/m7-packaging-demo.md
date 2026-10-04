@@ -3,7 +3,7 @@ title: M7. Packaging and demo
 description: Container images, a one-command demo with two environments, and guides to run Architrace for real.
 ---
 
-Status: design agreed · Order: 8 (images started in M0, demo stack usable from M2) · Requirements: F12, N8
+Status: in progress (images delivered by M0 PR 4, ARCHI-36; demo stack and guides pending) · Order: 8 · Requirements: F12, N8
 
 ## Goal
 
@@ -21,9 +21,12 @@ Out: Helm chart, Kubernetes manifests, native image (post-MVP).
 
 ### Images
 
-- `architrace-agent/Dockerfile` and `architrace-control-plane/Dockerfile`: multi-stage,
-  Eclipse Temurin 25 JRE, non-root user, container-aware JVM flags, `HEALTHCHECK`, labels with
-  version and source.
+- `architrace-agent/Dockerfile` and `architrace-control-plane/Dockerfile`: single stage over the
+  prebuilt jar, Eclipse Temurin 25 JRE on Alpine pinned by digest, non-root user, container-aware
+  JVM flags, `HEALTHCHECK`, OCI labels with version and source (delivered in M0 PR 4). The
+  control plane reads `ARCHITRACE_DB_URL`, `ARCHITRACE_DB_USERNAME` and `ARCHITRACE_DB_PASSWORD`;
+  the agent expects its YAML at `/config/architrace-agent.yaml` and announces its OTLP port
+  through `ARCHITRACE_OTLP_PORT` for the health check.
 - Published by the main pipeline (M0) to `ghcr.io/architrace-intelligence/architrace-agent`
   and `…/architrace-control-plane`, tags `X.Y.Z`, `latest`, `sha-<short>`; Trivy scan before
   push.
@@ -65,6 +68,6 @@ box.
 
 ## Delivery plan
 
-1. Dockerfiles and image publishing (delivered inside M0 PR 4).
+1. Dockerfiles and image publishing: done (M0 PR 4, ARCHI-36).
 2. Demo stack with two environments, broker and database; traffic generator.
 3. Guides and reference pages; final architecture page update for the MVP.

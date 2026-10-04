@@ -30,7 +30,14 @@ Last updated: **2026-10-04**
   the Snyk PAT `architrace-ci` (Snyk PATs live 90 days at most, this one expires 2026-12-31;
   service accounts are a paid feature), `SNYK_ORG` is the real slug `architrace`, `NVD_API_KEY`
   is an activated NVD key; all of them exist as repository and as Dependabot secrets.
-- **Dependency update (ARCHI-35, in review)**: the first Snyk run with valid credentials found
+- **M0 PR 4 (ARCHI-36, in review)**: `main.yml` replaces `ci-cd.yml` and `docs-deploy.yml`:
+  the three gates of `pr.yml`, then `release` (tag, notes, jars under the tag, GitHub release;
+  skipped with a notice while no `v*` tag exists), `images` (module Dockerfiles over the prebuilt
+  jars, Trivy SARIF plus a gate on fixable critical findings, GHCR tags `sha-<short>` always and
+  `X.Y.Z` + `latest` on release), `docs` deploy to Pages and Gradle dependency-graph submission.
+  Dockerfiles `architrace-agent/Dockerfile` and `architrace-control-plane/Dockerfile` verified
+  locally. Details on the [M0](../features/m0-engineering-platform/) page.
+- **Dependency update (ARCHI-35, merged as #46)**: the first Snyk run with valid credentials found
   22 critical and 110 high findings across the Java modules and the docs site. The PR moves
   Spring Boot 4.0.3 → 4.1.1 and the control plane to the Boot gRPC server starter (Spring gRPC 1.1
   moved its starters and test support into Boot, its BOM now manages only `spring-grpc-core`),
@@ -41,10 +48,11 @@ Last updated: **2026-10-04**
   Starlight 0.42 (sidebar `autogenerate` groups became `items`), and tells Dependabot to ignore
   TypeScript majors for the UI. The root `gradle.lockfile` is gone: the root project has no
   lockable configurations and the old file only carried stale GraalVM entries.
-- Still open for the maintainer: seed `v0.1.0` after PR 4 is merged (the legacy `ci-cd.yml` still
-  releases on `v*` tags), make the GHCR packages public after the first push, rebase or close
-  Dependabot PR #41 after PR 4; Dependabot closes #43, #28 and #40 by itself once `main` carries
-  the versions.
+- Still open for the maintainer, after PR 4 is merged: seed the tag (`git tag -a v0.1.0 -m v0.1.0
+  <merge commit> && git push origin v0.1.0`; from then on every `feat`/`fix` merge releases),
+  make the two GHCR packages public after the first `main` run, close Dependabot #45 (edits the
+  removed `ci-cd.yml`). Dependabot Gradle PRs (#47) fail `build` because Dependabot does not
+  regenerate lockfiles; take their bumps into maintainer PRs.
 - Collection processing uses the Stream API across both modules (maintainer, 2026-10-01;
   rule in `AGENTS.md` §4).
 - Automation token for the GitHub API is issued and verified; git pushes use SSH.
@@ -89,21 +97,16 @@ only).
 
 ## Next step
 
-The dependency update (ARCHI-35) is open for review. Merge it first (one PR at a time), then
-update this page.
+M0 PR 4 (ARCHI-36) is open for review. Merge it first (one PR at a time), watch the first
+`main` run (images, notice about the missing seed tag), seed `v0.1.0`, then update this page.
 
 Then, in order (one PR each, next free ticket number):
 
-1. M0 PR 4: `main.yml` with `build → quality → security → release → images → docs deploy`:
-   release = tag + GitHub release from `releaseNotes` when `printReleaseVersion` differs from
-   the latest tag; images = Dockerfiles that copy prebuilt jars, Trivy, GHCR;
-   `gradle/actions/dependency-submission` so Dependabot alerts cover Gradle dependencies;
-   removal of `ci-cd.yml` and `docs-deploy.yml`; the maintainer seeds `v0.1.0` beforehand.
-2. M0 PR 5: `main` ruleset (ADR 0003) with the required checks `build`, `quality`, `security`,
+1. M0 PR 5: `main` ruleset (ADR 0003) with the required checks `build`, `quality`, `security`,
    `docs`, `title` and the CodeQL analyses; repository settings (squash only, delete branch on
    merge, Dependabot alerts and security updates, secret scanning with push protection);
    `.coderabbit.yaml`; site pages.
-3. M1 agent pipeline (restores 85 % coverage and the formatter in the agent), then M4 PR 2
+2. M1 agent pipeline (restores 85 % coverage and the formatter in the agent), then M4 PR 2
    (Projects list), M4 PR 3–4, M5, M6, M7.
 
 ## How to resume

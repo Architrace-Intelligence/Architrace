@@ -168,7 +168,8 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   the control plane build generates Spring interfaces and `Dto` models into
   `io.github.architrace.control.plane.api` (`openApiGenerate`, never committed). Swagger UI is
   the `swagger-ui` webjar behind `/swagger-ui`; there is no runtime-generated document.
-- Demo stack: `otel-test-app/` (Python Flask services + OTel Collector + docker compose).
+- Demo stack: `otel-test-app/` (Python Flask services + OTel Collector + docker compose); M7
+  replaces it with `demo/` on the published images.
 - Documentation site: Astro Starlight in `documentation/architrace-inteligence`, published
   to GitHub Pages from `main`.
 - Quality tooling already wired: Spotless (license header), JaCoCo (85% line/branch/method),
@@ -178,7 +179,12 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   with `JAVA_HOME` pointing at JDK 25. `gradlew` is not executable in git, use `sh ./gradlew`
   or `chmod +x gradlew`.
 - Pipelines: `pr.yml` (`build → quality → security`, `docs`), `pr-title.yml` and `codeql.yml`
-  check pull requests; the composite action `.github/actions/setup-build` installs the toolchains
-  from `gradle.properties`; actions are pinned by commit SHA. `ci-cd.yml` is the legacy main
-  workflow until M0 PR 4 replaces it with `main.yml`; `docs-deploy.yml` publishes the site from
-  `main`.
+  check pull requests; `main.yml` runs the same gates on `main`, then `release` (tag and GitHub
+  release when the computed version moved past the latest `v*` tag), `images` (module
+  Dockerfiles, Trivy, GHCR) and the Pages deploy. The composite action
+  `.github/actions/setup-build` installs the toolchains from `gradle.properties`; actions are
+  pinned by commit SHA.
+- Images: `architrace-agent/Dockerfile` and `architrace-control-plane/Dockerfile` copy the
+  prebuilt jar from `build/libs` (build context = module directory), base
+  `eclipse-temurin:25-jre-alpine` pinned by digest, published to
+  `ghcr.io/architrace-intelligence/<module>`.

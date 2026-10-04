@@ -164,10 +164,28 @@ Checkstyle, tests with the JaCoCo coverage gate, the UI gate, jars), `quality` (
 the quality gate on new code), `security` (Snyk, OWASP Dependency-Check, gitleaks) and `docs`
 (site build). [`PR title`](./.github/workflows/pr-title.yml) checks the title convention and
 [`CodeQL`](./.github/workflows/codeql.yml) analyses the Java and TypeScript sources and the
-workflows. Merges to `main` still run the legacy [`Merge CI/CD`](./.github/workflows/ci-cd.yml)
-until the release pipeline of the
-[M0 design](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/)
-replaces it.
+workflows. Merges to `main` run [`Main`](./.github/workflows/main.yml): the same gates, then a
+release when the commits since the last tag contain a releasing type (tag, notes, jars), the
+container images, the documentation site and the dependency graph. Details on the
+[M0 page](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/).
+
+## Container images
+
+Every merge to `main` publishes `ghcr.io/architrace-intelligence/architrace-agent` and
+`ghcr.io/architrace-intelligence/architrace-control-plane` tagged `sha-<short>`; releases add
+`X.Y.Z` and `latest`. The images run as a non-root user on Eclipse Temurin 25 JRE.
+
+```bash
+docker run --rm -p 8085:8085 -p 9090:9090 \
+  -e ARCHITRACE_DB_URL=jdbc:postgresql://db:5432/architrace \
+  ghcr.io/architrace-intelligence/architrace-control-plane:latest
+
+docker run --rm -p 4317:4317 -v $PWD/architrace-agent.yaml:/config/architrace-agent.yaml \
+  ghcr.io/architrace-intelligence/architrace-agent:latest
+```
+
+To build an image locally, produce a fresh jar first (`./gradlew clean assemble`), then
+`docker build -t architrace-agent architrace-agent` or the same for `architrace-control-plane`.
 
 ---
 

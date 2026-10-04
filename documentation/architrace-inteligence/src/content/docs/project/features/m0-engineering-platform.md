@@ -3,7 +3,7 @@ title: M0. Engineering platform
 description: Green gates on every PR, automatic versioning and publishing on main.
 ---
 
-Status: in progress (PR 3 of 5 in review, ARCHI-34) · Order: 1 · Requirements: P1–P7, §5.1–5.5
+Status: in progress (PR 4 of 5 in review, ARCHI-36) · Order: 1 · Requirements: P1–P7, §5.1–5.5
 
 ## Goal
 
@@ -56,7 +56,8 @@ pr.yml        build ──► quality ──► security       (required checks)
               └ docs
 pr-title.yml  title                                (required check)
 codeql.yml    CodeQL (java-kotlin | javascript-typescript | actions)
-main.yml      build ──► quality ──► security ──► release ──► images ──► docs deploy
+main.yml      build ──► quality ──► security ──► release ──► images (agent | control-plane)
+              └ dependency graph                  └ docs deploy
 ```
 
 - `build`: `./gradlew build`, the same gate as on a developer machine (compile, Spotless,
@@ -69,10 +70,15 @@ main.yml      build ──► quality ──► security ──► release ─�
 - `docs`: builds the documentation site.
 - `title`: the pull request title follows the commit convention; its own workflow, so a title
   edit does not rebuild.
-- `release` (main only): compute version; when the commits since the last tag contain a
-  releasing type, create tag `vX.Y.Z`, GitHub release with generated notes.
-- `images` (main only): build agent and control plane images, Trivy scan (fail on critical),
-  push to GHCR as `X.Y.Z`, `latest`, `sha-<short>`.
+- `release` (main only): `printReleaseVersion` against the latest `v*` tag; when they differ, write
+  the release notes, tag `vX.Y.Z`, rebuild the jars under the tag and publish the GitHub release
+  with the notes and both jars. Without any tag the job only reports that `v0.1.0` has to be
+  seeded.
+- `images` (main only): build the agent and control plane images from the prebuilt jars, upload
+  a Trivy SARIF to code scanning, fail on fixable critical findings, push to GHCR as
+  `sha-<short>` on every merge and additionally as `X.Y.Z` and `latest` on a release.
+- `docs` (main only): build and deploy the site to GitHub Pages after the gates; `build` also
+  submits the Gradle dependency graph so Dependabot alerts cover the Java dependencies.
 - One composite action for JDK + Gradle setup; all actions pinned by commit SHA; concurrency
   groups cancel superseded PR runs.
 
@@ -100,7 +106,7 @@ main.yml      build ──► quality ──► security ──► release ─�
 1. Hygiene: green build on `main`, stale files removed, templates and labels fixed (ARCHI-24, #26).
 2. `build-logic` conventions and versioning; CLI version from manifest (ARCHI-33).
 3. `pr.yml`, `pr-title.yml`, `codeql.yml`, composite action, scanner configuration (ARCHI-34).
-4. `main.yml` with release and images; Dockerfiles for agent and control plane (shared with M7).
+4. `main.yml` with release and images; Dockerfiles for agent and control plane (shared with M7) (ARCHI-36).
 5. Ruleset, repository settings, `.coderabbit.yaml`, site pages (contributing, getting started).
 
 ### PR 2: build conventions and versioning (ARCHI-33)
@@ -200,6 +206,44 @@ What landed and the decisions behind it:
 - `docs-deploy.yml` runs only on pushes to `main` (pull requests build the site in `pr.yml`), with
   pinned actions and Node.js 24. `ci-cd.yml` stays until PR 4 replaces it with `main.yml`.
 
+### PR 4: main pipeline, release and images (ARCHI-36)
+
+What landed and the decisions behind it:
+
+- **`main.yml`** replaces `ci-cd.yml` and `docs-deploy.yml`; `build`, `quality` and `security`
+  are the same jobs as in `pr.yml` (plus `snyk monitor` to keep the Snyk project snapshot
+  current, gitleaks over `before..sha` of the push and the full history on manual dispatch), and
+  `build` passes `dependency-graph: generate-and-submit` to the composite action so GitHub's
+  dependency graph and Dependabot alerts know the Gradle dependencies. The concurrency group
+  `main` never cancels a run: a release in flight must finish.
+- **`release`** runs after the three gates. It compares `printReleaseVersion` (last line of a
+  quiet Gradle run) with `git describe --tags --match 'v*'`: no tag at all → notice to seed
+  `v0.1.0` and no release (ADR 0006 keeps the first tag manual); equal → nothing releasable
+  (docs, ci, chore merges); different → `releaseNotes` first (its default base is the previous
+  tag, so it must run before tagging), then the annotated tag is pushed with `GITHUB_TOKEN`
+  (events from that token start no workflows, so nothing recurses), the jars are rebuilt under
+  the tag so they carry `X.Y.Z` in their names and manifests, and `gh release create` publishes
+  the notes with both jars attached. The job exports `released` and `version` for the images.
+- **`images`** is a matrix over the two modules. It downloads `release-jars` or the SNAPSHOT
+  `jars`, lowercases the registry path (GHCR rejects the capitalised organisation name), builds
+  with `load: true` and tags from `docker/metadata-action` (`sha-<short>` always, `X.Y.Z` and
+  `latest` only when released), scans twice with Trivy (a SARIF with critical and high findings
+  for the Security tab, then a gate on fixable critical findings) and only then pushes every tag.
+- **Dockerfiles** live next to the modules and copy the prebuilt jar; the build context is the
+  module directory with a `.dockerignore` that admits only the jar. Base image
+  `eclipse-temurin:25-jre-alpine` pinned by digest (Dependabot's `docker` ecosystem keeps tag and
+  digest current), a system user `architrace`, `JDK_JAVA_OPTIONS` with `MaxRAMPercentage=75` and
+  `ExitOnOutOfMemoryError`, `--enable-preview` in both entrypoints, OCI labels with the version
+  from a build argument. The control plane exposes `8085` and `9090` and checks
+  `/actuator/health`; the agent exposes `4317`, checks a TCP connect to `ARCHITRACE_OTLP_PORT`
+  (its only health signal is gRPC) and expects the configuration at
+  `/config/architrace-agent.yaml` (`run --config` has no default; override `CMD` to change it).
+  Local images need a fresh `build/libs` (`./gradlew clean assemble`) because the `COPY`
+  pattern must match exactly one jar. Verified locally: the agent prints its version, the control
+  plane with PostgreSQL turns healthy within 15 seconds, both run as uid 100.
+- The demo's in-container Dockerfiles are gone; the commented services in
+  `otel-test-app/docker-compose.yml` now point at the module Dockerfiles.
+
 ## Risks and open points
 
 - CodeQL extracted the Java 25 sources in manual build mode on the first run of PR 3; the
@@ -212,8 +256,13 @@ What landed and the decisions behind it:
 - Snyk runs only where `SNYK_TOKEN` is available: add it as a Dependabot secret as well. The
   stored token was rejected (401) on the first run of PR 3 and has to be rotated; until then the
   `security` job fails on the Snyk step while Dependency-Check and gitleaks still report.
-- Dependabot pull request #41 (GitHub Actions bumps) edits the removed and rewritten workflows
-  and needs a rebase or a close after PR 3.
+- Dependabot pull request #45 (GitHub Actions bumps) edits the removed `ci-cd.yml` and has to
+  be closed after PR 4.
+- The first `main` run after PR 4 publishes `sha-*` images; the GHCR packages start private and
+  the maintainer makes them public once. The first release needs the `v0.1.0` seed tag.
+- Dependabot cannot regenerate Gradle lockfiles, so its Gradle pull requests fail `build`;
+  dependency bumps are taken over in maintainer pull requests until a lockfile-refresh step
+  exists.
 - Sonar project key is still the old `…_Architrace-agent`; rename in SonarCloud or keep.
 - The demo Dockerfiles build inside the container and therefore need `.git` in the build
   context for the version (removed from `.dockerignore`); PR 4 switches the images to prebuilt

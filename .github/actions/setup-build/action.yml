@@ -1,6 +1,12 @@
 name: Set up the build
 description: Installs the JDK declared in gradle.properties, configures Gradle with its caches and keeps the Node.js distribution that Gradle downloads between runs.
 
+inputs:
+  dependency-graph:
+    description: Dependency graph mode of setup-gradle (disabled, generate, generate-and-submit, ...)
+    required: false
+    default: disabled
+
 runs:
   using: composite
   steps:
@@ -21,6 +27,8 @@ runs:
 
     - name: Set up Gradle
       uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      with:
+        dependency-graph: ${{ inputs.dependency-graph }}
 
     - name: Cache the Node.js distribution
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
