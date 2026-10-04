@@ -54,7 +54,7 @@ export function DriftPanel({ diff, sides, selected, graph, onSelect }: DriftPane
       )}
       <div className="panel-body">
         <span className="panel-kicker">Drift summary · deterministic</span>
-        {summarise(diff, sides).map((sentence) => (
+        {summarise(diff, sides, graph).map((sentence) => (
           <article className="sentence" key={sentence.title}>
             <span className="panel-row">
               <span

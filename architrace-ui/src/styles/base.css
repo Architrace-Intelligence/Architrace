@@ -1220,6 +1220,13 @@ details.group:not([open]) > summary {
   align-items: center;
 }
 
+.sides .badge {
+  white-space: normal;
+  height: auto;
+  min-height: 20px;
+  padding: 2px 7px;
+}
+
 .panel-selected {
   border-bottom: 1px solid var(--line);
   gap: 8px;
@@ -1233,6 +1240,8 @@ details.group:not([open]) > summary {
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .sentence .panel-row {

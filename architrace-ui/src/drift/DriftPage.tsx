@@ -66,7 +66,7 @@ export function DriftPage() {
   });
   const graph = useQuery({
     ...graphQuery(right, diff.data?.right.at),
-    enabled: state.view === "map" && diff.isSuccess,
+    enabled: diff.isSuccess,
   });
   const update = (next: DriftState) => {
     setParams(toDriftParams(next), { replace: true });
@@ -213,7 +213,7 @@ export function DriftPage() {
           <Counters diff={diff.data} sides={sides} />
           {state.view === "list" ? (
             <DriftList
-              groups={diffGroups(diff.data, sides)}
+              groups={diffGroups(diff.data, sides, graph.data)}
               onShowOnMap={(node) => {
                 update({ ...state, view: "map", node });
               }}
@@ -245,7 +245,7 @@ function apiRequest(path: string, state: DriftState): string {
     if (state.at !== undefined) {
       query.set("at", state.at);
     }
-    return `/api/v1${path}/diff/environments?${query.toString()}`;
+    return withQuery(`/api/v1${path}/diff/environments`, query);
   }
   if (state.from !== undefined) {
     query.set("from", state.from);
@@ -253,7 +253,11 @@ function apiRequest(path: string, state: DriftState): string {
   if (state.to !== undefined) {
     query.set("to", state.to);
   }
-  return `/api/v1${path}/diff/timeline?${query.toString()}`;
+  return withQuery(`/api/v1${path}/diff/timeline`, query);
+}
+
+function withQuery(url: string, query: URLSearchParams): string {
+  return query.size === 0 ? url : `${url}?${query.toString()}`;
 }
 
 interface EnvironmentSidesProps {

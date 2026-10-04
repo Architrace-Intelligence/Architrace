@@ -204,8 +204,12 @@ export interface DiffGroup {
   readonly summary: string;
 }
 
-export function diffGroups(diff: TopologyDiff, sides: SideLabels): DiffGroup[] {
-  const names = knownNames(diff);
+export function diffGroups(
+  diff: TopologyDiff,
+  sides: SideLabels,
+  graph?: TopologyGraph,
+): DiffGroup[] {
+  const names = knownNames(diff, graph);
   const nodeRows: DiffRow[] = [
     ...diff.nodesAdded.map((node) => ({
       kind: "added" as const,
@@ -276,8 +280,9 @@ export function edgeKey(edge: EdgeRef): string {
   return `${edge.sourceId}>${edge.targetId}:${edge.kind}`;
 }
 
-function knownNames(diff: TopologyDiff): ReadonlyMap<string, string> {
+function knownNames(diff: TopologyDiff, graph?: TopologyGraph): ReadonlyMap<string, string> {
   return new Map([
+    ...(graph?.nodes ?? []).map((node) => [node.id, node.name] as const),
     ...diff.nodesAdded.map((node) => [node.id, node.name] as const),
     ...diff.nodesRemoved.map((node) => [node.id, node.name] as const),
     ...diff.nodesChanged.map((change) => [change.id, change.name] as const),
@@ -366,9 +371,13 @@ export interface Sentence {
   readonly body: string;
 }
 
-export function summarise(diff: TopologyDiff, sides: SideLabels): Sentence[] {
-  const names = knownNames(diff);
-  const list = (nodes: readonly TopologyNode[]) => nodes.map((node) => node.name).join(", ");
+export function summarise(
+  diff: TopologyDiff,
+  sides: SideLabels,
+  graph?: TopologyGraph,
+): Sentence[] {
+  const names = knownNames(diff, graph);
+  const list = (nodes: readonly TopologyNode[]) => listNames(nodes.map((node) => node.name));
   const describeEdge = (edge: EdgeRef) =>
     `${nameOf(edge.sourceId, names)} → ${nameOf(edge.targetId, names)}`;
   const sentences: Sentence[] = [];
@@ -408,10 +417,13 @@ export function summarise(diff: TopologyDiff, sides: SideLabels): Sentence[] {
       kind: diff.edgesAdded.length > 0 ? "added" : "removed",
       badge: String(edgeCount),
       title: `${plural(edgeCount, "dependency", "dependencies")} differ${edgeCount > 1 ? "" : "s"}`,
-      body: [
-        ...diff.edgesAdded.map((edge) => `${describeEdge(edge)} only in ${sides.right}`),
-        ...diff.edgesRemoved.map((edge) => `${describeEdge(edge)} only in ${sides.left}`),
-      ].join("; "),
+      body: listNames(
+        [
+          ...diff.edgesAdded.map((edge) => `${describeEdge(edge)} only in ${sides.right}`),
+          ...diff.edgesRemoved.map((edge) => `${describeEdge(edge)} only in ${sides.left}`),
+        ],
+        "; ",
+      ),
     });
   }
   if (sentences.length === 0) {
@@ -423,6 +435,16 @@ export function summarise(diff: TopologyDiff, sides: SideLabels): Sentence[] {
     });
   }
   return sentences;
+}
+
+const NAMES_SHOWN = 5;
+
+export function listNames(names: readonly string[], separator = ", "): string {
+  if (names.length <= NAMES_SHOWN) {
+    return names.join(separator);
+  }
+  const rest = names.length - NAMES_SHOWN;
+  return `${names.slice(0, NAMES_SHOWN).join(separator)} and ${String(rest)} more`;
 }
 
 export interface SelectedNode {

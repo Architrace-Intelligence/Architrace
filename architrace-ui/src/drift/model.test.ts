@@ -17,6 +17,7 @@ import {
   headline,
   INITIAL_DRIFT_STATE,
   isReady,
+  listNames,
   nameOf,
   otherScopes,
   overlay,
@@ -273,6 +274,34 @@ describe("diff views", () => {
         body: "Same node ids, versions and dependency keys. Metrics may still differ; they are not part of drift.",
       },
     ]);
+  });
+
+  it("caps long name lists in the sentences and names unchanged nodes from the graph", () => {
+    expect(listNames(["a", "b", "c", "d", "e"])).toBe("a, b, c, d, e");
+    expect(listNames(["a", "b", "c", "d", "e", "f", "g"], "; ")).toBe("a; b; c; d; e and 2 more");
+    const renamed = {
+      ...demoGraph,
+      nodes: demoGraph.nodes.map((node) =>
+        node.id === "service:payments-service" ? { ...node, name: "payments" } : node,
+      ),
+    };
+    expect(diffGroups(demoDiff, SIDES, renamed)[4]?.rows[0]?.name).toBe(
+      "payments → payment-events",
+    );
+    expect(summarise(demoDiff, SIDES, renamed)[0]?.body).toBe(
+      "Brings payments → payment-events, payment-events → notification-service.",
+    );
+    const many: TopologyDiff = {
+      ...emptyDiff,
+      edgesAdded: Array.from({ length: 7 }, (_, index) => ({
+        sourceId: `service:s${String(index)}`,
+        targetId: "db:postgresql/orders",
+        kind: "SYNC" as const,
+      })),
+    };
+    expect(summarise(many, SIDES)[0]?.body).toMatch(
+      /^s0 → postgresql\/orders only in PROD · k8s-prod-eu1; .* and 2 more$/,
+    );
   });
 
   it("describes the selected node from the diff, or from the graph when it is the same on both sides", () => {
