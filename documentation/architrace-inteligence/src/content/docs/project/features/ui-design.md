@@ -175,8 +175,9 @@ modes; they are not measurements.
   JetBrains Mono. Confirm or redirect before implementation starts.
 - Environment drift compares versions only. Deployments (cluster, namespace) differ between
   environments by construction, so comparing them in environment mode would mark every node
-  as changed; the design proposes comparing deployments in timeline mode only. This refines
-  the `NodeChange` semantics in [M5](../m5-drift/) and needs the maintainer's agreement.
+  as changed; the design proposes comparing deployments in timeline mode only. ARCHI-48
+  implements it this way (`DiffMode` in [M5](../m5-drift/)); the maintainer confirms or
+  redirects.
 - Fan-in hub and long sync chain never fire on the demo landscape; the demo stack of M7 should
   include a case for each so the findings page is exercised end to end.
 - Allowlisting an external is a configuration change in the MVP; the UI offers the property

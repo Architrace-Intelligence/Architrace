@@ -5,8 +5,9 @@ info:
   description: |
     Read-only API of the Architrace control plane. It serves the UI and scripts with the
     scopes the agents report, the agents themselves, the topology graph of a scope at a point
-    in time, the services of a scope with their dependencies and the snapshot history behind
-    the graph; later versions add drift and findings.
+    in time, the services of a scope with their dependencies, the snapshot history behind
+    the graph and the drift between two scopes or two points in time; later versions add
+    findings.
 
     Every error is returned as RFC 9457 problem details with the media type
     `application/problem+json`. Errors raised by the framework (unknown path, unreadable
@@ -23,6 +24,8 @@ tags:
     description: Scopes (project, environment, cluster) with at least one registered agent, their current graph and services
   - name: snapshots
     description: Snapshot history behind the graph of a scope
+  - name: drift
+    description: What differs between two scopes of a project, or between two points in time of one scope
   - name: agents
     description: Agents registered with the control plane
 paths:
@@ -237,6 +240,156 @@ paths:
                     size: 50
                     totalItems: 2
                     totalPages: 1
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          $ref: "#/components/responses/ScopeNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
+  /scopes/{project}/{environment}/{cluster}/diff/environments:
+    get:
+      tags: [drift]
+      operationId: diffEnvironments
+      summary: Environment drift between two scopes of a project
+      description: |
+        The difference between the current graph of another scope of the same project (the
+        left side, `leftEnvironment` and `leftCluster`) and the current graph of this scope
+        (the right side), both resolved at `at`. Nodes are matched by id, edges by source,
+        target and kind; `nodesAdded` and `edgesAdded` exist only on the right,
+        `nodesRemoved` and `edgesRemoved` only on the left. A node present on both sides is
+        `changed` when its set of versions differs; deployments differ between environments
+        by construction and are reported but not compared. Edge metrics are never compared:
+        traffic is not drift. Every list is ordered by id, or by source, target and kind.
+      parameters:
+        - $ref: "#/components/parameters/Project"
+        - $ref: "#/components/parameters/Environment"
+        - $ref: "#/components/parameters/Cluster"
+        - name: leftEnvironment
+          in: query
+          required: true
+          description: Environment of the left side, a scope of the same project
+          schema:
+            type: string
+        - name: leftCluster
+          in: query
+          required: true
+          description: Cluster of the left side
+          schema:
+            type: string
+        - $ref: "#/components/parameters/At"
+      responses:
+        "200":
+          description: The diff, left side relative to right side
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopologyDiff"
+              examples:
+                webshop:
+                  value:
+                    left:
+                      scope: { project: webshop, environment: DEV, cluster: k8s-dev }
+                      at: "2026-10-01T12:00:00Z"
+                    right:
+                      scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                      at: "2026-10-01T12:00:00Z"
+                    nodesAdded:
+                      - id: "service:reporting"
+                        type: SERVICE
+                        name: reporting
+                        versions: ["1.2.0"]
+                        deployments: [{ cluster: k8s-prod-eu1, namespace: reporting }]
+                        labels: {}
+                    nodesRemoved:
+                      - id: "db:postgresql/catalog"
+                        type: DATABASE
+                        name: catalog
+                        versions: []
+                        deployments: []
+                        labels: {}
+                    nodesChanged:
+                      - id: "service:search"
+                        type: SERVICE
+                        name: search
+                        versionsBefore: ["2.3.0"]
+                        versionsAfter: ["2.2.1"]
+                        deploymentsBefore: [{ cluster: k8s-dev, namespace: search }]
+                        deploymentsAfter: [{ cluster: k8s-prod-eu1, namespace: search }]
+                    edgesAdded:
+                      - sourceId: "service:reporting"
+                        targetId: "db:postgresql/orders"
+                        kind: SYNC
+                    edgesRemoved:
+                      - sourceId: "service:search"
+                        targetId: "db:postgresql/catalog"
+                        kind: SYNC
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          $ref: "#/components/responses/ScopeNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
+  /scopes/{project}/{environment}/{cluster}/diff/timeline:
+    get:
+      tags: [drift]
+      operationId: diffTimeline
+      summary: Release drift of one scope between two points in time
+      description: |
+        The difference between the current graph of the scope at `from` (the left side) and
+        at `to` (the right side, default now). Nodes are matched by id, edges by source,
+        target and kind; `nodesAdded` and `edgesAdded` exist only at `to`, `nodesRemoved`
+        and `edgesRemoved` only at `from`. A node present at both points is `changed` when its
+        set of versions or its set of deployments differs. Edge metrics are never compared.
+        Every list is ordered by id, or by source, target and kind.
+      parameters:
+        - $ref: "#/components/parameters/Project"
+        - $ref: "#/components/parameters/Environment"
+        - $ref: "#/components/parameters/Cluster"
+        - name: from
+          in: query
+          required: true
+          description: Point in time (RFC 3339) of the left side
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          description: Point in time (RFC 3339) of the right side; defaults to now
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: The diff, `from` relative to `to`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopologyDiff"
+              examples:
+                webshop:
+                  value:
+                    left:
+                      scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                      at: "2026-09-30T18:00:00Z"
+                    right:
+                      scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                      at: "2026-10-01T12:00:00Z"
+                    nodesAdded: []
+                    nodesRemoved: []
+                    nodesChanged:
+                      - id: "service:orders"
+                        type: SERVICE
+                        name: orders
+                        versionsBefore: ["2.8.0"]
+                        versionsAfter: ["2.8.1"]
+                        deploymentsBefore: [{ cluster: k8s-prod-eu1, namespace: orders }]
+                        deploymentsAfter: [{ cluster: k8s-prod-eu1, namespace: orders }]
+                    edgesAdded:
+                      - sourceId: "service:orders"
+                        targetId: "topic:kafka/order-events"
+                        kind: PUBLISH
+                    edgesRemoved: []
         "400":
           $ref: "#/components/responses/InvalidQuery"
         "404":
@@ -727,6 +880,96 @@ components:
           format: int32
           minimum: 0
           description: Pages needed for all matching snapshots; `0` when nothing matches
+    TopologyDiff:
+      type: object
+      description: |
+        What differs between two graphs: the left side and the right side. Everything "added"
+        exists only on the right, everything "removed" only on the left.
+      required: [left, right, nodesAdded, nodesRemoved, nodesChanged, edgesAdded, edgesRemoved]
+      properties:
+        left:
+          $ref: "#/components/schemas/GraphRef"
+        right:
+          $ref: "#/components/schemas/GraphRef"
+        nodesAdded:
+          type: array
+          description: Nodes only on the right, as seen on the right, ordered by id
+          items:
+            $ref: "#/components/schemas/TopologyNode"
+        nodesRemoved:
+          type: array
+          description: Nodes only on the left, as seen on the left, ordered by id
+          items:
+            $ref: "#/components/schemas/TopologyNode"
+        nodesChanged:
+          type: array
+          description: Nodes on both sides whose compared attributes differ, ordered by id
+          items:
+            $ref: "#/components/schemas/NodeChange"
+        edgesAdded:
+          type: array
+          description: Edges only on the right, ordered by source, target and kind
+          items:
+            $ref: "#/components/schemas/EdgeRef"
+        edgesRemoved:
+          type: array
+          description: Edges only on the left, ordered by source, target and kind
+          items:
+            $ref: "#/components/schemas/EdgeRef"
+    GraphRef:
+      type: object
+      description: One side of a diff, the scope and the point in time its graph was resolved for.
+      required: [scope, at]
+      properties:
+        scope:
+          $ref: "#/components/schemas/Scope"
+        at:
+          type: string
+          format: date-time
+    NodeChange:
+      type: object
+      description: A node present on both sides with the attributes of each side.
+      required: [id, type, name, versionsBefore, versionsAfter, deploymentsBefore, deploymentsAfter]
+      properties:
+        id:
+          type: string
+          description: Stable node id, the same on both sides
+        type:
+          $ref: "#/components/schemas/NodeType"
+        name:
+          type: string
+          description: Display name, taken from the right side
+        versionsBefore:
+          type: array
+          description: Versions seen on the left
+          items:
+            type: string
+        versionsAfter:
+          type: array
+          description: Versions seen on the right
+          items:
+            type: string
+        deploymentsBefore:
+          type: array
+          description: Where the node runs on the left
+          items:
+            $ref: "#/components/schemas/Deployment"
+        deploymentsAfter:
+          type: array
+          description: Where the node runs on the right
+          items:
+            $ref: "#/components/schemas/Deployment"
+    EdgeRef:
+      type: object
+      description: The identity of an edge without its metrics.
+      required: [sourceId, targetId, kind]
+      properties:
+        sourceId:
+          type: string
+        targetId:
+          type: string
+        kind:
+          $ref: "#/components/schemas/EdgeKind"
     Agent:
       type: object
       description: An agent registration as the control plane sees it.

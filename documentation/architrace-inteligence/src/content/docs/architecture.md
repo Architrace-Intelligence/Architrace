@@ -51,10 +51,13 @@ flowchart LR
   tracks liveness through heartbeats. `TopologyQuery` answers the current graph of a scope at
   a point in time (latest snapshot per agent, merged), the services of that graph with their
   dependencies, a per-scope summary for the Projects list and the paged snapshot history; a
-  scheduled job removes snapshots older than the retention period. The Query API under
-  `/api/v1` exposes scopes, agents, graph, services, snapshot history and single snapshots,
-  with domain errors as typed RFC 9457 problems; the control plane serves its OpenAPI document
-  and Swagger UI. Health and metrics are on Actuator.
+  scheduled job removes snapshots older than the retention period. The `drift` package
+  compares two such graphs: `GraphDiffer` is a pure set difference on node ids and edge keys
+  with a mode-dependent notion of a changed node, `DriftQuery` resolves the two sides (two
+  scopes of a project at one instant, or one scope at two instants). The Query API under
+  `/api/v1` exposes scopes, agents, graph, services, snapshot history, single snapshots and
+  the two diffs of a scope, with domain errors as typed RFC 9457 problems; the control plane
+  serves its OpenAPI document and Swagger UI. Health and metrics are on Actuator.
 - The UI module `architrace-ui` (Vite, React, TypeScript) is built by Gradle, which downloads
   the pinned Node.js, and its bundle is packed into the control plane jar under `static/`. The
   control plane serves it at `/` with a single-page fallback: unknown paths outside `/api`,
@@ -146,7 +149,7 @@ Packages are organised by feature, each with the same inner shape:
 | `agents` | `Agent`, `AgentHealth` | registry, liveness | gRPC, repository |
 | `ingestion` | `IncomingSnapshot` | validation, mapping to topology | gRPC |
 | `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent`, `NodeView`, `Page` | store, current graph, node views, history, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`: controllers, model mapping, problem details) |
-| `drift` | `TopologyDiff` | environment diff, timeline diff | REST |
+| `drift` | `GraphRef`, `NodeChange`, `TopologyDiff`, `DiffMode` | `GraphDiffer`, `DriftQuery` | REST (`drift.web`) |
 | `rules` | `ArchitectureRule`, `Finding` | engine, scheduling after ingest | repository, REST |
 | `web` | | | OpenAPI document, Swagger UI, UI bundle with single-page fallback |
 
