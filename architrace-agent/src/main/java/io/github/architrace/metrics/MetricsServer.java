@@ -27,11 +27,10 @@ public final class MetricsServer implements AutoCloseable {
     private static final int NOT_FOUND = 404;
 
     private final HttpServer server;
-    private final PrometheusMeterRegistry registry;
     private final PublisherStats publisher;
 
     public MetricsServer(int port, PrometheusMeterRegistry registry, PublisherStats publisher) {
-        this.registry = Objects.requireNonNull(registry, "registry");
+        Objects.requireNonNull(registry, "registry");
         this.publisher = Objects.requireNonNull(publisher, "publisher");
         try {
             this.server = HttpServer.create(new InetSocketAddress(port), 0);
