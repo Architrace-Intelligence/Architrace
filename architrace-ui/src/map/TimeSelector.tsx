@@ -52,7 +52,7 @@ export function TimeSelector({ at, onChange }: TimeSelectorProps) {
           }}
         >
           <label>
-            Graph at (UTC)
+            <span>Graph at (UTC)</span>
             <input
               type="datetime-local"
               step={1}

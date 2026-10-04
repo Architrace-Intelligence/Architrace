@@ -14,7 +14,8 @@ interface NodeTypeChipsProps {
 
 export function NodeTypeChips({ counts, filter, onToggle }: NodeTypeChipsProps) {
   return (
-    <div className="chips" role="group" aria-label="Node types">
+    <fieldset className="chips">
+      <legend className="sr-only">Node types</legend>
       {NODE_TYPES.map((type) => {
         const shown = !filter.hidden.includes(type);
         return (
@@ -33,6 +34,6 @@ export function NodeTypeChips({ counts, filter, onToggle }: NodeTypeChipsProps) 
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

@@ -37,6 +37,18 @@ body {
   grid-template-rows: auto 1fr;
 }
 
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+legend {
+  float: left;
+  padding: 0;
+}
+
 .app button {
   font: inherit;
   color: inherit;
