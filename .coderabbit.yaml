@@ -1,0 +1,91 @@
+language: en-US
+tone_instructions: >-
+  Be direct and specific. Point at the line, state the defect or the better alternative and the
+  reason. Do not praise and do not restate the diff. Treat the rules in AGENTS.md as mandatory.
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: false
+  poem: false
+  in_progress_fortune: false
+  suggested_labels: false
+  suggested_reviewers: false
+  commit_status: false
+  path_filters:
+    - "!**/gradle.lockfile"
+    - "!**/package-lock.json"
+    - "!**/gradle-wrapper.jar"
+  path_instructions:
+    - path: "**/*.java"
+      instructions: >-
+        Java 25 with preview features. Correctness first, then KISS, YAGNI, SOLID, clean code and
+        data-oriented programming: records, sealed interfaces, pattern matching, immutable data,
+        behaviour separated from data. Collection processing uses the Stream API; explicit loops
+        are reserved for polling, retries and batched I/O. No Javadoc and no explanatory comments:
+        names, types and structure carry the meaning; the only allowed header is the SPDX license
+        header. Small single-purpose classes, constructor injection, no static mutable state.
+        Switches are exhaustive and carry no default branch.
+    - path: "**/src/test/**/*.java"
+      instructions: >-
+        JUnit, AssertJ and Mockito. Tests exercise behaviour through the public API and never
+        reach private members through reflection. One throwing call per assertThatThrownBy or
+        isThrownBy lambda; pre-extract arguments into locals. Shared test fixtures live in
+        testsupport packages.
+    - path: "architrace-ui/**/*.{ts,tsx}"
+      instructions: >-
+        TypeScript strict with type-checked ESLint rules. Feature folders under src; server state
+        only through queryOptions factories and TanStack Query; the generated src/api/schema.d.ts
+        is never committed. Tests use Testing Library and stub fetch with the helpers in
+        src/test/http.ts. No explanatory comments.
+    - path: "{build-logic/**,**/*.gradle.kts,gradle/**}"
+      instructions: >-
+        Gradle Kotlin DSL. Dependencies and plugin versions are declared only in
+        gradle/libs.versions.toml; modules apply the convention plugins architrace.java,
+        architrace.spring-boot and architrace.versioning. Any dependency change must come with
+        regenerated gradle.lockfile files. No comments in build scripts.
+    - path: ".github/**"
+      instructions: >-
+        Every action is pinned by commit SHA with the version in a trailing comment. Job names are
+        the required-check names of the main ruleset and must not change without the ruleset. A
+        step that needs a secret skips with a notice when the secret is absent. Untrusted input
+        (titles, bodies, branch names) reaches scripts only through environment variables, never
+        through expression interpolation. Workflow permissions stay at the minimum.
+    - path: "**/*.proto"
+      instructions: >-
+        The protobuf contract is the agent-control-plane API. Changes must stay wire-compatible:
+        never reuse or renumber fields, keep deprecated fields until every client moved.
+    - path: "architrace-api/src/main/resources/openapi/**"
+      instructions: >-
+        Contract-first Query API. Every operation has typed problem details with
+        urn:architrace:problem:<slug> types for domain errors; schemas and examples stay in sync
+        with the reference page of the documentation site.
+    - path: "documentation/**/*.{md,mdx}"
+      instructions: >-
+        Documentation describes the present. The current-state page is a hand-over and must stay
+        short; history belongs in the progress page. Check that pages affected by the change
+        (architecture, feature page, reference, getting started) were updated. English only; no
+        references to employers, internal systems or private repositories.
+    - path: "**/Dockerfile"
+      instructions: >-
+        Base images are pinned by digest, the process runs as a non-root user, the build context
+        admits only the prebuilt jar, and the health check reflects the service's real readiness.
+  auto_review:
+    enabled: true
+    drafts: false
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "off"
+  finishing_touches:
+    docstrings:
+      enabled: false
+
+chat:
+  art: false
+
+knowledge_base:
+  code_guidelines:
+    filePatterns:
+      - "AGENTS.md"

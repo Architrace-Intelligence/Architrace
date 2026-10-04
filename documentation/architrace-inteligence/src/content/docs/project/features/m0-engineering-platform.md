@@ -3,7 +3,7 @@ title: M0. Engineering platform
 description: Green gates on every PR, automatic versioning and publishing on main.
 ---
 
-Status: in progress (PR 4 of 5 in review, ARCHI-36) · Order: 1 · Requirements: P1–P7, §5.1–5.5
+Status: in progress (PR 5 of 5 in review, ARCHI-37) · Order: 1 · Requirements: P1–P7, §5.1–5.5
 
 ## Goal
 
@@ -84,14 +84,20 @@ main.yml      build ──► quality ──► security ──► release ─�
 
 ### Review and repository settings
 
-- `.coderabbit.yaml`: assertive profile, review on push, path instructions for Java,
-  TypeScript, Gradle, workflows and docs, request-changes workflow on, summaries off (the PR
-  template carries the summary).
-- `main` ruleset per [ADR 0003](../../adr/0003-review-identity-and-merge-gate/): PR required, 0 approvals,
-  required checks `build`, `quality`, `security`, `docs`, `title` and the CodeQL analyses,
-  conversation resolution, linear history, no force push or deletion, no bypass.
-- Repository: squash merge only, delete branch on merge, Dependabot alerts and security
-  updates, secret scanning with push protection, code scanning via CodeQL.
+- `.coderabbit.yaml`: assertive profile, review on push, path instructions for Java, tests,
+  TypeScript, Gradle, workflows, contracts, Dockerfiles and docs, request-changes workflow on,
+  summaries and poems off (the PR template carries the summary), docstring generation and the
+  docstring coverage check off (P7 forbids documentation comments), `AGENTS.md` as the coding
+  guideline document.
+- `main` ruleset per [ADR 0003](../../adr/0003-review-identity-and-merge-gate/), kept as code
+  in `.github/rulesets/main.json`: PR required, 0 approvals, required checks `build`, `quality`,
+  `security`, `docs`, `title` and the three CodeQL analyses, conversation resolution, squash as
+  the only merge method, linear history, no force push or deletion, no bypass, plus the CodeQL
+  code scanning threshold. The maintainer applies the file; the commands are on the
+  [GitHub setup](../../github-access/#5-the-main-ruleset-and-the-repository-settings) page.
+- Repository: squash merge only with the pull request title as the commit subject, delete
+  branch on merge, Dependabot alerts and security updates, secret scanning with push
+  protection, code scanning via CodeQL.
 
 ## Acceptance criteria
 
@@ -107,7 +113,7 @@ main.yml      build ──► quality ──► security ──► release ─�
 2. `build-logic` conventions and versioning; CLI version from manifest (ARCHI-33).
 3. `pr.yml`, `pr-title.yml`, `codeql.yml`, composite action, scanner configuration (ARCHI-34).
 4. `main.yml` with release and images; Dockerfiles for agent and control plane (shared with M7) (ARCHI-36).
-5. Ruleset, repository settings, `.coderabbit.yaml`, site pages (contributing, getting started).
+5. Ruleset, repository settings, `.coderabbit.yaml`, site pages (contributing, getting started) (ARCHI-37).
 
 ### PR 2: build conventions and versioning (ARCHI-33)
 
@@ -244,29 +250,69 @@ What landed and the decisions behind it:
 - The demo's in-container Dockerfiles are gone; the commented services in
   `otel-test-app/docker-compose.yml` now point at the module Dockerfiles.
 
+### PR 5: merge gate, repository settings and CodeRabbit (ARCHI-37)
+
+What landed and the decisions behind it:
+
+- **Ruleset as code.** `.github/rulesets/main.json` is the exact request body of the rulesets
+  API and the import format of the GitHub UI, so the gate is reviewed in a pull request like
+  everything else and can be re-applied after a change of job names. Required checks are bound
+  to the GitHub Actions app id, so a check with the same name from another app cannot satisfy
+  them. Skipped jobs count as passed, which is what lets Dependabot pull requests through
+  `quality` without the SonarCloud token. `strict_required_status_checks_policy` stays off: work
+  lands one pull request at a time, and `main.yml` runs the same gates on the merge commit, so
+  the "branch up to date" requirement would only add rebases of long-lived Dependabot branches.
+  The CodeQL `code_scanning` rule from the old disabled ruleset is kept (no new alert of
+  severity error, no new security alert of high or higher); its `copilot_code_review` and
+  `code_quality` rules are dropped, the first needs a paid plan, the second is a preview product
+  outside the agreed design.
+- **Squash commit shape.** The title of the squash commit is the pull request title, which the
+  title check already validates against the commit convention, so the Conventional Commits
+  incrementer reads a guaranteed-valid header on every `main` commit. The body keeps the
+  squashed commit messages so a `BREAKING CHANGE:` footer written in any commit still reaches
+  the parser (`ConventionalCommit.parse` scans the body with a multi-line regular expression).
+- **Applying the settings is a maintainer action.** The agent session's tool permissions stop at
+  administration writes, and the ruleset would gate its own pull request anyway. The GitHub setup
+  page carries the two commands; the state page tracks them as the open step of M0.
+- **CodeRabbit configuration.** Validated against the published schema
+  (`https://coderabbit.ai/integrations/schema.v2.json`). The assertive profile and the
+  request-changes workflow turn findings into blocking threads; summaries, poems, fortunes,
+  label and reviewer suggestions and the legacy commit status are off because the PR template,
+  the maintainer and the ruleset cover them. Docstring generation and the docstring coverage
+  pre-merge check are off (no documentation comments, P7), the title pre-merge check is off
+  (`pr-title.yml` already enforces it). Lockfiles and the wrapper jar are filtered out of the
+  review. One path instruction per language or artefact type restates the rules of `AGENTS.md`
+  that a reviewer can check line by line (Stream API, no comments, exhaustive switches, test
+  style, pinned actions, contract compatibility), and `AGENTS.md` itself is declared as the
+  coding guideline document. The app is installed by the maintainer (organisation owner).
+- **Site pages.** Contributing lists the checks a pull request has to pass and the ruleset that
+  enforces them; Getting started points to the guides and the contributing page; the GitHub
+  setup page carries the observed state, the ruleset explanation and the maintainer checklist.
+- **Images fix.** The first `main` run after PR 4 failed in both `images` jobs: the Trivy steps
+  referenced the image as `sha-<full sha>` while `docker/metadata-action` had tagged it
+  `sha-<short sha>`, so the scan found no image and the push never ran. Both scans now use the
+  `version` output of the metadata step, which is the same tag the build applied (`sha-<short>`
+  on a plain merge, `X.Y.Z` on a release). One source of truth for the tag instead of two
+  expressions that have to agree.
+
 ## Risks and open points
 
 - CodeQL extracted the Java 25 sources in manual build mode on the first run of PR 3; the
   fallback, should a preview construct break the extractor later, is `build-mode: none`. SpotBugs
   stays out: Sonar and CodeQL cover bug and security patterns.
 - Dependency-Check 13.0.0 cannot update without an NVD API key (upstream issue 8715 sends an
-  empty key); the step is skipped with a warning until the maintainer stores the key as the
-  repository secret `NVD_API_KEY`, and as a Dependabot secret so Dependabot pull requests are
-  checked too. The first run with the key verifies the analysis end to end.
-- Snyk runs only where `SNYK_TOKEN` is available: add it as a Dependabot secret as well. The
-  stored token was rejected (401) on the first run of PR 3 and has to be rotated; until then the
-  `security` job fails on the Snyk step while Dependency-Check and gitleaks still report.
-- Dependabot pull request #45 (GitHub Actions bumps) edits the removed `ci-cd.yml` and has to
-  be closed after PR 4.
-- The first `main` run after PR 4 publishes `sha-*` images; the GHCR packages start private and
-  the maintainer makes them public once. The first release needs the `v0.1.0` seed tag.
+  empty key); `NVD_API_KEY` exists as a repository and a Dependabot secret since 2026-10-02 and
+  the step is skipped with a warning wherever it is absent.
+- Snyk runs only where `SNYK_TOKEN` is available (repository and Dependabot secret). The PAT
+  expires on 2026-12-31 and has to be rotated before.
+- Open maintainer actions after PR 5: apply the ruleset and the repository settings, install
+  the CodeRabbit app, seed `v0.1.0`, make the GHCR packages public once the first successful
+  `images` run has created them (they start private), close Dependabot #45 (it edits the
+  removed `ci-cd.yml`). Until the ruleset is active the gate is discipline, not platform.
 - Dependabot cannot regenerate Gradle lockfiles, so its Gradle pull requests fail `build`;
   dependency bumps are taken over in maintainer pull requests until a lockfile-refresh step
   exists.
 - Sonar project key is still the old `…_Architrace-agent`; rename in SonarCloud or keep.
-- The demo Dockerfiles build inside the container and therefore need `.git` in the build
-  context for the version (removed from `.dockerignore`); PR 4 switches the images to prebuilt
-  jars.
 - Checkstyle does not analyse `build-logic` (Kotlin); its sources carry the SPDX header through
   Spotless and are covered by their own tests. Its package is `io.github.architrace.conventions`:
   a package segment named `build` is swallowed by the `**/build` ignore patterns of Docker and

@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | in progress | M2, M3 and M4 PR 1 done; M0 PR 1–3 merged; M0 PR 4 (main pipeline, ARCHI-36) in review |
+| 3 | Implementation (feature by feature)     | in progress | M2, M3 and M4 PR 1 done; M0 PR 1–4 merged; M0 PR 5 (merge gate, CodeRabbit, ARCHI-37) in review |
 | 4 | Testing, hardening, release 1.0         | todo        |                                                        |
 
 ## Process foundation
@@ -29,10 +29,10 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | Documentation moved to the site, current-state page | done  | PR #21                                   |
 | Commit convention and automated versioning        | done  | ADR 0006; `architrace.versioning` (ARCHI-33, #42) |
 | CI: single PR pipeline with quality gates         | done  | `pr.yml`, `pr-title.yml`, composite action (ARCHI-34, #44) |
-| CI: AI code review                                | todo  | CodeRabbit (ADR 0002); app install pending  |
+| CI: AI code review                                | review | `.coderabbit.yaml` (ARCHI-37); the maintainer installs the app |
 | CI: security scanning (Snyk, OWASP, CodeQL, …)    | done  | Snyk, Dependency-Check, gitleaks, CodeQL (ARCHI-34); credentials and clean baseline (ARCHI-35) |
-| CD: main pipeline, release, images                | review | `main.yml`, Dockerfiles, Trivy, GHCR, dependency graph (ARCHI-36) |
-| Branch ruleset on `main`                          | todo  | shape agreed in ADR 0003; applied in M0     |
+| CD: main pipeline, release, images                | done  | `main.yml`, Dockerfiles, Trivy, GHCR, dependency graph (ARCHI-36, #48); first run green on 2026-10-04 |
+| Branch ruleset on `main`                          | review | `.github/rulesets/main.json` (ARCHI-37); the maintainer applies it |
 | ADR folder and first ADRs                         | done  | ADR 0001–0010 accepted                      |
 | Architecture page                                 | done  | current and target views                    |
 | Repository hygiene (templates, stale files)       | done  | M0 PR 1 (ARCHI-24), PR #26                  |
@@ -43,7 +43,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 
 | Feature | State | Design | PR | Notes |
 |---------|-------|--------|----|-------|
-| [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | ARCHI-24, ARCHI-33, ARCHI-34, ARCHI-36 | PR 1 (hygiene, #26), PR 2 (`build-logic`, versioning, #42), PR 3 (PR pipeline, scanners, #44) merged; PR 4 (main pipeline, release, images) in review |
+| [M0 Engineering platform](../features/m0-engineering-platform/) | in progress | agreed | ARCHI-24, ARCHI-33, ARCHI-34, ARCHI-36, ARCHI-37 | PR 1 (hygiene, #26), PR 2 (`build-logic`, versioning, #42), PR 3 (PR pipeline, scanners, #44), PR 4 (main pipeline, release, images, #48) merged; PR 5 (ruleset, settings, CodeRabbit, site pages) in review |
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | todo | agreed | | |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
@@ -82,3 +82,5 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-04 | Dependency update: Spring Boot 4.1.1 with the Boot gRPC starter, managed-version overrides, catalog on the latest releases, docs site on Astro 7; closes the first Snyk and Dependency-Check findings (ARCHI-35) |
 | 2026-10-04 | Dependency update merged (#46): Snyk and Dependency-Check report zero findings |
 | 2026-10-04 | M0 PR 4: `main.yml` with release, images in GHCR, Trivy, Pages deploy and dependency graph; module Dockerfiles (ARCHI-36) |
+| 2026-10-04 | M0 PR 4 merged (#48): first `main` run passes the gates and reports the missing seed tag `v0.1.0`; the `images` jobs fail at the Trivy scan (image reference mismatch, fixed in ARCHI-37) |
+| 2026-10-04 | M0 PR 5: `main` ruleset as code, squash-only settings, `.coderabbit.yaml`, contributing and getting-started pages (ARCHI-37) |

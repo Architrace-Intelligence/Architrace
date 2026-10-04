@@ -203,7 +203,9 @@ main:  init → compile → tests → static analysis → security → build art
 ```
 
 - Reusable composite action for JDK + Gradle setup; Gradle build cache; all actions pinned by SHA.
-- Required checks on `main`: `build`, `quality`, `security`, `ai-review`.
+- Required checks on `main`: `build`, `quality`, `security`, `docs`, `title` and the CodeQL
+  analyses; the AI review gates through required conversation resolution, not a check
+  ([ADR 0002](../adr/0002-coderabbit-ai-review/)).
 - Release channel: every merge to `main` produces `X.Y.Z-<sha>` artifacts; a release tag
   `vX.Y.Z` is created automatically when the computed version changes (or manually via
   `workflow_dispatch`, to be decided).
