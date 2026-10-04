@@ -42,7 +42,8 @@ export function ScopePage() {
   const select = (selection: Selection | undefined) => {
     update({ ...state, selection });
   };
-  const request = `/api/v1${path}/graph${state.at === undefined ? "" : `?at=${encodeURIComponent(state.at)}`}`;
+  const atQuery = state.at === undefined ? "" : `?at=${encodeURIComponent(state.at)}`;
+  const request = `/api/v1${path}/graph${atQuery}`;
 
   const tools = (
     <>

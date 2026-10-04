@@ -199,12 +199,13 @@ describe("ScopePage", () => {
     fireEvent.click(element(".react-flow__pane"));
     expect(await screen.findByText("Scope · PROD")).toBeInTheDocument();
 
-    const card = element('.react-flow__node[data-id="service:api-gateway"]');
+    const card = element('.react-flow__node[data-id="service:api-gateway"] .node');
     if (card instanceof HTMLElement) {
       card.focus();
     }
     await user.keyboard("{Enter}");
     expect(await screen.findByText("service:api-gateway")).toBeInTheDocument();
+    expect(card).toHaveAttribute("aria-pressed", "true");
 
     await user.keyboard("{Escape}");
     expect(await screen.findByText("Scope · PROD")).toBeInTheDocument();
