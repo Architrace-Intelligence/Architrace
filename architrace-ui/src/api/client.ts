@@ -7,7 +7,14 @@ import createClient from "openapi-fetch";
 import type { components, paths } from "./schema";
 
 export type Problem = components["schemas"]["Problem"];
+export type Scope = components["schemas"]["Scope"];
 export type ScopeSummary = components["schemas"]["ScopeSummary"];
+export type TopologyGraph = components["schemas"]["TopologyGraph"];
+export type TopologyNode = components["schemas"]["TopologyNode"];
+export type TopologyEdge = components["schemas"]["TopologyEdge"];
+export type EdgeMetrics = components["schemas"]["EdgeMetrics"];
+export type NodeType = components["schemas"]["NodeType"];
+export type EdgeKind = components["schemas"]["EdgeKind"];
 
 export class ProblemError extends Error {
   readonly problem: Problem;
@@ -26,6 +33,22 @@ export const client = createClient<paths>({
 
 export async function listScopes(signal?: AbortSignal): Promise<ScopeSummary[]> {
   const { data, error, response } = await client.GET("/scopes", { signal });
+  return unwrap(data, error, response);
+}
+
+export async function getGraph(scope: Scope, signal?: AbortSignal): Promise<TopologyGraph> {
+  const { data, error, response } = await client.GET(
+    "/scopes/{project}/{environment}/{cluster}/graph",
+    { params: { path: scope }, signal },
+  );
+  return unwrap(data, error, response);
+}
+
+export function describeError(error: Error): string {
+  return error instanceof ProblemError ? (error.problem.detail ?? error.message) : error.message;
+}
+
+function unwrap<T>(data: T | undefined, error: unknown, response: Response): T {
   if (data === undefined) {
     throw new ProblemError(toProblem(error, response));
   }

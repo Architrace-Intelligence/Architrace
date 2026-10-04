@@ -6,7 +6,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router";
-import { ProblemError } from "../api/client";
+import { describeError } from "../api/client";
 import { scopesQuery } from "../api/queries";
 import { Shell } from "../app/Shell";
 import { FacetChip } from "./FacetChip";
@@ -60,7 +60,7 @@ export function ProjectsPage() {
       {scopes.isPending && <output className="status">Connecting to the control plane…</output>}
       {scopes.isError && (
         <p className="status status-error" role="alert">
-          The control plane did not answer: {describe(scopes.error)}
+          The control plane did not answer: {describeError(scopes.error)}
         </p>
       )}
       {scopes.isSuccess && <ScopeList all={scopes.data} filter={filter} onChange={update} />}
@@ -157,8 +157,4 @@ function describeSummary(summary: Summary): string {
     plural(summary.clusters, "cluster"),
     agents,
   ].join(" · ");
-}
-
-function describe(error: Error): string {
-  return error instanceof ProblemError ? (error.problem.detail ?? error.message) : error.message;
 }

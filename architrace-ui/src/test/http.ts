@@ -4,7 +4,7 @@
  */
 
 import { type Mock, vi } from "vitest";
-import type { ScopeSummary } from "../api/client";
+import type { ScopeSummary, TopologyEdge, TopologyGraph, TopologyNode } from "../api/client";
 
 export function respondWithJson(body: unknown, status = 200, contentType = "application/json") {
   return vi.fn<typeof fetch>(() =>
@@ -76,3 +76,74 @@ export const demoScopes: ScopeSummary[] = [
     dataStreams: 0,
   }),
 ];
+
+function node(
+  type: TopologyNode["type"],
+  id: string,
+  name: string,
+  overrides: Partial<Omit<TopologyNode, "id" | "type" | "name">> = {},
+): TopologyNode {
+  return { id, type, name, versions: [], deployments: [], labels: {}, ...overrides };
+}
+
+function edge(
+  sourceId: string,
+  targetId: string,
+  kind: TopologyEdge["kind"],
+  calls: number,
+  errors: number,
+): TopologyEdge {
+  return {
+    sourceId,
+    targetId,
+    kind,
+    metrics: { calls, errors, p50Millis: 4, p95Millis: 20, p99Millis: 60, maxMillis: 300 },
+  };
+}
+
+export const demoGraph: TopologyGraph = {
+  scope: { project: "webshop", environment: "PROD", cluster: "k8s-prod-eu1" },
+  at: "2026-10-01T12:00:00Z",
+  nodes: [
+    node("DATABASE", "db:postgresql/orders", "postgresql/orders"),
+    node("DATABASE", "db:postgresql/payments", "postgresql/payments"),
+    node("EXTERNAL", "external:api.stripe.com", "api.stripe.com"),
+    node("SERVICE", "service:api-gateway", "api-gateway", {
+      versions: ["3.4.0"],
+      deployments: [{ cluster: "k8s-prod-eu1", namespace: "edge" }],
+    }),
+    node("SERVICE", "service:inventory-service", "inventory-service", {
+      versions: ["1.9.0"],
+      deployments: [{ cluster: "k8s-prod-eu1", namespace: "inventory" }],
+    }),
+    node("SERVICE", "service:notification-service", "notification-service", {
+      deployments: [{ cluster: "k8s-prod-eu1", namespace: "notify" }],
+    }),
+    node("SERVICE", "service:orders-service", "orders-service", {
+      versions: ["2.8.1"],
+      deployments: [{ cluster: "k8s-prod-eu1", namespace: "orders" }],
+      labels: { team: "orders" },
+    }),
+    node("SERVICE", "service:payments-service", "payments-service", {
+      versions: ["4.1.2", "4.1.3"],
+      deployments: [{ cluster: "k8s-prod-eu1", namespace: "payments" }],
+    }),
+    node("TOPIC", "topic:kafka/order-events", "order-events"),
+    node("TOPIC", "topic:kafka/payment-events", "payment-events"),
+  ],
+  edges: [
+    edge("service:api-gateway", "service:orders-service", "SYNC", 12_400, 37),
+    edge("service:api-gateway", "service:payments-service", "SYNC", 3_100, 10),
+    edge("service:inventory-service", "service:orders-service", "SYNC", 1_200, 0),
+    edge("service:orders-service", "db:postgresql/orders", "SYNC", 24_000, 3),
+    edge("service:orders-service", "service:inventory-service", "SYNC", 8_900, 12),
+    edge("service:orders-service", "topic:kafka/order-events", "PUBLISH", 8_700, 0),
+    edge("service:payments-service", "db:postgresql/payments", "SYNC", 5_000, 80),
+    edge("service:payments-service", "external:api.stripe.com", "SYNC", 3_000, 150),
+    edge("service:payments-service", "topic:kafka/payment-events", "PUBLISH", 2_000, 0),
+    edge("topic:kafka/order-events", "service:notification-service", "CONSUME", 8_700, 0),
+    edge("topic:kafka/payment-events", "service:notification-service", "CONSUME", 2_000, 0),
+  ],
+};
+
+export const emptyGraph: TopologyGraph = { ...demoGraph, nodes: [], edges: [] };

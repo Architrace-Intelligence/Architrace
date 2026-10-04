@@ -3,6 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export function plural(count: number, noun: string): string {
-  return `${String(count)} ${noun}${count === 1 ? "" : "s"}`;
+export function plural(count: number, noun: string, nouns = `${noun}s`): string {
+  return `${String(count)} ${count === 1 ? noun : nouns}`;
 }
