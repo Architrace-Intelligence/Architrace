@@ -135,6 +135,14 @@ The control plane is a Spring Boot application; every property below can be set 
 | `architrace.topology.retention.period` | `30d` | snapshots whose window ended before `now - period` are deleted |
 | `architrace.topology.retention.batch-size` | `1000` | snapshots deleted per statement |
 | `architrace.topology.retention.cron` | `0 0 3 * * *` | when the retention job runs (UTC) |
+| `architrace.rules.evaluation-interval` | `30s` | the architecture rules run right after an ingested snapshot, at most once per scope per interval; the next snapshot after the interval catches up |
+| `architrace.rules.shared-database.min-services` | `2` | services using one database directly before `shared-database` fires |
+| `architrace.rules.unknown-external.allowlist` | empty | host names of known external systems; every other external host raises `unknown-external` |
+| `architrace.rules.wide-blast-radius.min-share-percent` | `50` | share of the scope's services that must be impaired, strictly above this value, before `wide-blast-radius` fires |
+| `architrace.rules.wide-blast-radius.min-services` | `3` | impaired services needed before `wide-blast-radius` fires, so small graphs stay quiet |
+| `architrace.rules.cross-domain-coupling.max-domains` | `3` | other domains a service may call synchronously before `cross-domain-coupling` fires |
+| `architrace.rules.fan-in-hub.max-callers` | `8` | direct service callers a service may have before `fan-in-hub` fires |
+| `architrace.rules.long-sync-chain.max-hops` | `5` | synchronous hops a request path may have before `long-sync-chain` fires; a cycle counts as one hop |
 
 Ports: HTTP `8085` (`server.port`), gRPC `9090` (`spring.grpc.server.port`). Actuator serves
 `/actuator/health` and `/actuator/metrics`.

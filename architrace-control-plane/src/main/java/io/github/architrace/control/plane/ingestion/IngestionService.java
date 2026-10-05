@@ -14,6 +14,7 @@ import io.github.architrace.control.plane.topology.SnapshotId;
 import io.github.architrace.control.plane.topology.SnapshotStore;
 import io.github.architrace.grpc.proto.GraphSnapshot;
 import java.time.Clock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,13 +24,20 @@ public class IngestionService {
     private final SnapshotStore snapshots;
     private final IngestionMetrics metrics;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
     private final SnapshotMapper mapper = new SnapshotMapper();
 
-    public IngestionService(AgentStore agents, SnapshotStore snapshots, IngestionMetrics metrics, Clock clock) {
+    public IngestionService(
+            AgentStore agents,
+            SnapshotStore snapshots,
+            IngestionMetrics metrics,
+            Clock clock,
+            ApplicationEventPublisher events) {
         this.agents = agents;
         this.snapshots = snapshots;
         this.metrics = metrics;
         this.clock = clock;
+        this.events = events;
     }
 
     public Agent register(AgentRegistration registration) {
@@ -47,6 +55,7 @@ public class IngestionService {
         SnapshotId id = snapshots.save(snapshot);
         agents.touch(agent.id(), snapshot.receivedAt());
         metrics.snapshotIngested();
+        events.publishEvent(new SnapshotIngested(snapshot.scope(), snapshot.receivedAt()));
         return id;
     }
 

@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class IngestionServiceTest {
@@ -32,8 +34,9 @@ class IngestionServiceTest {
     private final InMemoryAgentStore agents = new InMemoryAgentStore();
     private final InMemorySnapshotStore snapshots = new InMemorySnapshotStore();
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
-    private final IngestionService service =
-            new IngestionService(agents, snapshots, new IngestionMetrics(registry), Clock.fixed(NOW, ZoneOffset.UTC));
+    private final List<Object> events = new ArrayList<>();
+    private final IngestionService service = new IngestionService(
+            agents, snapshots, new IngestionMetrics(registry), Clock.fixed(NOW, ZoneOffset.UTC), events::add);
 
     @Test
     void registersWithTheClockTime() {
@@ -58,6 +61,7 @@ class IngestionServiceTest {
                 .satisfies(a -> assertThat(a.lastSeenAt()).isEqualTo(NOW));
         assertThat(registry.counter("architrace.snapshots.ingested").count()).isEqualTo(1.0);
         assertThat(registry.counter("architrace.snapshots.rejected").count()).isZero();
+        assertThat(events).containsExactly(new SnapshotIngested(REGISTRATION.scope(), NOW));
     }
 
     @Test
@@ -72,5 +76,6 @@ class IngestionServiceTest {
 
         assertThat(snapshots.all()).isEmpty();
         assertThat(registry.counter("architrace.snapshots.rejected").count()).isEqualTo(1.0);
+        assertThat(events).isEmpty();
     }
 }

@@ -5,6 +5,7 @@
 
 package io.github.architrace.control.plane.rules;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,6 +13,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties(prefix = "architrace.rules")
 public record RulesProperties(
+        @DefaultValue("30s") Duration evaluationInterval,
         @DefaultValue SharedDatabaseProperties sharedDatabase,
         @DefaultValue UnknownExternalProperties unknownExternal,
         @DefaultValue WideBlastRadiusProperties wideBlastRadius,
@@ -20,6 +22,10 @@ public record RulesProperties(
         @DefaultValue LongSyncChainProperties longSyncChain) {
 
     public RulesProperties {
+        Objects.requireNonNull(evaluationInterval, "evaluationInterval");
+        if (evaluationInterval.isZero() || evaluationInterval.isNegative()) {
+            throw new IllegalArgumentException("evaluationInterval must be positive");
+        }
         Objects.requireNonNull(sharedDatabase, "sharedDatabase");
         Objects.requireNonNull(unknownExternal, "unknownExternal");
         Objects.requireNonNull(wideBlastRadius, "wideBlastRadius");
@@ -30,6 +36,7 @@ public record RulesProperties(
 
     public static RulesProperties defaults() {
         return new RulesProperties(
+                Duration.ofSeconds(30),
                 new SharedDatabaseProperties(2),
                 new UnknownExternalProperties(List.of()),
                 new WideBlastRadiusProperties(50, 3),

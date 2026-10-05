@@ -53,11 +53,17 @@ Last updated: **2026-10-05**
   `findings(scope)`) with `JdbcFindingStore` in `rules.persistence` over the `finding` table
   (Liquibase changelog `0002-finding.yaml`, scope columns, `subject_ids` and `evidence` as
   jsonb id lists, index on the scope); replacing is one transaction (delete the scope, insert
-  the new rows); reads come back in `Finding.ORDER`. Nothing writes to the store yet. See
-  the [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
-  delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a pull
-  request may change at most twelve files; the rule table there still needs the chain
-  semantics and the plan the split (next docs touch).
+  the new rows); reads come back in `Finding.ORDER`. PR 5 (ARCHI-57, #70) runs the rules:
+  `IngestionService` publishes a `SnapshotIngested` event after every stored snapshot,
+  `RuleEvaluator` listens, claims the scope at most once per
+  `architrace.rules.evaluation-interval` (30s, compare-and-set on a per-scope instant),
+  evaluates the current graph at the control plane's `now` and replaces the findings of the
+  scope; a failing evaluation is logged and never fails the ingestion. `RulesConfiguration`
+  enables `RulesProperties` and the `RuleEngine` bean; the properties are on the
+  configuration reference page. See the [M6](../features/m6-architecture-rules/) page;
+  item 4 of its delivery plan is delivered in two pull requests (ARCHI-56 persistence,
+  ARCHI-57 evaluation) because a pull request may change at most twelve files; the rule
+  table there still needs the chain semantics and the plan the split (next docs touch).
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -135,22 +141,18 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–3 (#66–#68) are merged. Merge M6 PR 4 (ARCHI-56, #69); the next pull request is
+M6 PR 1–4 (#66–#69) are merged. Merge M6 PR 5 (ARCHI-57, #70); the next pull request is
 opened only after it is merged. Then continue, one pull request against `main` at a time,
 each with the next free ticket number:
 
-1. M6 PR 5: evaluation after every ingested snapshot (`IngestionService` publishes a
-   `SnapshotIngested` event, `RuleEvaluator` listens, bounded to once per scope per
-   `architrace.rules.evaluation-interval`), `RulesConfiguration` enabling `RulesProperties`
-   and the `RuleEngine` bean, the configuration reference page.
-2. M6 PR 6: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
+1. M6 PR 6: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
    the Query API reference page, finding counts on the scope summaries.
-3. M6 PR 7 and following: Findings page, map badges, impact lens and rail card, user guide
+2. M6 PR 7 and following: Findings page, map badges, impact lens and rail card, user guide
    page.
-4. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+3. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
    real data); the M6 candidates B2 and B3 along the way.
-5. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+4. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume
