@@ -10,6 +10,7 @@ import { App } from "../app/App";
 import {
   demoFindings,
   demoGraph,
+  demoImpact,
   demoScopes,
   emptyGraph,
   problem,
@@ -204,6 +205,79 @@ describe("ScopePage", () => {
     expect(await screen.findByText("Service · PROD")).toBeInTheDocument();
     expect(rail().queryByText(/^Findings ·/)).not.toBeInTheDocument();
     expect(requestPaths(fetch).some((request) => request.endsWith("/findings"))).toBe(false);
+  });
+
+  it("shows what breaks if the selected node fails under the impact lens", async () => {
+    const user = userEvent.setup();
+    const fetch = respondByPath({
+      "/graph": demoGraph,
+      "/scopes": demoScopes,
+      "/findings": demoFindings,
+      "/impact": demoImpact,
+    });
+    vi.stubGlobal("fetch", fetch);
+    renderAt(`${SCOPE}?lens=impact&node=service%3Aorders-service`, <App />);
+
+    expect(await screen.findByText("If orders-service fails · deterministic")).toBeInTheDocument();
+    expect(requestPaths(fetch)).toContain(
+      "/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/impact?node=service%3Aorders-service",
+    );
+    expect(screen.getByRole("link", { name: "Open as JSON" })).toHaveAttribute(
+      "href",
+      "/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/impact?node=service%3Aorders-service",
+    );
+    const card = rail().getByRole("region", { name: "If orders-service fails · deterministic" });
+    expect(card).toHaveTextContent("2 of 5 services impaired (40 %) · 1 node delayed");
+    expect(within(card).getByRole("button", { name: /api-gateway/ })).toHaveTextContent(
+      "1 hop api-gateway api-gateway → orders-service",
+    );
+    expect(within(card).getByRole("button", { name: /notification-service/ })).toHaveTextContent(
+      "delayed",
+    );
+    expect(
+      rail().queryByRole("button", { name: "What breaks if it fails" }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(count(".react-flow__node.impact-impaired")).toBe(2);
+    });
+    expect(count(".react-flow__node.impact-hop-1")).toBe(2);
+    expect(count(".react-flow__node.impact-delayed")).toBe(1);
+    expect(count(".react-flow__node.impact-subject")).toBe(1);
+    expect(count(".react-flow__node.dimmed")).toBe(5);
+    expect(screen.getByText("if this node fails")).toBeInTheDocument();
+
+    await user.click(within(card).getByRole("button", { name: /inventory-service/ }));
+    expect(await screen.findByText("service:inventory-service")).toBeInTheDocument();
+    expect(requestPaths(fetch)).toContain(
+      "/api/v1/scopes/web%20shop/PROD/k8s-prod-eu1/impact?node=service%3Ainventory-service",
+    );
+  });
+
+  it("offers the impact lens from the rail and asks for a node when none is selected", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      respondByPath({
+        "/graph": demoGraph,
+        "/scopes": demoScopes,
+        "/findings": demoFindings,
+        "/impact": demoImpact,
+      }),
+    );
+    renderAt(`${SCOPE}?lens=impact`, <App />);
+
+    expect(
+      await screen.findByText("Select a node to see what breaks if it fails."),
+    ).toBeInTheDocument();
+    await user.click(
+      within(screen.getByRole("group", { name: "Lens" })).getByRole("button", { name: "All" }),
+    );
+    fireEvent.click(await screen.findByText("orders-service"));
+    await user.click(await rail().findByRole("button", { name: "What breaks if it fails" }));
+    expect(await screen.findByText("If orders-service fails · deterministic")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("group", { name: "Lens" })).getByRole("button", { name: "Impact" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("selects an edge from the URL and describes the dependency", async () => {

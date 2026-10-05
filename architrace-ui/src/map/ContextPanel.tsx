@@ -4,7 +4,7 @@
  */
 
 import { Fragment, type ReactNode } from "react";
-import type { Finding, TopologyGraph, TopologyNode } from "../api/client";
+import type { Finding, Impact, ImpactedNode, TopologyGraph, TopologyNode } from "../api/client";
 import { findingsOf, SEVERITY_LABELS, severityToken } from "../findings/model";
 import { plural } from "../projects/format";
 import { describeMetrics, formatCount, formatInstant, formatMillis, formatRate } from "./metrics";
@@ -33,6 +33,8 @@ interface ContextPanelProps {
   readonly state: MapState;
   readonly onSelect: (selection: Selection | undefined) => void;
   readonly findings?: readonly Finding[];
+  readonly impact?: Impact;
+  readonly onImpact?: () => void;
 }
 
 const HEALTH_LABELS: Record<EdgeHealth, string> = {
@@ -41,7 +43,14 @@ const HEALTH_LABELS: Record<EdgeHealth, string> = {
   bad: "errors ≥ 3 %",
 };
 
-export function ContextPanel({ graph, state, onSelect, findings }: ContextPanelProps) {
+export function ContextPanel({
+  graph,
+  state,
+  onSelect,
+  findings,
+  impact,
+  onImpact,
+}: ContextPanelProps) {
   const environment = graph.scope.environment;
   const node =
     state.selection?.kind === "node" ? nodeDetails(graph, state.selection.id) : undefined;
@@ -52,6 +61,9 @@ export function ContextPanel({ graph, state, onSelect, findings }: ContextPanelP
         environment={environment}
         onSelect={onSelect}
         findings={findings === undefined ? undefined : findingsOf(findings, node.node.id)}
+        impact={impact?.subject.id === node.node.id ? impact : undefined}
+        onImpact={state.lens === "impact" ? undefined : onImpact}
+        names={new Map(graph.nodes.map((candidate) => [candidate.id, candidate.name]))}
       />
     );
   }
@@ -139,9 +151,20 @@ interface NodePanelProps {
   readonly environment: string;
   readonly onSelect: (selection: Selection | undefined) => void;
   readonly findings?: readonly Finding[];
+  readonly impact?: Impact;
+  readonly onImpact?: () => void;
+  readonly names: ReadonlyMap<string, string>;
 }
 
-function NodePanel({ details, environment, onSelect, findings }: NodePanelProps) {
+function NodePanel({
+  details,
+  environment,
+  onSelect,
+  findings,
+  impact,
+  onImpact,
+  names,
+}: NodePanelProps) {
   const { node, inbound, outbound } = details;
   const namespaces = namespacesOf(node);
   const clusters = clustersOf(node);
@@ -249,6 +272,12 @@ function NodePanel({ details, environment, onSelect, findings }: NodePanelProps)
               ))}
             </Section>
           </>
+        )}
+        {impact !== undefined && <ImpactCard impact={impact} names={names} onSelect={onSelect} />}
+        {impact === undefined && onImpact !== undefined && (
+          <button type="button" className="btn btn-sm" onClick={onImpact}>
+            What breaks if it fails
+          </button>
         )}
         {findings !== undefined && (
           <Section title={`Findings · ${String(findings.length)}`}>
@@ -374,6 +403,73 @@ function EdgePanel({ details, environment, onSelect }: EdgePanelProps) {
         </Section>
       </div>
     </>
+  );
+}
+
+interface ImpactCardProps {
+  readonly impact: Impact;
+  readonly names: ReadonlyMap<string, string>;
+  readonly onSelect: (selection: Selection | undefined) => void;
+}
+
+function ImpactCard({ impact, names, onSelect }: ImpactCardProps) {
+  const share =
+    impact.servicesTotal === 0 ? 0 : Math.round((impact.services * 100) / impact.servicesTotal);
+  return (
+    <Section title={`If ${impact.subject.name} fails · deterministic`}>
+      <span className="muted">
+        {impact.impaired.length === 0
+          ? "Nothing depends on it synchronously."
+          : `${String(impact.services)} of ${plural(impact.servicesTotal, "service")} impaired (${String(share)} %)`}
+        {impact.delayed.length > 0 && ` · ${plural(impact.delayed.length, "node")} delayed`}
+      </span>
+      {impact.impaired.map((reached) => (
+        <ImpactRow
+          key={reached.node.id}
+          badge={`${String(reached.distance)} hop${reached.distance === 1 ? "" : "s"}`}
+          badgeClass="sev-high"
+          reached={reached}
+          names={names}
+          onSelect={onSelect}
+        />
+      ))}
+      {impact.delayed.map((reached) => (
+        <ImpactRow
+          key={reached.node.id}
+          badge="delayed"
+          badgeClass="sev-medium"
+          reached={reached}
+          names={names}
+          onSelect={onSelect}
+        />
+      ))}
+    </Section>
+  );
+}
+
+interface ImpactRowProps {
+  readonly badge: string;
+  readonly badgeClass: string;
+  readonly reached: ImpactedNode;
+  readonly names: ReadonlyMap<string, string>;
+  readonly onSelect: (selection: Selection | undefined) => void;
+}
+
+function ImpactRow({ badge, badgeClass, reached, names, onSelect }: ImpactRowProps) {
+  return (
+    <button
+      type="button"
+      className="dep"
+      onClick={() => {
+        onSelect({ kind: "node", id: reached.node.id });
+      }}
+    >
+      <span className={`badge ${badgeClass}`}>{badge}</span>{" "}
+      <span className="dep-name">{reached.node.name}</span>{" "}
+      <span className="dep-metrics">
+        {reached.path.map((id) => names.get(id) ?? id).join(" → ")}
+      </span>
+    </button>
   );
 }
 

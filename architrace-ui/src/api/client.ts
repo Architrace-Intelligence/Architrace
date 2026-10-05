@@ -22,6 +22,8 @@ export type EdgeRef = components["schemas"]["EdgeRef"];
 export type Finding = components["schemas"]["Finding"];
 export type Severity = components["schemas"]["Severity"];
 export type FindingCounts = components["schemas"]["FindingCounts"];
+export type Impact = components["schemas"]["Impact"];
+export type ImpactedNode = components["schemas"]["ImpactedNode"];
 
 export class ProblemError extends Error {
   readonly problem: Problem;
@@ -95,6 +97,19 @@ export async function listFindings(scope: Scope, signal?: AbortSignal): Promise<
   const { data, error, response } = await client.GET(
     "/scopes/{project}/{environment}/{cluster}/findings",
     { params: { path: scope }, signal },
+  );
+  return unwrap(data, error, response);
+}
+
+export async function getImpact(
+  scope: Scope,
+  node: string,
+  at: string | undefined,
+  signal?: AbortSignal,
+): Promise<Impact> {
+  const { data, error, response } = await client.GET(
+    "/scopes/{project}/{environment}/{cluster}/impact",
+    { params: { path: scope, query: at === undefined ? { node } : { node, at } }, signal },
   );
   return unwrap(data, error, response);
 }

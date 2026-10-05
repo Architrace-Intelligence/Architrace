@@ -1392,6 +1392,67 @@ button.node {
   opacity: 0.75;
 }
 
+.react-flow__node.impact-subject .node {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    var(--shadow);
+}
+
+.react-flow__node.impact-impaired .node {
+  border-color: var(--sev-high);
+  background: color-mix(in srgb, var(--sev-high) 24%, var(--surface));
+}
+
+.react-flow__node.impact-hop-2 .node {
+  background: color-mix(in srgb, var(--sev-high) 13%, var(--surface));
+}
+
+.react-flow__node.impact-hop-3 .node {
+  background: color-mix(in srgb, var(--sev-high) 6%, var(--surface));
+}
+
+.react-flow__node.impact-delayed .node {
+  border-color: var(--sev-med);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--sev-med) 20%, var(--surface)) 0 5px,
+    var(--surface) 5px 10px
+  );
+}
+
+.swatch {
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+}
+
+.swatch-subject {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.swatch-impaired {
+  border-color: var(--sev-high);
+  background: color-mix(in srgb, var(--sev-high) 24%, var(--surface));
+}
+
+.swatch-far {
+  border-color: var(--sev-high);
+  background: color-mix(in srgb, var(--sev-high) 8%, var(--surface));
+}
+
+.swatch-delayed {
+  border-color: var(--sev-med);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--sev-med) 20%, var(--surface)) 0 3px,
+    var(--surface) 3px 6px
+  );
+}
+
 .react-flow__edge.drift-added .react-flow__edge-path {
   stroke: var(--added);
 }

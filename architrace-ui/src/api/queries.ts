@@ -7,6 +7,7 @@ import { queryOptions } from "@tanstack/react-query";
 import {
   getEnvironmentDiff,
   getGraph,
+  getImpact,
   getTimelineDiff,
   listFindings,
   listScopes,
@@ -67,5 +68,12 @@ export function findingsQuery(scope: Scope) {
   return queryOptions({
     queryKey: ["findings", scope.project, scope.environment, scope.cluster],
     queryFn: ({ signal }) => listFindings(scope, signal),
+  });
+}
+
+export function impactQuery(scope: Scope, node: string, at?: string) {
+  return queryOptions({
+    queryKey: ["impact", scope.project, scope.environment, scope.cluster, node, at ?? "live"],
+    queryFn: ({ signal }) => getImpact(scope, node, at, signal),
   });
 }

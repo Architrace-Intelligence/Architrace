@@ -7,9 +7,10 @@ import { GLYPHS, NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES, type SideLabels
 
 interface MapLegendProps {
   readonly sides?: SideLabels;
+  readonly impact?: boolean;
 }
 
-export function MapLegend({ sides }: MapLegendProps) {
+export function MapLegend({ sides, impact = false }: MapLegendProps) {
   return (
     <fieldset className="legend">
       <legend className="sr-only">Legend</legend>
@@ -21,7 +22,9 @@ export function MapLegend({ sides }: MapLegendProps) {
           </div>
         ))}
       </div>
-      {sides === undefined ? <TrafficLegend /> : <DriftLegend sides={sides} />}
+      {impact && <ImpactLegend />}
+      {!impact && sides === undefined && <TrafficLegend />}
+      {!impact && sides !== undefined && <DriftLegend sides={sides} />}
     </fieldset>
   );
 }
@@ -48,6 +51,35 @@ function TrafficLegend() {
       <div className="legend-row">
         <span className="line-sample line-bad" aria-hidden="true" />
         <span>errors ≥ 3 %</span>
+      </div>
+      <div className="legend-row">
+        <span className="badge node-badge sev-high" aria-hidden="true">
+          2
+        </span>
+        <span>findings on the node</span>
+      </div>
+    </div>
+  );
+}
+
+function ImpactLegend() {
+  return (
+    <div className="legend-col">
+      <div className="legend-row">
+        <span className="swatch swatch-subject" aria-hidden="true" />
+        <span>if this node fails</span>
+      </div>
+      <div className="legend-row">
+        <span className="swatch swatch-impaired" aria-hidden="true" />
+        <span>impaired, one hop away</span>
+      </div>
+      <div className="legend-row">
+        <span className="swatch swatch-far" aria-hidden="true" />
+        <span>impaired further away</span>
+      </div>
+      <div className="legend-row">
+        <span className="swatch swatch-delayed" aria-hidden="true" />
+        <span>delayed, data arrives late</span>
       </div>
     </div>
   );

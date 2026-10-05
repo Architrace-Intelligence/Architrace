@@ -33,6 +33,7 @@ import {
   type SideLabels,
   type VisibleGraph,
   type NodeFindings,
+  type ImpactOverlay,
 } from "./model";
 import { type CardNode, NodeCard } from "./NodeCard";
 
@@ -53,9 +54,18 @@ interface ServiceMapProps {
   readonly overlay?: DriftOverlay;
   readonly sides?: SideLabels;
   readonly findings?: ReadonlyMap<string, NodeFindings>;
+  readonly impact?: ImpactOverlay;
 }
 
-export function ServiceMap({ graph, state, onSelect, overlay, sides, findings }: ServiceMapProps) {
+export function ServiceMap({
+  graph,
+  state,
+  onSelect,
+  overlay,
+  sides,
+  findings,
+  impact,
+}: ServiceMapProps) {
   const key = [...graph.nodes.map((node) => node.id), ...graph.edges.map(edgeId)].join("|");
   const layout = useQuery({
     queryKey: ["layout", key],
@@ -82,6 +92,7 @@ export function ServiceMap({ graph, state, onSelect, overlay, sides, findings }:
       overlay={overlay}
       sides={sides}
       findings={findings}
+      impact={impact}
     />
   );
 }
@@ -94,6 +105,7 @@ interface MapCanvasProps {
   readonly overlay: DriftOverlay | undefined;
   readonly sides: SideLabels | undefined;
   readonly findings: ReadonlyMap<string, NodeFindings> | undefined;
+  readonly impact: ImpactOverlay | undefined;
 }
 
 function MapCanvas({
@@ -104,13 +116,15 @@ function MapCanvas({
   overlay,
   sides,
   findings,
+  impact,
 }: MapCanvasProps) {
-  const look = useMemo(() => looks(graph, state), [graph, state]);
+  const look = useMemo(() => looks(graph, state, impact), [graph, state, impact]);
   const nodes = useMemo<CardNode[]>(
     () =>
       graph.nodes.map((node) => {
         const nodeLook = look.nodes.get(node.id);
         const change = overlay?.nodes.get(node.id);
+        const mark = impact?.nodes.get(node.id);
         return {
           id: node.id,
           type: "card",
@@ -129,10 +143,13 @@ function MapCanvas({
             [nodeLook?.dimmed ?? false, "dimmed"],
             [nodeLook?.match ?? false, "match"],
             [change !== undefined, `drift-${change ?? ""}`],
+            [impact?.subject === node.id, "impact-subject"],
+            [mark !== undefined, `impact-${mark?.kind ?? ""}`],
+            [mark?.kind === "impaired", `impact-hop-${String(Math.min(mark?.distance ?? 1, 3))}`],
           ]),
         };
       }),
-    [graph, positions, look, onSelect, overlay, findings],
+    [graph, positions, look, onSelect, overlay, findings, impact],
   );
   const edges = useMemo<Edge[]>(
     () =>
@@ -219,7 +236,7 @@ function MapCanvas({
           nodeClassName={(node) => `mini-${NODE_TYPE_TOKENS[node.data.node.type]}`}
         />
         <Panel position="bottom-left">
-          <MapLegend sides={sides} />
+          <MapLegend sides={sides} impact={impact !== undefined} />
         </Panel>
       </ReactFlow>
     </section>
