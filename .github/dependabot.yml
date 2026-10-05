@@ -67,6 +67,9 @@ updates:
     directory: /demo/services
     schedule:
       interval: monthly
+    groups:
+      demo-dependencies:
+        patterns: ["*"]
     labels: [chore]
     commit-message:
       prefix: "build(deps)"

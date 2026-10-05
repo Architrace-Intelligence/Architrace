@@ -38,7 +38,12 @@ Last updated: **2026-10-05**
 - Housekeeping merged on 2026-10-05: the Snyk policy of the documentation site (ARCHI-68, #71:
   `overrides` for `postcss-selector-parser`, a time-boxed ignore for `zod`) and Gradle 9.8.0
   with regenerated lockfiles (ARCHI-69, #74; the unused `guava` catalog entry is gone). Open
-  follow-up: drop the JVM 24 pin in `build-logic` now that Kotlin 2.4 targets 25.
+  follow-up: drop the JVM 24 pin in `build-logic` now that Kotlin 2.4 targets 25. The demo's
+  Python dependencies move together (ARCHI-70, #91: OpenTelemetry SDK and exporter 1.45.0,
+  instrumentations 0.66b0, kafka-python 3.0.11, psycopg2-binary 2.9.13) and Dependabot now
+  groups the pip updates of `demo/services`, because the SDK, exporter and instrumentation
+  pins only resolve as one set and no CI job builds the demo image; the stack was run end to
+  end with locally built images after the bump.
 - **M7 is in progress.** PR 1 (ARCHI-64, #81) adds `demo/`: `docker-compose.yml` with the
   control plane, one agent per environment (`agent-dev.yaml`, `agent-stage.yaml`), one
   OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
@@ -137,9 +142,10 @@ timeline mode only).
 
 ## Next step
 
-M6 is complete; M7 PR 1–3 (#81–#83) are merged. Merge M7 PR 4 (ARCHI-67, #90), the last pull
-request of the MVP queue. Then continue, one pull request against `main` at a time, each
-with the next free ticket number:
+The MVP queue M0–M7 is merged (#90 closed M7). Merge the demo dependency bump (ARCHI-70, #91),
+which completes the set that the single Dependabot merges #84–#88 left inconsistent on
+`main`. Then continue, one pull request against `main` at a time, each with the next free
+ticket number:
 
 1. The M6 candidates B2 (an outbox topic with consumers but no producer as an insight) and
    B3 (a platform category in the external allowlist); the maintainer checklist of M0
