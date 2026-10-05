@@ -23,56 +23,49 @@ export interface RuleInfo {
   readonly property?: string;
 }
 
-export const RULES: readonly RuleInfo[] = [
-  {
-    id: "cyclic-dependency",
-    label: "Cyclic dependency",
-    severity: "HIGH",
-    threshold: "any cycle of synchronous calls",
-  },
-  {
-    id: "shared-database",
-    label: "Shared database",
-    severity: "HIGH",
-    threshold: "2 or more services on one database",
-    property: "architrace.rules.shared-database.min-services",
-  },
-  {
-    id: "wide-blast-radius",
-    label: "Wide blast radius",
-    severity: "HIGH",
-    threshold: "more than 50 % of the services impaired, at least 3",
-    property: "architrace.rules.wide-blast-radius.min-share-percent",
-  },
-  {
-    id: "cross-domain-coupling",
-    label: "Cross-domain coupling",
-    severity: "MEDIUM",
-    threshold: "more than 3 other domains called synchronously",
-    property: "architrace.rules.cross-domain-coupling.max-domains",
-  },
-  {
-    id: "fan-in-hub",
-    label: "Fan-in hub",
-    severity: "MEDIUM",
-    threshold: "more than 8 direct callers",
-    property: "architrace.rules.fan-in-hub.max-callers",
-  },
-  {
-    id: "long-sync-chain",
-    label: "Long synchronous chain",
-    severity: "MEDIUM",
-    threshold: "more than 5 hops",
-    property: "architrace.rules.long-sync-chain.max-hops",
-  },
-  {
-    id: "unknown-external",
-    label: "Unknown external",
-    severity: "LOW",
-    threshold: "any external host outside the allowlist",
-    property: "architrace.rules.unknown-external.allowlist",
-  },
+const RULE_TABLE: readonly (readonly [string, string, Severity, string, string?])[] = [
+  ["cyclic-dependency", "Cyclic dependency", "HIGH", "any cycle of synchronous calls"],
+  [
+    "shared-database",
+    "Shared database",
+    "HIGH",
+    "2 or more services on one database",
+    "min-services",
+  ],
+  [
+    "wide-blast-radius",
+    "Wide blast radius",
+    "HIGH",
+    "more than 50 % of the services impaired, at least 3",
+    "min-share-percent",
+  ],
+  [
+    "cross-domain-coupling",
+    "Cross-domain coupling",
+    "MEDIUM",
+    "more than 3 other domains called synchronously",
+    "max-domains",
+  ],
+  ["fan-in-hub", "Fan-in hub", "MEDIUM", "more than 8 direct callers", "max-callers"],
+  ["long-sync-chain", "Long synchronous chain", "MEDIUM", "more than 5 hops", "max-hops"],
+  [
+    "unknown-external",
+    "Unknown external",
+    "LOW",
+    "any external host outside the allowlist",
+    "allowlist",
+  ],
 ];
+
+export const RULES: readonly RuleInfo[] = RULE_TABLE.map(
+  ([id, label, severity, threshold, key]) => ({
+    id,
+    label,
+    severity,
+    threshold,
+    property: key === undefined ? undefined : `architrace.rules.${id}.${key}`,
+  }),
+);
 
 export interface FindingsFilter {
   readonly severity?: Severity;
@@ -101,7 +94,8 @@ export function toFindingsParams(filter: FindingsFilter): URLSearchParams {
 
 export function apiRequest(scopePath: string, filter: FindingsFilter): string {
   const query = toFindingsParams(filter).toString();
-  return `/api/v1${scopePath}/findings${query === "" ? "" : `?${query}`}`;
+  const suffix = query === "" ? "" : `?${query}`;
+  return `/api/v1${scopePath}/findings${suffix}`;
 }
 
 export function severityToken(severity: Severity): SeverityToken {
