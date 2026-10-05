@@ -105,19 +105,15 @@ class RuleEngineTest {
 
     @Test
     void findingRequiresASubjectAndText() {
+        List<String> noNodes = List.of();
+        List<String> subject = List.of("db:postgresql/orders");
+
         assertThatThrownBy(() -> new Finding(
-                        "shared-database", Finding.Severity.HIGH, SCOPE, List.of(), "title", "detail", List.of(), NOW))
+                        "shared-database", Finding.Severity.HIGH, SCOPE, noNodes, "title", "detail", noNodes, NOW))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("subjectNodeIds must not be empty");
         assertThatThrownBy(() -> new Finding(
-                        "shared-database",
-                        Finding.Severity.HIGH,
-                        SCOPE,
-                        List.of("db:postgresql/orders"),
-                        " ",
-                        "detail",
-                        List.of(),
-                        NOW))
+                        "shared-database", Finding.Severity.HIGH, SCOPE, subject, " ", "detail", noNodes, NOW))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("title must not be blank");
     }

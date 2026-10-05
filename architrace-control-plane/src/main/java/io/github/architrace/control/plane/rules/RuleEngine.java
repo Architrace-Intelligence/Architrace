@@ -9,12 +9,10 @@ import io.github.architrace.control.plane.topology.TopologyGraph;
 import java.util.List;
 import java.util.Set;
 
-public final class RuleEngine {
+public record RuleEngine(List<ArchitectureRule> rules) {
 
-    private final List<ArchitectureRule> rules;
-
-    public RuleEngine(List<ArchitectureRule> rules) {
-        this.rules = List.copyOf(rules);
+    public RuleEngine {
+        rules = List.copyOf(rules);
     }
 
     public static RuleEngine of(RulesProperties properties) {
@@ -22,10 +20,6 @@ public final class RuleEngine {
                 new CyclicDependency(),
                 new SharedDatabase(properties.sharedDatabase().minServices()),
                 new UnknownExternal(Set.copyOf(properties.unknownExternal().allowlist()))));
-    }
-
-    public List<ArchitectureRule> rules() {
-        return rules;
     }
 
     public List<Finding> evaluate(TopologyGraph graph) {
