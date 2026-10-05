@@ -5,7 +5,6 @@
 
 package io.github.architrace.control.plane.rules;
 
-import io.github.architrace.control.plane.topology.EdgeKind;
 import io.github.architrace.control.plane.topology.NodeType;
 import io.github.architrace.control.plane.topology.TopologyEdge;
 import io.github.architrace.control.plane.topology.TopologyGraph;
@@ -13,8 +12,6 @@ import io.github.architrace.control.plane.topology.TopologyNode;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public record FanInHub(int maxCallers) implements ArchitectureRule {
 
@@ -36,14 +33,11 @@ public record FanInHub(int maxCallers) implements ArchitectureRule {
 
     @Override
     public List<Finding> evaluate(TopologyGraph graph) {
-        Map<String, TopologyNode> nodes =
-                graph.nodes().stream().collect(Collectors.toMap(TopologyNode::id, Function.identity()));
-        Map<String, Set<String>> callersByTarget = graph.edges().stream()
-                .filter(edge -> edge.kind() == EdgeKind.SYNC)
-                .filter(edge -> !edge.sourceId().equals(edge.targetId()))
-                .filter(edge -> isService(nodes, edge.sourceId()) && isService(nodes, edge.targetId()))
-                .collect(Collectors.groupingBy(
-                        TopologyEdge::targetId, Collectors.mapping(TopologyEdge::sourceId, Collectors.toSet())));
+        Map<String, TopologyNode> nodes = Nodes.byId(graph);
+        Map<String, Set<String>> callersByTarget = Nodes.group(
+                Nodes.syncCalls(graph, nodes, NodeType.SERVICE, NodeType.SERVICE),
+                TopologyEdge::targetId,
+                TopologyEdge::sourceId);
         return callersByTarget.entrySet().stream()
                 .filter(entry -> entry.getValue().size() > maxCallers)
                 .sorted(Map.Entry.comparingByKey())
@@ -52,11 +46,6 @@ public record FanInHub(int maxCallers) implements ArchitectureRule {
                         nodes.get(entry.getKey()),
                         entry.getValue().stream().sorted().toList()))
                 .toList();
-    }
-
-    private static boolean isService(Map<String, TopologyNode> nodes, String id) {
-        TopologyNode node = nodes.get(id);
-        return node != null && node.type() == NodeType.SERVICE;
     }
 
     private Finding report(TopologyGraph graph, TopologyNode hub, List<String> callerIds) {

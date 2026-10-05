@@ -5,7 +5,6 @@
 
 package io.github.architrace.control.plane.rules;
 
-import io.github.architrace.control.plane.topology.EdgeKind;
 import io.github.architrace.control.plane.topology.NodeType;
 import io.github.architrace.control.plane.topology.TopologyEdge;
 import io.github.architrace.control.plane.topology.TopologyGraph;
@@ -13,7 +12,6 @@ import io.github.architrace.control.plane.topology.TopologyNode;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public record CrossDomainCoupling(int maxDomains) implements ArchitectureRule {
@@ -38,14 +36,12 @@ public record CrossDomainCoupling(int maxDomains) implements ArchitectureRule {
 
     @Override
     public List<Finding> evaluate(TopologyGraph graph) {
-        Map<String, TopologyNode> nodes =
-                graph.nodes().stream().collect(Collectors.toMap(TopologyNode::id, Function.identity()));
-        Map<String, Set<String>> foreignCalleesBySource = graph.edges().stream()
-                .filter(edge -> edge.kind() == EdgeKind.SYNC)
-                .filter(edge -> isService(nodes, edge.sourceId()) && isService(nodes, edge.targetId()))
-                .filter(edge -> !domain(edge.sourceId()).equals(domain(edge.targetId())))
-                .collect(Collectors.groupingBy(
-                        TopologyEdge::sourceId, Collectors.mapping(TopologyEdge::targetId, Collectors.toSet())));
+        Map<String, TopologyNode> nodes = Nodes.byId(graph);
+        Map<String, Set<String>> foreignCalleesBySource = Nodes.group(
+                Nodes.syncCalls(graph, nodes, NodeType.SERVICE, NodeType.SERVICE)
+                        .filter(edge -> !domain(edge.sourceId()).equals(domain(edge.targetId()))),
+                TopologyEdge::sourceId,
+                TopologyEdge::targetId);
         return foreignCalleesBySource.entrySet().stream()
                 .filter(entry -> domains(entry.getValue()).size() > maxDomains)
                 .sorted(Map.Entry.comparingByKey())
@@ -55,11 +51,6 @@ public record CrossDomainCoupling(int maxDomains) implements ArchitectureRule {
                         entry.getValue().stream().sorted().toList(),
                         nodes))
                 .toList();
-    }
-
-    private static boolean isService(Map<String, TopologyNode> nodes, String id) {
-        TopologyNode node = nodes.get(id);
-        return node != null && node.type() == NodeType.SERVICE;
     }
 
     private static Set<String> domains(Set<String> serviceIds) {
