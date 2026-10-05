@@ -36,7 +36,7 @@ val uiSources = fileTree(projectDir) {
     exclude("src/api/schema.d.ts")
 }
 
-val npmCheck by tasks.registering(NpmTask::class) {
+val npmCheck = tasks.register<NpmTask>("npmCheck") {
     group = "verification"
     description = "Type-checks, lints, format-checks and tests the UI sources."
     dependsOn(tasks.named("npmInstall"))
@@ -46,7 +46,7 @@ val npmCheck by tasks.registering(NpmTask::class) {
     outputs.dir(coverageDirectory)
 }
 
-val npmBuild by tasks.registering(NpmTask::class) {
+val npmBuild = tasks.register<NpmTask>("npmBuild") {
     group = "build"
     description = "Builds the production bundle of the UI."
     dependsOn(tasks.named("npmInstall"))

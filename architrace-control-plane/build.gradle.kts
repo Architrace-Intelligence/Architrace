@@ -16,7 +16,7 @@ configurations {
     }
 }
 
-val uiBundle: Configuration by configurations.creating {
+val uiBundle: Configuration = configurations.create("uiBundle") {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
