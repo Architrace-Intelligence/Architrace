@@ -90,10 +90,11 @@ Last updated: **2026-10-05**
   with the share and the rows by distance (each with its path, clicking one moves the
   subject), the rail offers "What breaks if it fails" outside the lens, "Open as JSON"
   points at the impact request, and "Show on map" of a wide blast radius finding opens the
-  lens. See the [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
-  delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a pull
-  request may change at most twelve files; the rule table there still needs the chain
-  semantics and the plan the split (next docs touch).
+  lens. PR 11 (ARCHI-63, #80) closes M6 in the documentation: the user guide "Reading the
+  architecture findings", the M6 page (status, chain and domain semantics, the eleven-step
+  delivery plan), the progress log, the architecture page (four screens) and the README. M6
+  is complete once #80 is merged; see the [M6](../features/m6-architecture-rules/)
+  page.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -171,16 +172,14 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–9 (#66–#70, #75–#78) are merged. Merge M6 PR 10 (ARCHI-62, #79); the next pull
-request is opened only after it is merged. Then continue, one pull request against `main` at
-a time, each with the next free ticket number:
+M6 PR 1–10 (#66–#70, #75–#79) are merged. Merge M6 PR 11 (ARCHI-63, #80), the last of the
+chain. Then continue, one pull request against `main` at a time, each with the next free
+ticket number:
 
-1. M6 PR 11: the user guide page, the M6 feature page (status, chain semantics), progress
-   log lines for ARCHI-59 onwards, README.
-2. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+1. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
    real data); the M6 candidates B2 and B3 along the way.
-3. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+2. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume

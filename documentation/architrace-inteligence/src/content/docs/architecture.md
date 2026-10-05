@@ -77,11 +77,15 @@ flowchart LR
   `/actuator`, `/swagger-ui` and `/webjars` whose last segment has no extension answer
   `index.html`; everything else keeps its 404. The client is typed from the OpenAPI document
   (`openapi-typescript`, `openapi-fetch`) with TanStack Query for server state. The initial release
-  has three screens: the Projects list (scopes filtered by environment and cluster, grouped,
-  with the filter in the URL), the Service map of a scope, drawn with React Flow custom nodes
-  on an ELK layered layout that is loaded on demand (M4), and the Drift screen of a scope
-  (M5): environment or timeline mode, both sides in the URL, counters, a grouped list and the
-  same map with drift overlays, fed by the two diff endpoints and the right side's graph.
+  has four screens: the Projects list (scopes filtered by environment and cluster, grouped,
+  with the filter in the URL and the finding counts per scope), the Service map of a scope,
+  drawn with React Flow custom nodes on an ELK layered layout that is loaded on demand (M4),
+  with finding badges on the nodes and an impact lens that colours what breaks if the
+  selected node fails (M6), the Drift screen of a scope (M5): environment or timeline mode,
+  both sides in the URL, counters, a grouped list and the same map with drift overlays, fed
+  by the two diff endpoints and the right side's graph, and the Findings screen of a scope
+  (M6): findings grouped by rule with filters in the URL, evidence, "Show on map" and a rail
+  with every rule's status.
 - The build is governed by the convention plugins of the included build `build-logic`
   (`architrace.java`, `architrace.spring-boot`, `architrace.versioning`): one place for the
   toolchain, formatting, Checkstyle, coverage gates and versioning. Gradle project paths equal

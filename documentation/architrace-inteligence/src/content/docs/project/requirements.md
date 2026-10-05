@@ -53,7 +53,7 @@ Numbered so that MVP decisions can refer to them.
 
 ### 3.1 Repository and build
 
-- Gradle 9.3.1, Kotlin DSL, Java 25 toolchain with `--enable-preview`, version catalogue in
+- Gradle 9.8.0, Kotlin DSL, Java 25 toolchain with `--enable-preview`, version catalogue in
   `gradle/libs.versions.toml`. Modules: `api`, `agent`, `control-plane`.
 - Root plugins: JaCoCo (85% line / branch / method verification), Spotless (SPDX license header
   only, **no formatter**), SonarQube, GraalVM native, Shadow.

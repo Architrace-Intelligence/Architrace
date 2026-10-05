@@ -3,7 +3,7 @@ title: M6. Architecture rules
 description: Deterministic checks that turn a topology into findings with severity and evidence, and the blast radius of any node.
 ---
 
-Status: in progress since 2026-10-05 (engine and three rules in PR 1, impact analysis in PR 2) · Order: 7 · Requirements: F10
+Status: done on 2026-10-05 (ARCHI-53 to ARCHI-63) · Order: 7 · Requirements: F10
 
 ## Goal
 
@@ -47,9 +47,9 @@ graph the map and the drift use.
 | CyclicDependency | strongly connected components over `sync` edges (Tarjan) | any cycle | high |
 | SharedDatabase | a database node with more than one service depending on it | 2 services | high |
 | WideBlastRadius | a node whose failure impairs more than N % of the services of the scope (see Blast radius) | 50 %, at least 3 services | high |
-| CrossDomainCoupling | a service with sync edges into more than N other domains | 3 domains | medium |
+| CrossDomainCoupling | a service with sync edges into services of more than N other domains (the domain is parsed from `service:{domain}/{name}`) | 3 domains | medium |
 | FanInHub | a service with inbound sync degree above N (direct callers, a coupling hotspot) | 8 | medium |
-| LongSyncChain | a simple sync path longer than N hops | 5 | medium |
+| LongSyncChain | the longest sync path from an entry node (a node nobody calls), over the condensation of the strongly connected components: a cycle collapses to its smallest member and has its own finding, a database or external host counts as the last hop | 5 hops | medium |
 | UnknownExternal | an external node not in the allowlist | empty allowlist | low |
 
 ### Blast radius
@@ -111,8 +111,12 @@ Propagation follows the data, edge kind by edge kind:
 | `GET /scopes/{project}/{environment}/{cluster}/findings?severity=&rule=` | the findings of the scope, grouped in the UI by rule; counts per severity join the scope summaries of `GET /scopes` |
 | `GET /scopes/{project}/{environment}/{cluster}/impact?node=&at=` | the `Impact` of one node (the id is a query parameter because ids contain `/`) |
 
-- Findings page: table grouped by rule, severity badges, "show on map" highlights the subject
-  nodes; the map shows a badge with the finding count on affected nodes.
+- Findings page: findings grouped by rule in severity order, severity chips and a rule select
+  in the URL, rows that expand to the detail, the evidence and "Show on map" (the map with the
+  first subject selected), the allowlist line for unknown externals, the rules that pass, a
+  rail with the totals and every rule's status; the Projects list carries the counts per
+  severity, the map a badge with the finding count on every subject node and the findings of
+  the selected node in its rail.
 - Impact lens on the map (`lens=impact` with the selected node in the URL): impaired nodes
   coloured by distance (one hop strong, further hops lighter), delayed nodes hatched,
   everything else dimmed; the context rail gains the card "If *X* fails": impaired services
@@ -133,18 +137,22 @@ Propagation follows the data, edge kind by edge kind:
 
 ## Delivery plan
 
-One pull request against `main` at a time, each at most twelve files:
+Delivered as eleven pull requests against `main`, one at a time, each at most twelve files:
 
 1. Engine, `CyclicDependency`, `SharedDatabase`, `UnknownExternal`, configuration, tests
    (ARCHI-53).
 2. `ImpactAnalysis` with `WideBlastRadius` and its thresholds (ARCHI-54).
-3. `CrossDomainCoupling`, `FanInHub`, `LongSyncChain` with their thresholds.
-4. Persistence (`finding` table), evaluation after ingestion, Spring wiring of the engine and
-   the properties, configuration reference page.
-5. Findings and impact endpoints, OpenAPI update, Query API reference page, finding counts on
-   the scope summaries.
-6. Findings page, map badges, impact lens and rail card, user guide page (split further as
-   the size gate requires).
+3. `CrossDomainCoupling`, `FanInHub`, `LongSyncChain`, the shared
+   `StronglyConnectedComponents` (ARCHI-55).
+4. The `finding` table, `FindingStore`, `JdbcFindingStore` (ARCHI-56).
+5. Evaluation after every ingested snapshot, bounded per scope, Spring wiring, configuration
+   reference (ARCHI-57).
+6. Findings and impact endpoints, OpenAPI, Query API reference (ARCHI-58).
+7. Finding counts on the scope summaries (ARCHI-59).
+8. Findings screen (ARCHI-60).
+9. Finding badges on the Projects list, the map and the map rail (ARCHI-61).
+10. Impact lens and the rail card (ARCHI-62).
+11. User guide and documentation close-out (ARCHI-63).
 
 ## Open points
 

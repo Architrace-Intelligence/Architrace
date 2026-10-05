@@ -25,7 +25,8 @@ export default defineConfig({
           items: [
             { label: 'Local Development', slug: 'guides/local-development' },
             { label: 'Docker Demo', slug: 'guides/docker-demo' },
-            { label: 'Comparing Environments and Releases', slug: 'guides/drift' }
+            { label: 'Comparing Environments and Releases', slug: 'guides/drift' },
+            { label: 'Reading the Architecture Findings', slug: 'guides/findings' }
           ]
         },
         {

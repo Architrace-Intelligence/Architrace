@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | in progress | M0 (maintainer checklist open), M1, M2, M3, M4 and M5 done; M6 in progress, the rest of M7 open |
+| 3 | Implementation (feature by feature)     | in progress | M0 (maintainer checklist open), M1, M2, M3, M4, M5 and M6 done; the rest of M7 open |
 | 4 | Testing, hardening, release 1.0         | in progress | First real-data round on 2026-10-04: no Architrace change needed, backlog B1–B7 in [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) |
 
 ## Process foundation
@@ -49,7 +49,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
 | [M4 Service map UI](../features/m4-service-map/) | done | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32, ARCHI-43, ARCHI-44, ARCHI-45, ARCHI-46 | PR 1–5 merged (#39, #55, #56, #58, #59): `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate, Projects list, shell, routing, Service map with React Flow and ELK, lenses, context rail, find, time, selection in the URL, scope switcher, namespace filter; follow-ups B1 and B3 from the real-data round |
 | [M5 Drift](../features/m5-drift/) | done | agreed | ARCHI-48, ARCHI-49 | PR 1 (#61: diff domain, algorithm, `diff/environments` and `diff/timeline` endpoints) and PR 2 (#62: Drift screen with modes, sides in the URL, counters, grouped list, map overlays, rail, user guide) merged; the changed-node semantics per mode awaits the maintainer's confirmation |
-| [M6 Architecture rules](../features/m6-architecture-rules/) | in progress | agreed · blast radius added 2026-10-05 (ARCHI-50) | ARCHI-53 to ARCHI-58 | PR 1–5 merged (#66: `rules` package with `RuleEngine`, `Finding`, `RulesProperties` and the rules `CyclicDependency`, `SharedDatabase`, `UnknownExternal`; #67: `ImpactAnalysis`, `Impact`, `WideBlastRadius`; #68: `CrossDomainCoupling`, `FanInHub`, `LongSyncChain`, shared `StronglyConnectedComponents`; #69: `finding` table, `FindingStore`, `JdbcFindingStore`; #70: `SnapshotIngested` event, `RuleEvaluator` bounded per scope, `RulesConfiguration`, configuration reference); PR 6 (ARCHI-58, #75: `findings` and `impact` endpoints, OpenAPI, Query API reference) open; scope summary counts and the UI follow one pull request at a time; candidates B2 and B3 from the real-data round |
+| [M6 Architecture rules](../features/m6-architecture-rules/) | done | agreed · blast radius added 2026-10-05 (ARCHI-50) | ARCHI-53 to ARCHI-63 | eleven pull requests (#66–#70, #75–#80), one after the other: the rule engine and the seven rules (ARCHI-53 to ARCHI-55), the `finding` table (ARCHI-56), evaluation after every ingested snapshot (ARCHI-57), the `findings` and `impact` endpoints (ARCHI-58), counts on the scope summaries (ARCHI-59), the Findings screen (ARCHI-60), badges on the Projects list, the map and the rail (ARCHI-61), the impact lens with the rail card (ARCHI-62), the user guide (ARCHI-63); candidates B2 and B3 from the real-data round stay open |
 | [M7 Packaging and demo](../features/m7-packaging-demo/) | in progress | agreed | ARCHI-36 | images delivered with M0 PR 4; demo stack and guides pending; B5, B6 and B7 from the real-data round |
 
 ## History
@@ -110,3 +110,8 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-05 | M6 PR 4: the `finding` table and `JdbcFindingStore` (ARCHI-56) |
 | 2026-10-05 | M6 PR 5: rules evaluated after every ingested snapshot, bounded per scope (ARCHI-57) |
 | 2026-10-05 | M6 PR 6: `findings` and `impact` endpoints of the Query API (ARCHI-58) |
+| 2026-10-05 | M6 PR 7: finding counts per severity on the scope summaries (ARCHI-59) |
+| 2026-10-05 | M6 PR 8: the Findings screen with rule groups, filters, evidence and the rail (ARCHI-60) |
+| 2026-10-05 | M6 PR 9: finding badges on the Projects list, the map nodes and the map rail (ARCHI-61) |
+| 2026-10-05 | M6 PR 10: the impact lens with the card "If X fails" (ARCHI-62) |
+| 2026-10-05 | M6 PR 11: user guide and documentation close-out; M6 complete (ARCHI-63) |
