@@ -44,6 +44,11 @@ Last updated: **2026-10-05**
   groups the pip updates of `demo/services`, because the SDK, exporter and instrumentation
   pins only resolve as one set and no CI job builds the demo image; the stack was run end to
   end with locally built images after the bump.
+- README badges (ARCHI-71, #92): the `main` pipeline now publishes `badges/tests.json` (passed,
+  failed, skipped over every JUnit report) and `badges/version.json` with the documentation site;
+  the README shows the pipeline, CodeQL, tests, SonarCloud quality gate and coverage, Snyk, the
+  release and the version on `main`, the images, and the stack versions read live from the
+  repository files. The release badge says "no releases found" until `v0.1.0` exists.
 - **M7 is in progress.** PR 1 (ARCHI-64, #81) adds `demo/`: `docker-compose.yml` with the
   control plane, one agent per environment (`agent-dev.yaml`, `agent-stage.yaml`), one
   OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
@@ -142,10 +147,9 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7 is merged (#90 closed M7). Merge the demo dependency bump (ARCHI-70, #91),
-which completes the set that the single Dependabot merges #84–#88 left inconsistent on
-`main`. Then continue, one pull request against `main` at a time, each with the next free
-ticket number:
+The MVP queue M0–M7 and the demo dependency bump (#91) are merged. Merge the README badges
+(ARCHI-71, #92); the first `main` run after it publishes the badge data. Then continue, one
+pull request against `main` at a time, each with the next free ticket number:
 
 1. The M6 candidates B2 (an outbox topic with consumers but no producer as an insight) and
    B3 (a platform category in the external allowlist); the maintainer checklist of M0
