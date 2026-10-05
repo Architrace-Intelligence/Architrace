@@ -181,7 +181,11 @@ export function allowlistLine(finding: Finding): string | undefined {
 
 export function mapSearch(finding: Finding): string {
   const subject = finding.subjectNodeIds[0];
-  return subject === undefined ? "" : `?node=${encodeURIComponent(subject)}`;
+  if (subject === undefined) {
+    return "";
+  }
+  const lens = finding.ruleId === "wide-blast-radius" ? "&lens=impact" : "";
+  return `?node=${encodeURIComponent(subject)}${lens}`;
 }
 
 const SEVERITY_RANK: Record<SeverityToken, number> = { high: 0, medium: 1, low: 2 };

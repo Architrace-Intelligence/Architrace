@@ -81,8 +81,16 @@ Last updated: **2026-10-05**
   to the Findings screen), a count badge on every map node that is the subject of a finding
   (`findingsByNode`, the top severity colours it) and a "Findings · N" section in the map
   rail for the selected node; the map asks for the findings only when it shows the present
-  (no `at`), because findings describe the current graph. See the
-  [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
+  (no `at`), because findings describe the current graph. PR 10 (ARCHI-62, #79) adds the impact
+  lens: `lens=impact` with the selected node asks `GET …/impact?node=` (`getImpact`,
+  `impactQuery`), `impactOverlay` turns the answer into node marks (subject, impaired with
+  its hop, delayed) and the set of lit nodes (every path), `looks` dims everything else,
+  the canvas carries the classes `impact-subject`, `impact-impaired impact-hop-{1,2,3}` and
+  `impact-delayed` (hatched), the legend explains them, the rail shows the card "If X fails"
+  with the share and the rows by distance (each with its path, clicking one moves the
+  subject), the rail offers "What breaks if it fails" outside the lens, "Open as JSON"
+  points at the impact request, and "Show on map" of a wide blast radius finding opens the
+  lens. See the [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
   delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a pull
   request may change at most twelve files; the rule table there still needs the chain
   semantics and the plan the split (next docs touch).
@@ -163,18 +171,16 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–8 (#66–#70, #75–#77) are merged. Merge M6 PR 9 (ARCHI-61, #78); the next pull
+M6 PR 1–9 (#66–#70, #75–#78) are merged. Merge M6 PR 10 (ARCHI-62, #79); the next pull
 request is opened only after it is merged. Then continue, one pull request against `main` at
 a time, each with the next free ticket number:
 
-1. M6 PR 10: the impact lens (`lens=impact` with the selected node), the rail card "If X
-   fails", "Show on map" of a wide blast radius finding opening the lens.
-2. M6 PR 11: the user guide page, the M6 feature page (status, chain semantics), progress
+1. M6 PR 11: the user guide page, the M6 feature page (status, chain semantics), progress
    log lines for ARCHI-59 onwards, README.
-3. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+2. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
    real data); the M6 candidates B2 and B3 along the way.
-4. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+3. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume

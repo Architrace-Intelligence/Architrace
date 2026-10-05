@@ -5,6 +5,7 @@
 
 import type {
   EdgeMetrics,
+  Impact,
   NodeType,
   TopologyEdge,
   TopologyGraph,
@@ -48,7 +49,9 @@ const WARN_ERROR_RATE = 0.01;
 const BAD_ERROR_RATE = 0.03;
 const MAX_EDGE_WIDTH = 6;
 
-export type Lens = "all" | "streams";
+export type Lens = "all" | "streams" | "impact";
+
+const LENSES: readonly Lens[] = ["all", "streams", "impact"];
 
 export type Selection =
   { readonly kind: "node"; readonly id: string } | { readonly kind: "edge"; readonly id: string };
@@ -122,6 +125,37 @@ export const GLYPHS: Record<ChangeKind, string> = { added: "+", removed: "−", 
 
 export type EdgeChangeKind = Exclude<ChangeKind, "changed">;
 
+export type ImpactKind = "impaired" | "delayed";
+
+export interface ImpactMark {
+  readonly kind: ImpactKind;
+  readonly distance: number;
+}
+
+export interface ImpactOverlay {
+  readonly subject: string;
+  readonly nodes: ReadonlyMap<string, ImpactMark>;
+  readonly lit: ReadonlySet<string>;
+}
+
+export function impactOverlay(impact: Impact): ImpactOverlay {
+  const nodes = new Map<string, ImpactMark>([
+    ...impact.impaired.map((reached): [string, ImpactMark] => [
+      reached.node.id,
+      { kind: "impaired", distance: reached.distance },
+    ]),
+    ...impact.delayed.map((reached): [string, ImpactMark] => [
+      reached.node.id,
+      { kind: "delayed", distance: reached.distance },
+    ]),
+  ]);
+  const lit = new Set([
+    impact.subject.id,
+    ...[...impact.impaired, ...impact.delayed].flatMap((reached) => reached.path),
+  ]);
+  return { subject: impact.subject.id, nodes, lit };
+}
+
 export interface DriftOverlay {
   readonly nodes: ReadonlyMap<string, ChangeKind>;
   readonly edges: ReadonlyMap<string, EdgeChangeKind>;
@@ -141,7 +175,7 @@ export function parseMapState(params: URLSearchParams): MapState {
   return {
     hidden: NODE_TYPES.filter((type) => requested.includes(type)),
     namespace: namespace === null || namespace === "" ? undefined : namespace,
-    lens: params.get("lens") === "streams" ? "streams" : "all",
+    lens: LENSES.find((lens) => lens === params.get("lens")) ?? "all",
     query: params.get("q") ?? "",
     at: parseAt(params.get("at")),
     selection: parseSelection(node, edge),
@@ -326,9 +360,10 @@ export function streams(graph: VisibleGraph): StreamSummary[] {
     .sort((left, right) => left.topic.name.localeCompare(right.topic.name));
 }
 
-export function looks(visible: VisibleGraph, state: MapState): Looks {
+export function looks(visible: VisibleGraph, state: MapState, impact?: ImpactOverlay): Looks {
   const selection = isPresent(visible, state.selection) ? state.selection : undefined;
-  const lit = litNodes(visible, selection);
+  const lit =
+    state.lens === "impact" && impact !== undefined ? impact.lit : litNodes(visible, selection);
   const touching = touchingEdges(visible, selection);
   const streamNodes = new Set(
     visible.edges
@@ -353,7 +388,9 @@ export function looks(visible: VisibleGraph, state: MapState): Looks {
       const dimmed =
         (nodes.get(edge.sourceId)?.dimmed ?? false) ||
         (nodes.get(edge.targetId)?.dimmed ?? false) ||
-        (selection !== undefined && !isTouching) ||
+        (selection !== undefined &&
+          !isTouching &&
+          !(state.lens === "impact" && impact !== undefined)) ||
         (state.lens === "streams" && edge.kind === "SYNC");
       return [id, { touching: isTouching, dimmed }];
     }),

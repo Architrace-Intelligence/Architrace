@@ -6,6 +6,7 @@
 import { type Mock, vi } from "vitest";
 import type {
   Finding,
+  Impact,
   ScopeSummary,
   TopologyDiff,
   TopologyEdge,
@@ -203,6 +204,40 @@ function finding(
     evaluatedAt: "2026-10-01T12:00:00Z",
   };
 }
+
+function demoNode(id: string): TopologyNode {
+  const found = demoGraph.nodes.find((candidate) => candidate.id === id);
+  if (found === undefined) {
+    throw new Error(`${id} is not in the demo graph`);
+  }
+  return found;
+}
+
+export const demoImpact: Impact = {
+  subject: demoNode("service:orders-service"),
+  at: "2026-10-01T12:00:00Z",
+  impaired: [
+    {
+      node: demoNode("service:api-gateway"),
+      distance: 1,
+      path: ["service:api-gateway", "service:orders-service"],
+    },
+    {
+      node: demoNode("service:inventory-service"),
+      distance: 1,
+      path: ["service:inventory-service", "service:orders-service"],
+    },
+  ],
+  delayed: [
+    {
+      node: demoNode("service:notification-service"),
+      distance: 2,
+      path: ["service:notification-service", "topic:kafka/order-events", "service:orders-service"],
+    },
+  ],
+  services: 2,
+  servicesTotal: 5,
+};
 
 export const demoFindings: Finding[] = [
   finding(
