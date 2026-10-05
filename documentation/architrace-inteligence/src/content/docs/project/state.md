@@ -40,7 +40,7 @@ Last updated: **2026-10-05**
   reverse breadth-first search over sync edges, `delayed` one asynchronous passage further,
   paths from the node to the subject, lexicographically smallest among equally short paths)
   and the rule `WideBlastRadius` (`wide-blast-radius.min-share-percent` 50,
-  `wide-blast-radius.min-services` 3; the share must exceed the percentage). PR 3 (ARCHI-55)
+  `wide-blast-radius.min-services` 3; the share must exceed the percentage). PR 3 (ARCHI-55, #68)
   completes the rule set: Tarjan moves into the package-private
   `StronglyConnectedComponents`, shared by `CyclicDependency` and `LongSyncChain`;
   `CrossDomainCoupling` (`cross-domain-coupling.max-domains` 3, domain parsed from
@@ -48,10 +48,16 @@ Last updated: **2026-10-05**
   (`fan-in-hub.max-callers` 8, direct service callers), `LongSyncChain`
   (`long-sync-chain.max-hops` 5: longest path over the condensation of the strongly connected
   components from every entry node, a cycle collapsed to its smallest member, databases and
-  externals counted as the last hop, subjects and evidence are the path in order). See the
-  [M6](../features/m6-architecture-rules/) page; its delivery plan is split into six pull
-  requests because a pull request may change at most twelve files; the rule table there
-  still needs the chain semantics (next docs touch).
+  externals counted as the last hop, subjects and evidence are the path in order).
+  PR 4 (ARCHI-56, #69) stores findings: `FindingStore` (`replace(scope, findings)`,
+  `findings(scope)`) with `JdbcFindingStore` in `rules.persistence` over the `finding` table
+  (Liquibase changelog `0002-finding.yaml`, scope columns, `subject_ids` and `evidence` as
+  jsonb id lists, index on the scope); replacing is one transaction (delete the scope, insert
+  the new rows); reads come back in `Finding.ORDER`. Nothing writes to the store yet. See
+  the [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
+  delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a pull
+  request may change at most twelve files; the rule table there still needs the chain
+  semantics and the plan the split (next docs touch).
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -129,16 +135,17 @@ timeline mode only).
 
 ## Next step
 
-Merge M6 PR 1 (ARCHI-53, #66), then M6 PR 2 (ARCHI-54, #67), then M6 PR 3 (ARCHI-55); each later
-one is opened only after the previous one is merged. Then continue, one pull request against
-`main` at a time, each with the next free ticket number:
+M6 PR 1–3 (#66–#68) are merged. Merge M6 PR 4 (ARCHI-56, #69); the next pull request is
+opened only after it is merged. Then continue, one pull request against `main` at a time,
+each with the next free ticket number:
 
-1. M6 PR 4: persistence (`finding` table in a Liquibase changelog, store interface, JDBC
-   store), evaluation after every ingested snapshot bounded to once per scope per interval,
-   `RulesConfiguration` enabling `RulesProperties`, the configuration reference page.
-2. M6 PR 5: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
+1. M6 PR 5: evaluation after every ingested snapshot (`IngestionService` publishes a
+   `SnapshotIngested` event, `RuleEvaluator` listens, bounded to once per scope per
+   `architrace.rules.evaluation-interval`), `RulesConfiguration` enabling `RulesProperties`
+   and the `RuleEngine` bean, the configuration reference page.
+2. M6 PR 6: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
    the Query API reference page, finding counts on the scope summaries.
-3. M6 PR 6 and following: Findings page, map badges, impact lens and rail card, user guide
+3. M6 PR 7 and following: Findings page, map badges, impact lens and rail card, user guide
    page.
 4. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with

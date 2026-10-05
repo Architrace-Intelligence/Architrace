@@ -1,0 +1,75 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0005-finding
+      author: dmytro.hryshchenko
+      changes:
+        - createTable:
+            tableName: finding
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: environment
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cluster
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rule_id
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: severity
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject_ids
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: detail
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: evidence
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: evaluated_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: finding
+            indexName: ix_finding_scope
+            columns:
+              - column:
+                  name: project
+              - column:
+                  name: environment
+              - column:
+                  name: cluster

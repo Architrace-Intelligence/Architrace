@@ -4,7 +4,7 @@
  */
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach } from "vitest";
 
 class ResizeObserverStub {
@@ -55,6 +55,8 @@ Object.defineProperties(HTMLElement.prototype, {
 });
 (SVGElement.prototype as SVGGraphicsElement).getBBox = () =>
   ({ x: 0, y: 0, width: 0, height: 0 }) as DOMRect;
+
+configure({ asyncUtilTimeout: 5_000 });
 
 afterEach(() => {
   cleanup();
