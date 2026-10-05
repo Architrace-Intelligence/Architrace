@@ -22,7 +22,8 @@ repository root. This page is the short human version.
    patterns and approaches used, architecture impact, testing, documentation. A pull request
    changes at most 12 files; larger work is split into sequential pull requests, one at a
    time.
-4. CI runs the gates. Each one is a required check on `main`:
+4. CI runs the gates, cheapest first: `size` gates everything, `build` gates the analyses.
+   Each one is a required check on `main`:
 
    | Check | What it does |
    |-------|--------------|
@@ -32,7 +33,7 @@ repository root. This page is the short human version.
    | `docs` | documentation site build |
    | `title` | the pull request title follows the commit convention |
    | `size` | the pull request changes at most 12 files |
-   | `CodeQL (java-kotlin)`, `CodeQL (javascript-typescript)`, `CodeQL (actions)` | code scanning |
+   | `codeql / java-kotlin`, `codeql / javascript-typescript`, `codeql / actions` | code scanning, after the build |
 
    CodeRabbit reviews every pull request ([ADR 0002](../adr/0002-coderabbit-ai-review/)) and
    opens threads; every thread is resolved, either by a fix or by an answer that says why the

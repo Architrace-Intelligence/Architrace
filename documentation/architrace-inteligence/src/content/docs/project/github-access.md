@@ -75,7 +75,7 @@ ruleset* button under *Settings → Rules → Rulesets*. It encodes
 - `pull_request`: **0** approving reviews, required conversation resolution (the CodeRabbit
   gate), squash as the only merge method.
 - `required_status_checks`: `build`, `quality`, `security`, `docs`, `title`, `size`,
-  `CodeQL (java-kotlin)`, `CodeQL (javascript-typescript)`, `CodeQL (actions)`, each bound to
+  `codeql / java-kotlin`, `codeql / javascript-typescript`, `codeql / actions`, each bound to
   the GitHub Actions app (`integration_id` 15368) so no other app can satisfy them. A job that is
   skipped (for example `quality` on Dependabot pull requests, which cannot read the SonarCloud
   token) counts as passed. Branches do not have to be up to date with `main`
@@ -130,7 +130,8 @@ versioning parses; `COMMIT_MESSAGES` keeps the squashed commit messages in the b
 - [x] Copyright holder: `Dmytro Hryshchenko`; header fixed in the hygiene feature.
 - [ ] Apply the `main` ruleset and the repository settings from §5 (after ARCHI-37 is merged);
       re-apply the ruleset after ARCHI-51, which adds the required check `size` (at most 12
-      changed files per pull request).
+      changed files per pull request), and after ARCHI-52, which renames the CodeQL checks to
+      `codeql / <language>`.
 - [ ] Install the CodeRabbit GitHub App on `Architrace-Intelligence/Architrace` (organisation
       owner, UI only); `.coderabbit.yaml` is already in the repository.
 - [ ] Seed the first release tag on the merge commit of the main pipeline:

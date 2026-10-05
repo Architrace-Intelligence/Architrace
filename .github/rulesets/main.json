@@ -36,9 +36,9 @@
           { "context": "docs", "integration_id": 15368 },
           { "context": "title", "integration_id": 15368 },
           { "context": "size", "integration_id": 15368 },
-          { "context": "CodeQL (java-kotlin)", "integration_id": 15368 },
-          { "context": "CodeQL (javascript-typescript)", "integration_id": 15368 },
-          { "context": "CodeQL (actions)", "integration_id": 15368 }
+          { "context": "codeql / java-kotlin", "integration_id": 15368 },
+          { "context": "codeql / javascript-typescript", "integration_id": 15368 },
+          { "context": "codeql / actions", "integration_id": 15368 }
         ]
       }
     },
