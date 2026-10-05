@@ -1,0 +1,29 @@
+name: PR size
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  size:
+    name: size
+    runs-on: ubuntu-latest
+    steps:
+      - name: Count the changed files against the limit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          LIMIT: 12
+        run: |
+          changed=$(gh api "repos/$REPOSITORY/pulls/$NUMBER" --jq .changed_files)
+          if (( changed <= LIMIT )); then
+            echo "The pull request changes $changed files; at most $LIMIT are allowed."
+          else
+            echo "::error::A pull request changes at most $LIMIT files; this one changes $changed. Split the work into sequential pull requests."
+            gh api "repos/$REPOSITORY/pulls/$NUMBER/files" --paginate --jq '.[].filename'
+            exit 1
+          fi

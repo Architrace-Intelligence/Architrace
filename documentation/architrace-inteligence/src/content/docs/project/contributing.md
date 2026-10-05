@@ -19,7 +19,9 @@ repository root. This page is the short human version.
    ```
 
 3. A pull request is opened with the repository template filled in: summary, what was done,
-   patterns and approaches used, architecture impact, testing, documentation.
+   patterns and approaches used, architecture impact, testing, documentation. A pull request
+   changes at most 12 files; larger work is split into sequential pull requests, one at a
+   time.
 4. CI runs the gates. Each one is a required check on `main`:
 
    | Check | What it does |
@@ -29,6 +31,7 @@ repository root. This page is the short human version.
    | `security` | Snyk, OWASP Dependency-Check, gitleaks |
    | `docs` | documentation site build |
    | `title` | the pull request title follows the commit convention |
+   | `size` | the pull request changes at most 12 files |
    | `CodeQL (java-kotlin)`, `CodeQL (javascript-typescript)`, `CodeQL (actions)` | code scanning |
 
    CodeRabbit reviews every pull request ([ADR 0002](../adr/0002-coderabbit-ai-review/)) and
