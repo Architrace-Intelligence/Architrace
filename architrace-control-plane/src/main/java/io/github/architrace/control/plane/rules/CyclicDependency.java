@@ -10,11 +10,9 @@ import io.github.architrace.control.plane.topology.TopologyEdge;
 import io.github.architrace.control.plane.topology.TopologyGraph;
 import io.github.architrace.control.plane.topology.TopologyNode;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,10 +42,11 @@ public record CyclicDependency() implements ArchitectureRule {
                 .collect(Collectors.groupingBy(
                         TopologyEdge::sourceId,
                         Collectors.mapping(TopologyEdge::targetId, Collectors.toCollection(TreeSet::new))));
-        return new Tarjan(callees)
-                .cyclicComponents().stream()
-                        .map(component -> report(graph, component, shortestCycle(component, callees), names))
-                        .toList();
+        return StronglyConnectedComponents.of(callees).stream()
+                .filter(component -> component.size() > 1)
+                .sorted(Comparator.comparing(List::getFirst))
+                .map(component -> report(graph, component, shortestCycle(component, callees), names))
+                .toList();
     }
 
     private Finding report(TopologyGraph graph, List<String> component, List<String> cycle, Map<String, String> names) {
@@ -87,63 +86,5 @@ public record CyclicDependency() implements ArchitectureRule {
         }
         path.addFirst(start);
         return List.copyOf(path);
-    }
-
-    private static final class Tarjan {
-
-        private final Map<String, SortedSet<String>> callees;
-        private final Map<String, Integer> index = new HashMap<>();
-        private final Map<String, Integer> lowLink = new HashMap<>();
-        private final Deque<String> stack = new ArrayDeque<>();
-        private final Set<String> onStack = new HashSet<>();
-        private final List<List<String>> components = new ArrayList<>();
-        private int counter;
-
-        private Tarjan(Map<String, SortedSet<String>> callees) {
-            this.callees = callees;
-        }
-
-        private List<List<String>> cyclicComponents() {
-            for (String node : new TreeSet<>(callees.keySet())) {
-                if (!index.containsKey(node)) {
-                    visit(node);
-                }
-            }
-            return components.stream()
-                    .filter(component -> component.size() > 1)
-                    .map(component -> component.stream().sorted().toList())
-                    .sorted(Comparator.comparing(List::getFirst))
-                    .toList();
-        }
-
-        private void visit(String node) {
-            index.put(node, counter);
-            lowLink.put(node, counter);
-            counter++;
-            stack.push(node);
-            onStack.add(node);
-            for (String next : callees.getOrDefault(node, new TreeSet<>())) {
-                if (!index.containsKey(next)) {
-                    visit(next);
-                    lowLink.merge(node, lowLink.get(next), Math::min);
-                } else if (onStack.contains(next)) {
-                    lowLink.merge(node, index.get(next), Math::min);
-                }
-            }
-            if (lowLink.get(node).equals(index.get(node))) {
-                components.add(popComponent(node));
-            }
-        }
-
-        private List<String> popComponent(String root) {
-            List<String> component = new ArrayList<>();
-            String member;
-            do {
-                member = stack.pop();
-                onStack.remove(member);
-                component.add(member);
-            } while (!member.equals(root));
-            return component;
-        }
     }
 }

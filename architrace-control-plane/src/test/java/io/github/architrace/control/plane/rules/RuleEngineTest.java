@@ -14,6 +14,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
 
+import io.github.architrace.control.plane.rules.RulesProperties.CrossDomainCouplingProperties;
+import io.github.architrace.control.plane.rules.RulesProperties.FanInHubProperties;
+import io.github.architrace.control.plane.rules.RulesProperties.LongSyncChainProperties;
 import io.github.architrace.control.plane.rules.RulesProperties.SharedDatabaseProperties;
 import io.github.architrace.control.plane.rules.RulesProperties.UnknownExternalProperties;
 import io.github.architrace.control.plane.rules.RulesProperties.WideBlastRadiusProperties;
@@ -42,7 +45,10 @@ class RuleEngineTest {
         RulesProperties properties = new RulesProperties(
                 new SharedDatabaseProperties(3),
                 new UnknownExternalProperties(List.of("api.github.com")),
-                new WideBlastRadiusProperties(60, 4));
+                new WideBlastRadiusProperties(60, 4),
+                new CrossDomainCouplingProperties(2),
+                new FanInHubProperties(10),
+                new LongSyncChainProperties(6));
 
         RuleEngine engine = RuleEngine.of(properties);
 
@@ -51,7 +57,10 @@ class RuleEngineTest {
                         new CyclicDependency(),
                         new SharedDatabase(3),
                         new UnknownExternal(Set.of("api.github.com")),
-                        new WideBlastRadius(60, 4));
+                        new WideBlastRadius(60, 4),
+                        new CrossDomainCoupling(2),
+                        new FanInHub(10),
+                        new LongSyncChain(6));
     }
 
     @Test
@@ -94,7 +103,8 @@ class RuleEngineTest {
         RulesProperties overridden = bind(Map.of(
                 "architrace.rules.shared-database.min-services", "4",
                 "architrace.rules.unknown-external.allowlist", "api.github.com,api.stripe.com",
-                "architrace.rules.wide-blast-radius.min-share-percent", "70"));
+                "architrace.rules.wide-blast-radius.min-share-percent", "70",
+                "architrace.rules.fan-in-hub.max-callers", "12"));
 
         assertThat(defaults).isEqualTo(RulesProperties.defaults());
         assertThat(defaults.sharedDatabase().minServices()).isEqualTo(2);
@@ -102,6 +112,9 @@ class RuleEngineTest {
         assertThat(overridden.sharedDatabase().minServices()).isEqualTo(4);
         assertThat(overridden.unknownExternal().allowlist()).containsExactly("api.github.com", "api.stripe.com");
         assertThat(overridden.wideBlastRadius()).isEqualTo(new WideBlastRadiusProperties(70, 3));
+        assertThat(overridden.crossDomainCoupling()).isEqualTo(new CrossDomainCouplingProperties(3));
+        assertThat(overridden.fanInHub()).isEqualTo(new FanInHubProperties(12));
+        assertThat(overridden.longSyncChain()).isEqualTo(new LongSyncChainProperties(5));
     }
 
     @Test
@@ -115,6 +128,9 @@ class RuleEngineTest {
         assertThatThrownBy(() -> new WideBlastRadiusProperties(50, 0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("minServices must be at least 1");
+        assertThatThrownBy(() -> new CrossDomainCouplingProperties(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new FanInHubProperties(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new LongSyncChainProperties(0)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

@@ -40,9 +40,18 @@ Last updated: **2026-10-05**
   reverse breadth-first search over sync edges, `delayed` one asynchronous passage further,
   paths from the node to the subject, lexicographically smallest among equally short paths)
   and the rule `WideBlastRadius` (`wide-blast-radius.min-share-percent` 50,
-  `wide-blast-radius.min-services` 3; the share must exceed the percentage). See the
+  `wide-blast-radius.min-services` 3; the share must exceed the percentage). PR 3 (ARCHI-55)
+  completes the rule set: Tarjan moves into the package-private
+  `StronglyConnectedComponents`, shared by `CyclicDependency` and `LongSyncChain`;
+  `CrossDomainCoupling` (`cross-domain-coupling.max-domains` 3, domain parsed from
+  `service:{domain}/{name}`, services without a domain share the empty one), `FanInHub`
+  (`fan-in-hub.max-callers` 8, direct service callers), `LongSyncChain`
+  (`long-sync-chain.max-hops` 5: longest path over the condensation of the strongly connected
+  components from every entry node, a cycle collapsed to its smallest member, databases and
+  externals counted as the last hop, subjects and evidence are the path in order). See the
   [M6](../features/m6-architecture-rules/) page; its delivery plan is split into six pull
-  requests because a pull request may change at most twelve files.
+  requests because a pull request may change at most twelve files; the rule table there
+  still needs the chain semantics (next docs touch).
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -120,24 +129,21 @@ timeline mode only).
 
 ## Next step
 
-Merge M6 PR 1 (ARCHI-53, #66), then M6 PR 2 (ARCHI-54, #67). Then continue, one pull request
-against `main` at a time, each with the next free ticket number:
+Merge M6 PR 1 (ARCHI-53, #66), then M6 PR 2 (ARCHI-54, #67), then M6 PR 3 (ARCHI-55); each later
+one is opened only after the previous one is merged. Then continue, one pull request against
+`main` at a time, each with the next free ticket number:
 
-1. M6 PR 3: the rules `CrossDomainCoupling` (domain parsed from `service:{domain}/{name}`),
-   `FanInHub`, `LongSyncChain` (longest path over the condensation of the strongly connected
-   components, which moves Tarjan out of `CyclicDependency` into a shared class) with their
-   properties.
-2. M6 PR 4: persistence (`finding` table in a Liquibase changelog, store interface, JDBC
+1. M6 PR 4: persistence (`finding` table in a Liquibase changelog, store interface, JDBC
    store), evaluation after every ingested snapshot bounded to once per scope per interval,
    `RulesConfiguration` enabling `RulesProperties`, the configuration reference page.
-3. M6 PR 5: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
+2. M6 PR 5: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
    the Query API reference page, finding counts on the scope summaries.
-4. M6 PR 6 and following: Findings page, map badges, impact lens and rail card, user guide
+3. M6 PR 6 and following: Findings page, map badges, impact lens and rail card, user guide
    page.
-5. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+4. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
    real data); the M6 candidates B2 and B3 along the way.
-6. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+5. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume

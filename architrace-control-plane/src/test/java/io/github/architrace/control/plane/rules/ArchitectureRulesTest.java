@@ -42,6 +42,14 @@ class ArchitectureRulesTest {
         return TestTopology.service(name, "1.0.0", name);
     }
 
+    private static TopologyNode service(String domain, String name) {
+        return new TopologyNode(
+                "service:" + domain + "/" + name,
+                NodeType.SERVICE,
+                name,
+                service(name).attributes());
+    }
+
     private static TopologyNode external(String address) {
         return new TopologyNode("ext:" + address, NodeType.EXTERNAL, address, NodeAttributes.none());
     }
@@ -208,6 +216,169 @@ class ArchitectureRulesTest {
             assertThatThrownBy(() -> new WideBlastRadius(0, 3)).isInstanceOf(IllegalArgumentException.class);
             assertThatThrownBy(() -> new WideBlastRadius(101, 3)).isInstanceOf(IllegalArgumentException.class);
             assertThatThrownBy(() -> new WideBlastRadius(50, 0)).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    class CrossDomainCouplingRule {
+
+        private final TopologyNode salesOrders = service("sales", "orders");
+        private final TopologyNode salesCatalog = service("sales", "catalog");
+        private final TopologyNode salesCheckout = service("sales", "checkout");
+        private final TopologyNode financeBilling = service("finance", "billing");
+        private final TopologyNode customersCrm = service("customers", "crm");
+        private final TopologyNode warehouseStock = service("warehouse", "stock");
+        private final TopologyNode logisticsShipping = service("logistics", "shipping");
+        private final TopologyGraph graph = graph(
+                List.of(
+                        salesOrders,
+                        salesCatalog,
+                        salesCheckout,
+                        financeBilling,
+                        customersCrm,
+                        warehouseStock,
+                        logisticsShipping,
+                        ordersDb),
+                List.of(
+                        sync(salesOrders, salesCatalog),
+                        sync(salesOrders, financeBilling),
+                        sync(salesOrders, customersCrm),
+                        sync(salesOrders, warehouseStock),
+                        sync(salesOrders, logisticsShipping),
+                        sync(salesOrders, ordersDb),
+                        sync(salesCheckout, salesOrders),
+                        sync(salesCheckout, financeBilling)));
+
+        @Test
+        void reportsAServiceCallingIntoMoreDomainsThanAllowed() {
+            List<Finding> findings = new CrossDomainCoupling(3).evaluate(graph);
+
+            assertThat(findings).hasSize(1);
+            Finding finding = findings.getFirst();
+            assertThat(finding.ruleId()).isEqualTo("cross-domain-coupling");
+            assertThat(finding.severity()).isEqualTo(Finding.Severity.MEDIUM);
+            assertThat(finding.subjectNodeIds()).containsExactly("service:sales/orders");
+            assertThat(finding.evidence())
+                    .containsExactly(
+                            "service:customers/crm",
+                            "service:finance/billing",
+                            "service:logistics/shipping",
+                            "service:warehouse/stock");
+            assertThat(finding.title()).isEqualTo("orders calls into 4 domains");
+            assertThat(finding.detail())
+                    .startsWith("orders (sales) calls crm (customers), billing (finance), shipping (logistics),"
+                            + " stock (warehouse) in 4 other domains");
+        }
+
+        @Test
+        void countsDomainsNotCallsAndIgnoresServicesWithoutADomain() {
+            assertThat(new CrossDomainCoupling(4).evaluate(graph)).isEmpty();
+            TopologyGraph flat = graph(
+                    List.of(orders, billing, payments, inventory),
+                    List.of(sync(orders, billing), sync(orders, payments), sync(orders, inventory)));
+            assertThat(new CrossDomainCoupling(1).evaluate(flat)).isEmpty();
+            assertThatThrownBy(() -> new CrossDomainCoupling(0)).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    class FanInHubRule {
+
+        private final TopologyGraph graph = graph(
+                List.of(checkout, orders, billing, reporting, payments, ordersDb),
+                List.of(
+                        sync(checkout, payments),
+                        sync(orders, payments),
+                        sync(billing, payments),
+                        sync(payments, payments),
+                        sync(payments, ordersDb),
+                        sync(reporting, ordersDb),
+                        sync(checkout, ordersDb),
+                        sync(orders, ordersDb)));
+
+        @Test
+        void reportsAServiceWithMoreDirectCallersThanAllowed() {
+            List<Finding> findings = new FanInHub(2).evaluate(graph);
+
+            assertThat(findings).hasSize(1);
+            Finding finding = findings.getFirst();
+            assertThat(finding.ruleId()).isEqualTo("fan-in-hub");
+            assertThat(finding.severity()).isEqualTo(Finding.Severity.MEDIUM);
+            assertThat(finding.subjectNodeIds()).containsExactly("service:payments");
+            assertThat(finding.evidence()).containsExactly("service:billing", "service:checkout", "service:orders");
+            assertThat(finding.title()).isEqualTo("payments has 3 direct callers");
+            assertThat(finding.detail()).startsWith("3 services call payments synchronously");
+        }
+
+        @Test
+        void staysQuietAtTheThresholdAndNeverCountsDatabases() {
+            assertThat(new FanInHub(3).evaluate(graph)).isEmpty();
+            assertThatThrownBy(() -> new FanInHub(0)).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    class LongSyncChainRule {
+
+        private final TopologyGraph graph = graph(
+                List.of(checkout, inventory, orders, payments, billing, reporting, ordersDb),
+                List.of(
+                        sync(checkout, inventory),
+                        sync(inventory, orders),
+                        sync(orders, payments),
+                        sync(payments, billing),
+                        sync(billing, ordersDb),
+                        sync(reporting, payments)));
+
+        @Test
+        void reportsTheLongestChainFromEveryEntryNodeAboveTheThreshold() {
+            List<Finding> findings = new LongSyncChain(4).evaluate(graph);
+
+            assertThat(findings).hasSize(1);
+            Finding finding = findings.getFirst();
+            assertThat(finding.ruleId()).isEqualTo("long-sync-chain");
+            assertThat(finding.severity()).isEqualTo(Finding.Severity.MEDIUM);
+            assertThat(finding.subjectNodeIds())
+                    .containsExactly(
+                            "service:checkout",
+                            "service:inventory",
+                            "service:orders",
+                            "service:payments",
+                            "service:billing",
+                            "db:postgresql/orders");
+            assertThat(finding.evidence()).isEqualTo(finding.subjectNodeIds());
+            assertThat(finding.title()).isEqualTo("Synchronous chain of 5 hops from checkout");
+            assertThat(finding.detail())
+                    .startsWith("checkout -> inventory -> orders -> payments -> billing -> orders: every hop");
+        }
+
+        @Test
+        void staysQuietAtTheThresholdAndReportsBothEntriesBelowIt() {
+            assertThat(new LongSyncChain(5).evaluate(graph)).isEmpty();
+            assertThat(new LongSyncChain(2).evaluate(graph))
+                    .extracting(finding -> finding.subjectNodeIds().getFirst())
+                    .containsExactly("service:checkout", "service:reporting");
+            assertThatThrownBy(() -> new LongSyncChain(0)).isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        void collapsesACycleToItsSmallestMemberAndPrefersTheSmallerBranchOnTies() {
+            TopologyGraph graph = graph(
+                    List.of(checkout, orders, payments, billing, inventory, ordersDb, stripe),
+                    List.of(
+                            sync(checkout, orders),
+                            sync(orders, payments),
+                            sync(payments, orders),
+                            sync(payments, ordersDb),
+                            sync(checkout, inventory),
+                            sync(inventory, billing),
+                            sync(billing, stripe)));
+
+            List<Finding> findings = new LongSyncChain(1).evaluate(graph);
+
+            assertThat(findings).hasSize(1);
+            assertThat(findings.getFirst().subjectNodeIds())
+                    .containsExactly("service:checkout", "service:inventory", "service:billing", "ext:api.stripe.com");
         }
     }
 
