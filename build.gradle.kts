@@ -1,6 +1,7 @@
 plugins {
     base
     id("architrace.versioning")
+    id("architrace.badges")
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.dependency.check)
 }

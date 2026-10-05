@@ -82,9 +82,10 @@ main.yml      build ──► quality ──► security ──► release ─�
   `sha-<short>` on every merge and additionally as `X.Y.Z` and `latest` on a release.
 - `docs` (main only): build and deploy the site to GitHub Pages after the gates; `build` also
   submits the Gradle dependency graph so Dependabot alerts cover the Java dependencies.
-- Badges (ARCHI-71): `build` aggregates every JUnit report (Gradle modules, `build-logic`,
-  the UI through the Vitest `junit` reporter) and the computed version into
-  `build/badges/*.json` with `.github/scripts/badges.py`; `docs` adds them to the Pages
+- Badges (ARCHI-71): `build` runs `writeBadges` (convention plugin `architrace.badges`,
+  `JUnitReports` and `Badge` in `build-logic`, unit-tested), which sums every JUnit report
+  (Gradle modules, `build-logic`, the UI through the Vitest `junit` reporter) and writes the
+  test and version badges to `build/badges/*.json`; `docs` adds them to the Pages
   site under `/badges/`, and the README renders them through the shields.io `endpoint`
   badge next to the workflow, SonarCloud, Snyk, release and stack-version badges, the
   latter read live from `gradle.properties`, the wrapper properties, the version catalog
