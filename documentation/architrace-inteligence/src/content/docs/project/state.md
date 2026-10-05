@@ -35,7 +35,7 @@ Last updated: **2026-10-05**
   `CyclicDependency` (strongly connected components of the sync edges, one shortest cycle as
   evidence), `SharedDatabase` (threshold `shared-database.min-services`, default 2) and
   `UnknownExternal` (`unknown-external.allowlist` of host names). Nothing runs the engine yet:
-  the Spring wiring arrives with the evaluation trigger. PR 2 (ARCHI-54) adds the blast
+  the Spring wiring arrives with the evaluation trigger. PR 2 (ARCHI-54, #67) adds the blast
   radius: `ImpactAnalysis.of(graph, nodeId)` returns an `Optional<Impact>` (`impaired` by a
   reverse breadth-first search over sync edges, `delayed` one asynchronous passage further,
   paths from the node to the subject, lexicographically smallest among equally short paths)
@@ -120,7 +120,7 @@ timeline mode only).
 
 ## Next step
 
-Merge M6 PR 1 (ARCHI-53, #66), then M6 PR 2 (ARCHI-54). Then continue, one pull request
+Merge M6 PR 1 (ARCHI-53, #66), then M6 PR 2 (ARCHI-54, #67). Then continue, one pull request
 against `main` at a time, each with the next free ticket number:
 
 1. M6 PR 3: the rules `CrossDomainCoupling` (domain parsed from `service:{domain}/{name}`),
