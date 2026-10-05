@@ -44,7 +44,7 @@ Last updated: **2026-10-05**
   groups the pip updates of `demo/services`, because the SDK, exporter and instrumentation
   pins only resolve as one set and no CI job builds the demo image; the stack was run end to
   end with locally built images after the bump.
-- README badges (ARCHI-71, #92): the `main` pipeline now publishes `badges/tests.json` (passed,
+- README badges (ARCHI-71, #93): the `main` pipeline now publishes `badges/tests.json` (passed,
   failed, skipped over every JUnit report) and `badges/version.json` with the documentation site;
   the README shows the pipeline, CodeQL, tests, SonarCloud quality gate and coverage, Snyk, the
   release and the version on `main`, the images, and the stack versions read live from the
@@ -148,7 +148,7 @@ timeline mode only).
 ## Next step
 
 The MVP queue M0–M7 and the demo dependency bump (#91) are merged. Merge the README badges
-(ARCHI-71, #92); the first `main` run after it publishes the badge data. Then continue, one
+(ARCHI-71, #93); the first `main` run after it publishes the badge data. Then continue, one
 pull request against `main` at a time, each with the next free ticket number:
 
 1. The M6 candidates B2 (an outbox topic with consumers but no producer as an insight) and
