@@ -28,6 +28,8 @@ tags:
     description: What differs between two scopes of a project, or between two points in time of one scope
   - name: agents
     description: Agents registered with the control plane
+  - name: findings
+    description: Architecture findings of a scope and the blast radius of any node of its graph
 paths:
   /scopes:
     get:
@@ -396,6 +398,130 @@ paths:
           $ref: "#/components/responses/ScopeNotFound"
         default:
           $ref: "#/components/responses/Problem"
+  /scopes/{project}/{environment}/{cluster}/findings:
+    get:
+      tags: [findings]
+      operationId: listFindings
+      summary: Architecture findings of a scope
+      description: |
+        The findings of the last rule evaluation of the scope, ordered by severity (high
+        first), rule id and subject ids. The rules run right after an ingested snapshot, at
+        most once per scope per evaluation interval; `evaluatedAt` says which graph the
+        findings describe. `subjectNodeIds` are the nodes a finding is about, `evidence` the
+        node ids that substantiate it in a rule-specific order: the cycle, the clients of the
+        database, the callers, the impaired nodes, the chain.
+      parameters:
+        - $ref: "#/components/parameters/Project"
+        - $ref: "#/components/parameters/Environment"
+        - $ref: "#/components/parameters/Cluster"
+        - name: severity
+          in: query
+          required: false
+          description: Only findings of this severity
+          schema:
+            $ref: "#/components/schemas/Severity"
+        - name: rule
+          in: query
+          required: false
+          description: Only findings of this rule id
+          schema:
+            type: string
+            example: cyclic-dependency
+      responses:
+        "200":
+          description: The findings of the scope, possibly none
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Finding"
+              examples:
+                webshop:
+                  value:
+                    - ruleId: cyclic-dependency
+                      severity: HIGH
+                      scope: { project: webshop, environment: PROD, cluster: k8s-prod-eu1 }
+                      subjectNodeIds: ["service:sales/orders", "service:sales/payments"]
+                      title: Cyclic dependency between 2 services
+                      detail: "orders -> payments -> orders over synchronous calls; a failure or a slowdown in any of them propagates around the cycle"
+                      evidence: ["service:sales/orders", "service:sales/payments"]
+                      evaluatedAt: "2026-10-05T12:00:00Z"
+        "404":
+          $ref: "#/components/responses/ScopeNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
+  /scopes/{project}/{environment}/{cluster}/impact:
+    get:
+      tags: [findings]
+      operationId: getImpact
+      summary: Blast radius of one node of the scope
+      description: |
+        What stops working if the node fails, computed on the current graph of the scope at
+        `at` (default now). `impaired` lists the nodes that fail or error: the callers of the
+        subject over sync edges, transitively; for a topic its producers and their callers.
+        `delayed` lists the nodes that keep running but receive their data late: the
+        consumers of the topics the subject or an impaired service publishes to, and the
+        consumers of the subject itself when it is a topic. Each entry carries its distance
+        in hops and one shortest path from the node to the subject. Both lists are ordered by
+        distance, then id; the subject is in neither. `services` counts the impaired service
+        nodes, `servicesTotal` the service nodes of the graph.
+      parameters:
+        - $ref: "#/components/parameters/Project"
+        - $ref: "#/components/parameters/Environment"
+        - $ref: "#/components/parameters/Cluster"
+        - name: node
+          in: query
+          required: true
+          description: Id of the subject node; ids contain `/`, hence a query parameter
+          schema:
+            type: string
+            example: "db:postgresql/orders"
+        - $ref: "#/components/parameters/At"
+      responses:
+        "200":
+          description: The impact of the node on the graph at `at`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Impact"
+              examples:
+                webshop:
+                  value:
+                    subject:
+                      id: "db:postgresql/orders"
+                      type: DATABASE
+                      name: orders
+                      versions: []
+                      deployments: []
+                      labels: {}
+                    at: "2026-10-05T12:00:00Z"
+                    impaired:
+                      - node:
+                          id: "service:sales/orders"
+                          type: SERVICE
+                          name: orders
+                          versions: ["2.8.1"]
+                          deployments: [{ cluster: k8s-prod-eu1, namespace: orders }]
+                          labels: {}
+                        distance: 1
+                        path: ["service:sales/orders", "db:postgresql/orders"]
+                    delayed:
+                      - node:
+                          id: "service:sales/reporting"
+                          type: SERVICE
+                          name: reporting
+                          versions: ["1.2.0"]
+                          deployments: [{ cluster: k8s-prod-eu1, namespace: reporting }]
+                          labels: {}
+                        distance: 3
+                        path: ["service:sales/reporting", "topic:kafka/order-events", "service:sales/orders", "db:postgresql/orders"]
+                    services: 1
+                    servicesTotal: 2
+        "404":
+          $ref: "#/components/responses/NodeNotFound"
+        default:
+          $ref: "#/components/responses/Problem"
   /snapshots/{snapshotId}:
     get:
       tags: [snapshots]
@@ -575,6 +701,27 @@ components:
                 status: 404
                 detail: "no agent has registered for scope webshop/PROD/k8s-prod-eu2"
                 instance: /api/v1/scopes/webshop/PROD/k8s-prod-eu2/graph
+    NodeNotFound:
+      description: No agent has registered for the scope, or its current graph has no node with this id
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            unknownNode:
+              value:
+                type: "urn:architrace:problem:node-not-found"
+                title: Node not found
+                status: 404
+                detail: "no node service:sales/nothing in the graph of scope webshop/PROD/k8s-prod-eu1"
+                instance: /api/v1/scopes/webshop/PROD/k8s-prod-eu1/impact
+            unknownScope:
+              value:
+                type: "urn:architrace:problem:scope-not-found"
+                title: Scope not found
+                status: 404
+                detail: "no agent has registered for scope webshop/PROD/k8s-prod-eu2"
+                instance: /api/v1/scopes/webshop/PROD/k8s-prod-eu2/impact
     SnapshotNotFound:
       description: No snapshot has this id, or it has been removed by retention
       content:
@@ -970,6 +1117,91 @@ components:
           type: string
         kind:
           $ref: "#/components/schemas/EdgeKind"
+    Severity:
+      type: string
+      description: How urgent a finding is; the severity is fixed per rule.
+      enum: [HIGH, MEDIUM, LOW]
+    Finding:
+      type: object
+      description: One result of an architecture rule on the current graph of a scope.
+      required: [ruleId, severity, scope, subjectNodeIds, title, detail, evidence, evaluatedAt]
+      properties:
+        ruleId:
+          type: string
+          description: Rule that raised the finding, kebab-case (`cyclic-dependency`, `shared-database`, `unknown-external`, `wide-blast-radius`, `cross-domain-coupling`, `fan-in-hub`, `long-sync-chain`)
+        severity:
+          $ref: "#/components/schemas/Severity"
+        scope:
+          $ref: "#/components/schemas/Scope"
+        subjectNodeIds:
+          type: array
+          description: Ids of the nodes the finding is about, never empty
+          minItems: 1
+          items:
+            type: string
+        title:
+          type: string
+          description: One line naming the problem and its subject
+        detail:
+          type: string
+          description: One or two sentences with the evidence in words and why it matters
+        evidence:
+          type: array
+          description: Node ids that substantiate the finding, in a rule-specific order
+          items:
+            type: string
+        evaluatedAt:
+          type: string
+          format: date-time
+          description: Point in time of the graph the rules ran on
+    Impact:
+      type: object
+      description: The blast radius of one node, computed on the current graph of its scope at `at`.
+      required: [subject, at, impaired, delayed, services, servicesTotal]
+      properties:
+        subject:
+          $ref: "#/components/schemas/TopologyNode"
+        at:
+          type: string
+          format: date-time
+        impaired:
+          type: array
+          description: Nodes that fail or error when the subject fails, ordered by distance then id
+          items:
+            $ref: "#/components/schemas/ImpactedNode"
+        delayed:
+          type: array
+          description: Nodes that keep running but receive their data late, ordered by distance then id
+          items:
+            $ref: "#/components/schemas/ImpactedNode"
+        services:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Impaired service nodes
+        servicesTotal:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Service nodes of the graph
+    ImpactedNode:
+      type: object
+      description: One node reached by the failure, with the shortest path that connects it to the subject.
+      required: [node, distance, path]
+      properties:
+        node:
+          $ref: "#/components/schemas/TopologyNode"
+        distance:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Length of `path` in hops
+        path:
+          type: array
+          description: Node ids from this node to the subject, both included
+          minItems: 2
+          items:
+            type: string
     Agent:
       type: object
       description: An agent registration as the control plane sees it.

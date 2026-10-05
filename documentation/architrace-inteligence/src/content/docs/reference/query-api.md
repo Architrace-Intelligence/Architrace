@@ -22,6 +22,8 @@ generated from it, and so is the TypeScript client of the UI.
 | `GET /api/v1/snapshots/{snapshotId}` | one snapshot as the agent reported it, nodes and edges included |
 | `GET /api/v1/scopes/{project}/{environment}/{cluster}/diff/environments?leftEnvironment=&leftCluster=&at=` | the drift between another scope of the project (left) and this scope (right), both at `at` (default now) |
 | `GET /api/v1/scopes/{project}/{environment}/{cluster}/diff/timeline?from=&to=` | the drift of this scope between `from` (left) and `to` (right, default now) |
+| `GET /api/v1/scopes/{project}/{environment}/{cluster}/findings?severity=&rule=` | the findings of the last rule evaluation of the scope, high severity first, optionally filtered by severity or rule id |
+| `GET /api/v1/scopes/{project}/{environment}/{cluster}/impact?node=&at=` | the blast radius of one node of the current graph at `at` (default now): impaired and delayed nodes with distance and path |
 | `GET /api/v1/agents` | every registered agent with its scope, version, first and last seen time and liveness, ordered by scope and name |
 
 Timestamps are RFC 3339 in both directions (`2026-10-01T12:00:00Z`).
@@ -208,6 +210,69 @@ default now). A node present at both points is `changed` when its versions or it
 deployments differ. `from` after `to` answers `400 invalid-query`; a side whose scope has no
 registered agent answers `404 scope-not-found`.
 
+## Findings and blast radius
+
+```bash
+curl -s 'http://localhost:8085/api/v1/scopes/webshop/PROD/k8s-prod-eu1/findings?severity=HIGH' | jq .
+curl -s 'http://localhost:8085/api/v1/scopes/webshop/PROD/k8s-prod-eu1/impact?node=db:postgresql/orders' | jq .
+```
+
+```json
+[
+  {
+    "ruleId": "shared-database",
+    "severity": "HIGH",
+    "scope": { "project": "webshop", "environment": "PROD", "cluster": "k8s-prod-eu1" },
+    "subjectNodeIds": ["db:postgresql/orders"],
+    "title": "Database orders is shared by 2 services",
+    "detail": "billing, orders use the database orders directly; a schema change for one of them affects all of them",
+    "evidence": ["service:finance/billing", "service:sales/orders"],
+    "evaluatedAt": "2026-10-05T12:00:00Z"
+  }
+]
+```
+
+The architecture rules run right after an ingested snapshot, at most once per scope per
+`architrace.rules.evaluation-interval`, and replace the findings of the scope as a whole;
+`evaluatedAt` is the point in time of the graph they ran on. A finding is about its
+`subjectNodeIds` (a cycle lists every member, a chain every hop); `evidence` holds the node
+ids that substantiate it in the order the rule chose: the shortest cycle, the clients of the
+database, the callers, the impaired nodes, the chain. Names appear only in `title` and
+`detail`. The list is ordered by severity (high first), rule id and subject ids; `severity`
+and `rule` narrow it. The rule ids and their thresholds are on the
+[configuration](../configuration/#control-plane) page.
+
+```json
+{
+  "subject": { "id": "db:postgresql/orders", "type": "DATABASE", "name": "orders",
+               "versions": [], "deployments": [], "labels": {} },
+  "at": "2026-10-05T12:00:00Z",
+  "impaired": [
+    { "node": { "id": "service:sales/orders", "type": "SERVICE", "name": "orders", "versions": ["2.8.1"],
+                "deployments": [{ "cluster": "k8s-prod-eu1", "namespace": "orders" }], "labels": {} },
+      "distance": 1, "path": ["service:sales/orders", "db:postgresql/orders"] }
+  ],
+  "delayed": [
+    { "node": { "id": "service:sales/reporting", "type": "SERVICE", "name": "reporting", "versions": ["1.2.0"],
+                "deployments": [{ "cluster": "k8s-prod-eu1", "namespace": "reporting" }], "labels": {} },
+      "distance": 3,
+      "path": ["service:sales/reporting", "topic:kafka/order-events", "service:sales/orders", "db:postgresql/orders"] }
+  ],
+  "services": 1,
+  "servicesTotal": 2
+}
+```
+
+`impact` is computed on request from the current graph at `at`, like the drift, so it works
+for any node and any point in time. `impaired` are the nodes that fail or error when the
+subject fails: its callers over sync edges, transitively; for a topic its producers and
+their callers. `delayed` are the nodes that keep running but receive their data late: the
+consumers of the topics the subject or an impaired service publishes to, and the consumers
+of the subject itself when it is a topic. Every entry carries its distance in hops and one
+shortest path from the node to the subject; both lists are ordered by distance, then id, and
+the subject is in neither. `services` counts the impaired service nodes, `servicesTotal` the
+service nodes of the graph. A node id that is not in the graph answers `404 node-not-found`.
+
 ## Errors
 
 Every error is an RFC 9457 problem with the media type `application/problem+json`. Errors
@@ -224,6 +289,7 @@ Errors raised by the domain carry a stable type, a title and the reason:
 |------|--------|------|
 | `urn:architrace:problem:scope-not-found` | 404 | no agent has registered for the scope in the path, or for the left side of a diff |
 | `urn:architrace:problem:snapshot-not-found` | 404 | no snapshot has the id, or retention removed it |
+| `urn:architrace:problem:node-not-found` | 404 | the current graph of the scope has no node with the id given to `impact` |
 | `urn:architrace:problem:invalid-query` | 400 | `page` or `size` out of range, `from` after `to` (history and timeline drift) |
 
 ```json

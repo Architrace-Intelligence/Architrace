@@ -63,10 +63,13 @@ flowchart LR
   and orders the `Finding` records by severity, rule and subject; `ImpactAnalysis` answers
   the blast radius of any node (impaired by a reverse breadth-first search over sync edges,
   delayed one asynchronous passage further); `FindingStore` keeps the findings of a scope in
-  the `finding` table (`rules.persistence`), replaced as a whole. Evaluation after ingestion
-  and the findings and impact endpoints follow in the next M6 pull requests. The Query API under
-  `/api/v1` exposes scopes, agents, graph, services, snapshot history, single snapshots and
-  the two diffs of a scope, with domain errors as typed RFC 9457 problems; the control plane
+  the `finding` table (`rules.persistence`), replaced as a whole; `RuleEvaluator` runs the
+  engine after every ingested snapshot (a `SnapshotIngested` event from the ingestion), at
+  most once per scope per interval, and `FindingsQuery` serves the stored findings and the
+  impact of a node. The Query API under
+  `/api/v1` exposes scopes, agents, graph, services, snapshot history, single snapshots, the
+  two diffs of a scope, its findings and the impact of one of its nodes, with domain errors
+  as typed RFC 9457 problems; the control plane
   serves its OpenAPI document and Swagger UI. Health and metrics are on Actuator.
 - The UI module `architrace-ui` (Vite, React, TypeScript) is built by Gradle, which downloads
   the pinned Node.js, and its bundle is packed into the control plane jar under `static/`. The
@@ -162,7 +165,7 @@ Packages are organised by feature, each with the same inner shape:
 | `ingestion` | `IncomingSnapshot` | validation, mapping to topology | gRPC |
 | `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent`, `NodeView`, `Page` | store, current graph, node views, history, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`: controllers, model mapping, problem details) |
 | `drift` | `GraphRef`, `NodeChange`, `TopologyDiff`, `DiffMode` | `GraphDiffer`, `DriftQuery` | REST (`drift.web`) |
-| `rules` | `ArchitectureRule` (sealed, seven rules), `Finding`, `Impact`, `RulesProperties` | `RuleEngine`, `ImpactAnalysis`, `StronglyConnectedComponents`; evaluation after ingest (next M6 PR) | `FindingStore` over Spring Data JDBC (`rules.persistence`), REST (next M6 PRs) |
+| `rules` | `ArchitectureRule` (sealed, seven rules), `Finding`, `Impact`, `RulesProperties` | `RuleEngine`, `ImpactAnalysis`, `StronglyConnectedComponents`, `RuleEvaluator` (after ingest, bounded per scope), `FindingsQuery` | `FindingStore` over Spring Data JDBC (`rules.persistence`), REST (`rules.web`) |
 | `web` | | | OpenAPI document, Swagger UI, UI bundle with single-page fallback |
 
 Design detail: [M2](../project/features/m2-control-plane-storage/), [M3](../project/features/m3-query-api/),

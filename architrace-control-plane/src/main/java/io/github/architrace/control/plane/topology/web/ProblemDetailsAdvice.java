@@ -5,6 +5,7 @@
 
 package io.github.architrace.control.plane.topology.web;
 
+import io.github.architrace.control.plane.rules.NodeNotFoundException;
 import io.github.architrace.control.plane.topology.InvalidQueryException;
 import io.github.architrace.control.plane.topology.ScopeNotFoundException;
 import io.github.architrace.control.plane.topology.SnapshotNotFoundException;
@@ -22,6 +23,11 @@ class ProblemDetailsAdvice {
     @ExceptionHandler
     ProblemDetail scopeNotFound(ScopeNotFoundException e) {
         return problem(HttpStatus.NOT_FOUND, "scope-not-found", "Scope not found", e);
+    }
+
+    @ExceptionHandler
+    ProblemDetail nodeNotFound(NodeNotFoundException e) {
+        return problem(HttpStatus.NOT_FOUND, "node-not-found", "Node not found", e);
     }
 
     @ExceptionHandler
