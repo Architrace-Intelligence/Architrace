@@ -31,6 +31,10 @@ export function Shell({ title, tools, apiRequest, scopePath, aside, children }: 
         </NavLink>
         <ScopeLink label="Map" to={scopePath} />
         <ScopeLink label="Drift" to={scopePath === undefined ? undefined : `${scopePath}/drift`} />
+        <ScopeLink
+          label="Findings"
+          to={scopePath === undefined ? undefined : `${scopePath}/findings`}
+        />
         <span className="rail-spacer" />
         <button
           type="button"

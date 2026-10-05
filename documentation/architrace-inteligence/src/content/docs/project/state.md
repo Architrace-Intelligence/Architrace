@@ -69,7 +69,14 @@ Last updated: **2026-10-05**
   now. PR 7 (ARCHI-59, #76) joins the counts to the Projects list: `FindingStore.counts()` (every
   scope with findings, `FindingCounts` per severity, computed in Java from all rows), merged
   into `ScopeSummaryDto.findings` by `ScopesController` so `topology` never depends on
-  `rules`; the UI fixture carries the new required field. See the
+  `rules`; the UI fixture carries the new required field. PR 8 (ARCHI-60, #77) is the first UI
+  part: the Findings screen (`src/findings`: `listFindings` and `findingsQuery`, a rule
+  catalogue with label, default threshold and property, severity chips and a rule select
+  kept in the URL as `severity` and `rule`, findings grouped by rule in severity order,
+  rows that expand to detail, evidence with names from the graph, "Show on map" linking to
+  the map with the first subject selected, the allowlist line for unknown externals, the
+  rules that pass, a rail with totals and every rule's status), the `Findings` entry in the
+  navigation rail and the `sev-*` classes. See the
   [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
   delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a pull
   request may change at most twelve files; the rule table there still needs the chain
@@ -151,16 +158,20 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–6 (#66–#70, #75) are merged. Merge M6 PR 7 (ARCHI-59, #76); the next pull request
-is opened only after it is merged. Then continue, one pull request against `main` at a time,
-each with the next free ticket number:
+M6 PR 1–7 (#66–#70, #75, #76) are merged. Merge M6 PR 8 (ARCHI-60, #77); the next pull
+request is opened only after it is merged. Then continue, one pull request against `main` at
+a time, each with the next free ticket number:
 
-1. M6 PR 8 and following: Findings page, map badges, impact lens and rail card, user guide
-   page.
-2. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+1. M6 PR 9: finding counts on the Projects list, finding badges on the map nodes and the
+   findings of the selected node in the map rail.
+2. M6 PR 10: the impact lens (`lens=impact` with the selected node), the rail card "If X
+   fails", "Show on map" of a wide blast radius finding opening the lens.
+3. M6 PR 11: the user guide page, the M6 feature page (status, chain semantics), progress
+   log lines for ARCHI-59 onwards, README.
+4. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
    real data); the M6 candidates B2 and B3 along the way.
-3. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+5. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume
