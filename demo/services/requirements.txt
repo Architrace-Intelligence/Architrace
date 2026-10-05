@@ -7,4 +7,4 @@ opentelemetry-exporter-otlp-proto-grpc==1.29.0
 opentelemetry-instrumentation-flask==0.50b0
 opentelemetry-instrumentation-requests==0.50b0
 opentelemetry-instrumentation-psycopg2==0.50b0
-opentelemetry-instrumentation-kafka-python==0.50b0
+opentelemetry-instrumentation-kafka-python==0.66b0
