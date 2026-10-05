@@ -85,9 +85,8 @@ public final class ImpactAnalysis {
         while (!queue.isEmpty()) {
             Reach current = queue.poll();
             for (String caller : callers.getOrDefault(current.id(), List.of())) {
-                if (!reached.containsKey(caller)) {
-                    Reach next = current.extend(caller);
-                    reached.put(caller, next);
+                Reach next = current.extend(caller);
+                if (reached.putIfAbsent(caller, next) == null) {
                     queue.add(next);
                 }
             }
