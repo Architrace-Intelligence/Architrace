@@ -16,7 +16,7 @@ description: Build and run Architrace locally.
 - `architrace-control-plane`: Spring Boot control-plane (HTTP + gRPC).
 - `architrace-api`: shared protobuf and OpenAPI contracts and generated types.
 - `architrace-ui`: web UI (Vite, React, TypeScript), bundled into the control plane jar.
-- `otel-test-app`: end-to-end demo services and OpenTelemetry collector.
+- `demo`: the one-command demo stack (two environments, collector, broker, database).
 
 ## Build all modules
 
@@ -36,7 +36,7 @@ control plane jar. The version of every artifact comes from git (`./gradlew prin
 The control plane needs PostgreSQL. The demo stack ships one; start it first:
 
 ```bash
-docker compose -f otel-test-app/docker-compose.yml up -d postgres
+docker compose -f demo/docker-compose.yml up -d postgres
 ./gradlew :architrace-control-plane:bootRun
 ```
 
@@ -72,8 +72,8 @@ Build fat jar:
 Validate the configuration, then run (the jar name carries the computed version):
 
 ```bash
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./otel-test-app/architrace-agent.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./demo/agent-dev.yaml --prop control-plane.server=localhost:9090
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./demo/agent-dev.yaml --prop control-plane.server=localhost:9090
 ```
 
 `dry-run` prints the effective configuration or every validation problem; `--prop key=value`

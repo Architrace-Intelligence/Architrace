@@ -22,7 +22,7 @@ status update at least every 14 days until the report is resolved.
 - Control plane: gRPC ingestion, HTTP API, UI, persistence.
 - Build and release pipeline, published container images.
 
-Out of scope: the demo services in `demo/` or `otel-test-app/`, which exist only to generate
+Out of scope: the demo services in `demo/`, which exist only to generate
 sample telemetry.
 
 ## Automated scanning

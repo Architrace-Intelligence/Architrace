@@ -172,8 +172,9 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
   the control plane build generates Spring interfaces and `Dto` models into
   `io.github.architrace.control.plane.api` (`openApiGenerate`, never committed). Swagger UI is
   the `swagger-ui` webjar behind `/swagger-ui`; there is no runtime-generated document.
-- Demo stack: `otel-test-app/` (Python Flask services + OTel Collector + docker compose); M7
-  replaces it with `demo/` on the published images.
+- Demo stack: `demo/` (docker compose on the published images: two environments of one Flask
+  application parameterised by role, a collector routing by environment to one agent each,
+  Redpanda, a PostgreSQL demo database, an nginx standing in for an external host).
 - Documentation site: Astro Starlight in `documentation/architrace-inteligence`, published
   to GitHub Pages from `main`.
 - Quality tooling already wired: Spotless (license header), JaCoCo (85% line/branch/method),

@@ -12,7 +12,7 @@ description: Run Architrace modules directly from source.
 ## 2. Validate agent config (dry-run)
 
 ```bash
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./demo/agent-dev.yaml
 ```
 
 `dry-run` validates the file, applies `--prop key=value` overrides and prints the effective configuration.
@@ -20,12 +20,12 @@ java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.ja
 ## 3. Start agent runtime
 
 ```bash
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./otel-test-app/architrace-agent.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./demo/agent-dev.yaml --prop control-plane.server=localhost:9090
 ```
 
 ## 4. Send OTLP traces
 
-Use your own instrumented service or the demo collector in `otel-test-app`.
+Use your own instrumented service or the demo stack in `demo` (its collector forwards to the agents of the stack; point a service at your local agent on `4319` to see it here).
 
 Agent receives trace exports on port `4319` and forwards graph events to control-plane on `9090`.
 
