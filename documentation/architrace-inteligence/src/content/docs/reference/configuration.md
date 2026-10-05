@@ -45,8 +45,8 @@ attribute-mapping:
 | `snapshot.interval-seconds` | no | `60` | window length; one snapshot per interval |
 | `snapshot.queue-size` | no | `64` | snapshots kept while the control plane is unreachable (oldest dropped) |
 | `buffers.ring-size` | no | `65536` | bounded span queue between the receiver and the graph worker; spans beyond it are rejected and counted |
-| `buffers.pending-ttl-seconds` | no | `120` | how long a span waits for its partner before eviction |
-| `metrics.port` | no | `9464` | Prometheus metrics and health endpoint port |
+| `buffers.pending-ttl-seconds` | no | `120` | how long a span waits for its partner before eviction; an external host appears only after a client span has waited this long, so a short value shows externals sooner and pairs fewer slow calls (the demo uses `20`) |
+| `metrics.port` | no | `9464` | Prometheus metrics and health endpoint port; the image health check probes `/health` on `ARCHITRACE_METRICS_PORT` (default `9464`) |
 | `attribute-mapping.<field>` | no | see below | attribute keys tried in order for one field; replaces the default list of that field |
 
 Unknown keys are rejected, so a typo cannot silently disable a setting. The control plane

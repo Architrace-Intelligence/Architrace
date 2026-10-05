@@ -3,7 +3,7 @@ title: M7. Packaging and demo
 description: Container images, a one-command demo with two environments, and guides to run Architrace for real.
 ---
 
-Status: in progress (images delivered by M0 PR 4, ARCHI-36; demo stack delivered by ARCHI-64 and ARCHI-65; deployment guide and B5 pending) · Order: 8 · Requirements: F12, N8
+Status: done on 2026-10-05 (images ARCHI-36; demo ARCHI-64 to ARCHI-66; deployment guide and B5 to B7 ARCHI-67) · Order: 8 · Requirements: F12, N8
 
 ## Goal
 
@@ -76,18 +76,15 @@ external host appear within the first minute.
 
 1. Dockerfiles and image publishing: done (M0 PR 4, ARCHI-36).
 2. Demo stack with two environments, broker and database; traffic generator: done (ARCHI-64 the stack and the guide, ARCHI-65 the references, the removal of `otel-test-app` follows).
-3. Guides and reference pages; final architecture page update for the MVP.
+3. Guides and reference pages: done (ARCHI-67: the deployment guide with the Spring Boot instrumentation section, B5 health check on `/health` with `4319` as the one default port, B7 documented next to the TTL).
 
 ## Open points
 
 From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
 
-- B5: the agent `HEALTHCHECK` defaults to port `4317` while the agent listens on `4319`; the
-  check moves to `/health` on the metrics port and one default port is shared by the
-  Dockerfile, the configuration and the docs.
-- B6: the deployment guide gets a section on instrumenting Spring Boot services: the
-  environment variables for the OpenTelemetry starter, what the starter covers (HTTP, JDBC,
-  R2DBC, Spring Kafka) and what needs the Java agent (Kafka Streams, reactor-kafka, raw Kafka
-  clients, Lettuce, OkHttp), with the note that Prometheus metrics stay untouched.
-- B7: the demo configuration uses a shorter pending TTL so external hosts appear within the
-  first minute, and the setting documents the delay.
+- B5: done (ARCHI-67): the image health check probes `/health` on the metrics port
+  (`ARCHITRACE_METRICS_PORT`, default `9464`) and exposes `4319`, the one default OTLP port.
+- B6: done (ARCHI-67): the [deployment guide](../../../guides/deployment/) has the section on
+  instrumenting Spring Boot services.
+- B7: done (ARCHI-64, ARCHI-67): the demo agents wait 20 s for a partner span and the
+  configuration page explains the delay next to `buffers.pending-ttl-seconds`.

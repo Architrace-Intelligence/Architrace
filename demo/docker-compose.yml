@@ -43,8 +43,6 @@ services:
     image: ${ARCHITRACE_AGENT_IMAGE:-ghcr.io/architrace-intelligence/architrace-agent:latest}
     volumes:
       - ./agent-dev.yaml:/config/architrace-agent.yaml:ro
-    environment:
-      ARCHITRACE_OTLP_PORT: "4319"
     depends_on:
       - control-plane
 
@@ -52,8 +50,6 @@ services:
     image: ${ARCHITRACE_AGENT_IMAGE:-ghcr.io/architrace-intelligence/architrace-agent:latest}
     volumes:
       - ./agent-stage.yaml:/config/architrace-agent.yaml:ro
-    environment:
-      ARCHITRACE_OTLP_PORT: "4319"
     depends_on:
       - control-plane
 
