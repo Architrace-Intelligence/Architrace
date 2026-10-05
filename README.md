@@ -9,7 +9,7 @@
   </p>
 
   ![Java](https://img.shields.io/badge/Java-25-blue)
-  ![Gradle](https://img.shields.io/badge/Gradle-9.3.1-02303A?logo=gradle)
+  ![Gradle](https://img.shields.io/badge/Gradle-9.8.0-02303A?logo=gradle)
   ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 
   [Documentation](https://architrace-intelligence.github.io/Architrace/) | [Quick Start](#quick-start) | [Docker Demo](#docker-demo) | [Contributing](#contributing)

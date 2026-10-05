@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :architrace-control-plane:dependencies --write-locks
 biz.aQute.bnd:biz.aQute.bnd.annotation:7.1.0=compileClasspath,testCompileClasspath
 ch.qos.logback:logback-classic:1.5.38=compileClasspath,compileProtoPath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 ch.qos.logback:logback-core:1.5.38=compileClasspath,compileProtoPath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
@@ -93,10 +94,10 @@ org.checkerframework:checker-qual:3.55.1=compileProtoPath,productionRuntimeClass
 org.codehaus.mojo:animal-sniffer-annotations:1.27=compileClasspath,compileProtoPath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 org.hamcrest:hamcrest:3.0=testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 org.hdrhistogram:HdrHistogram:2.2.2=compileProtoPath,productionRuntimeClasspath,runtimeClasspath,testCompileProtoPath,testRuntimeClasspath
-org.jacoco:org.jacoco.agent:0.8.14=jacocoAgent,jacocoAnt
-org.jacoco:org.jacoco.ant:0.8.14=jacocoAnt
-org.jacoco:org.jacoco.core:0.8.14=jacocoAnt
-org.jacoco:org.jacoco.report:0.8.14=jacocoAnt
+org.jacoco:org.jacoco.agent:0.8.15=jacocoAgent,jacocoAnt
+org.jacoco:org.jacoco.ant:0.8.15=jacocoAnt
+org.jacoco:org.jacoco.core:0.8.15=jacocoAnt
+org.jacoco:org.jacoco.report:0.8.15=jacocoAnt
 org.javassist:javassist:3.28.0-GA=checkstyle
 org.jetbrains:annotations:17.0.0=testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 org.jspecify:jspecify:1.0.1=checkstyle,compileClasspath,compileProtoPath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
@@ -118,10 +119,10 @@ org.osgi:org.osgi.annotation.bundle:2.0.0=compileClasspath,testCompileClasspath
 org.osgi:org.osgi.annotation.versioning:1.1.2=compileClasspath,testCompileClasspath
 org.osgi:org.osgi.resource:1.0.0=compileClasspath,testCompileClasspath
 org.osgi:org.osgi.service.serviceloader:1.0.0=compileClasspath,testCompileClasspath
-org.ow2.asm:asm-commons:9.9=jacocoAnt
-org.ow2.asm:asm-tree:9.9=jacocoAnt
+org.ow2.asm:asm-commons:9.10.1=jacocoAnt
+org.ow2.asm:asm-tree:9.10.1=jacocoAnt
+org.ow2.asm:asm:9.10.1=jacocoAnt
 org.ow2.asm:asm:9.7.1=testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
-org.ow2.asm:asm:9.9=jacocoAnt
 org.postgresql:postgresql:42.7.13=compileClasspath,compileProtoPath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
 org.reflections:reflections:0.10.2=checkstyle
 org.rnorth.duct-tape:duct-tape:1.0.8=testCompileClasspath,testCompileProtoPath,testRuntimeClasspath
