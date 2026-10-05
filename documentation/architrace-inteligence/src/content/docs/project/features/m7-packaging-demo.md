@@ -3,7 +3,7 @@ title: M7. Packaging and demo
 description: Container images, a one-command demo with two environments, and guides to run Architrace for real.
 ---
 
-Status: in progress (images delivered by M0 PR 4, ARCHI-36; demo stack and guides pending) · Order: 8 · Requirements: F12, N8
+Status: in progress (images delivered by M0 PR 4, ARCHI-36; demo stack delivered by ARCHI-64 and ARCHI-65; deployment guide and B5 pending) · Order: 8 · Requirements: F12, N8
 
 ## Goal
 
@@ -33,23 +33,29 @@ Out: Helm chart, Kubernetes manifests, native image (post-MVP).
 
 ### Demo stack (`demo/`)
 
-Replaces `otel-test-app/`.
+Replaces `otel-test-app/` (delivered: ARCHI-64 adds the stack and the guide, ARCHI-65 points the repository at it, the old stack is removed next).
 
 | Service | Purpose |
 |---------|---------|
 | `postgres` | control plane store |
 | `control-plane` | ingest, API, UI on `8085` |
-| `agent` | one agent serving both demo environments (environment from resource attributes) |
-| `otel-collector` | receives from demo services, exports to the agent |
+| `agent-dev`, `agent-stage` | one agent per environment: an agent serves exactly one environment and drops the spans of another |
+| `otel-collector` | one collector receiving from every demo service, routing by `deployment.environment.name` to the agent of that environment (routing connector of the contrib distribution) |
 | `redpanda` | Kafka-compatible broker for publish and consume edges |
 | `demo-db` | PostgreSQL used by a demo service, producing a database node |
-| `dev-*` services | DEV environment: order, inventory, notification (sync chain, one topic, one database) |
-| `stage-*` services | STAGE environment: same set minus one dependency, one service on an older version |
+| `payments` | an uninstrumented nginx reachable as `api.payments.example`, the external host |
+| `dev-*` services | DEV environment: gateway, order, inventory, notification (sync chain with a back-call, one topic, one database, one external host) |
+| `stage-*` services | STAGE environment: same set minus the back-call, `order` on an older version |
 | `traffic` | generates requests continuously so metrics are non-zero |
 
-Demo services stay small (Python with the OTel SDK, standard semantic conventions); the
-differences between DEV and STAGE are deliberate so drift and findings are visible out of the
-box.
+Demo services are one small Flask application parameterised by role (Python with the OTel SDK
+and its Flask, requests, psycopg2 and kafka-python instrumentations, stable HTTP semantic
+conventions so client spans carry `server.address`); the differences between DEV and STAGE are
+deliberate so drift and findings are visible out of the box: DEV yields a cyclic dependency, a
+shared database, three wide blast radii and an unknown external host, STAGE the shared database
+and one blast radius, and the drift shows the version and the missing back-call. The agents
+report every 30 s and wait 20 s for a client span's partner (B7), so the first findings and the
+external host appear within the first minute.
 
 ### Guides
 
@@ -69,7 +75,7 @@ box.
 ## Delivery plan
 
 1. Dockerfiles and image publishing: done (M0 PR 4, ARCHI-36).
-2. Demo stack with two environments, broker and database; traffic generator.
+2. Demo stack with two environments, broker and database; traffic generator: done (ARCHI-64 the stack and the guide, ARCHI-65 the references, the removal of `otel-test-app` follows).
 3. Guides and reference pages; final architecture page update for the MVP.
 
 ## Open points

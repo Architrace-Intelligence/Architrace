@@ -41,8 +41,8 @@ Build runnable agent fat jar, validate a configuration, run the agent:
 
 ```bash
 ./gradlew :architrace-agent:shadowJar
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./otel-test-app/architrace-agent.yaml
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./otel-test-app/architrace-agent.yaml --prop otlp.port=4320
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./demo/agent-dev.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./demo/agent-dev.yaml --prop control-plane.server=localhost:9090
 ```
 
 Print the version the build computes from git tags and Conventional Commits:
@@ -75,7 +75,7 @@ Print the version the build computes from git tags and Conventional Commits:
 - **[`architrace-api`](./architrace-api)** - Shared protobuf and OpenAPI contracts and generated classes
 - **[`architrace-ui`](./architrace-ui)** - Web UI (Vite, React, TypeScript), built by Gradle and bundled into the control plane jar
 - **[`build-logic`](./build-logic)** - Gradle convention plugins: Java toolchain and quality gates, Spring Boot defaults, versioning from git
-- **[`otel-test-app`](./otel-test-app)** - End-to-end demo stack (Python services + collector + Architrace)
+- **[`demo`](./demo)** - One-command demo: two environments of a small shop, a broker, a database and an external host on the published images
 
 ---
 
@@ -94,27 +94,21 @@ flowchart LR
 
 ## Docker Demo
 
-Run full local demo stack:
+Run the full stack with two environments, a drift between them and findings out of the box:
 
 ```bash
-cd otel-test-app
-docker compose build
+cd demo
 docker compose up -d
 ```
 
-Traffic generator endpoint:
+Open <http://localhost:8085>: the Projects list shows the project `demo` with the scopes `DEV`
+and `STAGE` within a minute; the map, the Drift screen and the Findings screen have something
+to show from the first snapshot on. What runs and what to click first is in the
+[Docker demo guide](https://architrace-intelligence.github.io/Architrace/guides/docker-demo/).
 
 ```bash
-curl http://localhost:8080/
+docker compose down -v
 ```
-
-Expected response:
-
-```text
-A -> B -> C
-```
-
----
 
 ## Common Commands
 

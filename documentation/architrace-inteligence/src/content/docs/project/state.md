@@ -44,8 +44,16 @@ Last updated: **2026-10-05**
   OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
   external host and four Flask services from one parameterised `services/app.py` (`ROLE`), plus
   the rewritten [Docker demo](../../guides/docker-demo/) guide. The repository still points at
-  `otel-test-app` until PR 2; the published images are private on GHCR until the maintainer
-  checklist is done, so the guide shows the locally built alternative.
+  `otel-test-app` until PR 2. Validated end to end with locally built images (DEV: cycle,
+  shared database, three blast radii, unknown external; STAGE drift: version and missing
+  back-call). PR 2 (ARCHI-65, #82) points the README, `AGENTS.md`, `SECURITY.md`, the
+  getting-started, local-development and modules pages, the architecture page and the M7
+  page at `demo/`. Gotchas recorded on the M7 page: the control plane's
+  `architrace.ingestion.snapshot-interval` overrides the agent's interval; the Python
+  requests instrumentation needs `OTEL_SEMCONV_STABILITY_OPT_IN=http` to emit
+  `server.address`; `psycopg2-binary` needs `skip_dep_check`. The GHCR packages are still
+  private (maintainer checklist), so `docker compose up` on a clean machine waits for that;
+  the guide shows the locally built alternative.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -123,16 +131,17 @@ timeline mode only).
 
 ## Next step
 
-M6 is complete. Merge M7 PR 1 (ARCHI-64, #81); the next pull request is opened only after it
-is merged. Then continue, one pull request against `main` at a time, each with the next free
-ticket number:
+M6 is complete; M7 PR 1 (ARCHI-64, #81) is merged. Merge M7 PR 2 (ARCHI-65, #82); the next
+pull request is opened only after it is merged. Then continue, one pull request against
+`main` at a time, each with the next free ticket number:
 
-1. M7 PR 2 (ARCHI-65): point every reference at `demo/` (README, AGENTS, SECURITY,
-   getting-started, local development, modules, architecture, the M7 page, progress).
-2. M7 PR 3 (ARCHI-66): remove `otel-test-app`, move the Snyk excludes and Dependabot to `demo/`.
-3. M7 PR 4 (ARCHI-67): the deployment guide with the B6 Spring Boot section, the agent image
-   `HEALTHCHECK` on `/health` (B5), the B7 note on the configuration page; M7 done on the pages.
-4. Then the M6 candidates B2 and B3, the agent follow-ups B1 (fold Kafka Streams internal
+1. M7 PR 3 (ARCHI-66): remove `otel-test-app/` (the Snyk excludes in `main.yml` and `pr.yml`,
+   the Dependabot entry).
+2. M7 PR 4 (ARCHI-67): B5 (agent `HEALTHCHECK` on `/health` of the metrics port, one default
+   OTLP port `4319` in the Dockerfile, the configuration and the docs), B6 (deployment guide
+   with the Spring Boot instrumentation section), B7 note next to
+   `buffers.pending-ttl-seconds`; M7 done on the pages.
+3. Then the M6 candidates B2 and B3, the agent follow-ups B1 (fold Kafka Streams internal
    topics) and B4 (sub-millisecond latency) as small pull requests, and the `build-logic` JVM
    24 pin.
 

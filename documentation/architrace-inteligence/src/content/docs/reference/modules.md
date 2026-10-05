@@ -44,8 +44,11 @@ description: Monorepo module responsibilities.
 - Built by Gradle (`:architrace-ui:npmBuild`), tested by `:architrace-ui:test`; the bundle is a consumable Gradle
   configuration that the control plane packs under `static/`.
 
-## `otel-test-app`
+## `demo`
 
-- End-to-end local demo with Python services.
-- OpenTelemetry Collector forwarding traces to Architrace agent.
-- Docker Compose orchestration for quick validation.
+- One-command demo on the published images: `docker compose up -d`.
+- Two environments (DEV, STAGE) of one Flask application parameterised by role, with deliberate
+  differences so drift and findings show out of the box.
+- One OpenTelemetry Collector routing traces by `deployment.environment.name` to one agent per
+  environment; Redpanda, a PostgreSQL demo database and an nginx standing in for an external host.
+- Not a Gradle project; the [Docker demo guide](../../guides/docker-demo/) explains what runs.

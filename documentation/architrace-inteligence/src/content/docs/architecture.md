@@ -238,7 +238,7 @@ pipeline. Kubernetes manifests and a Helm chart are post-MVP.
 | `architrace-agent` | application | `architrace-api` | current |
 | `architrace-control-plane` | Spring Boot application | `architrace-api`, UI bundle | current |
 | `architrace-ui` | Vite project driven from Gradle | `architrace-api` (OpenAPI document) | current |
-| `demo` | docker compose, sample services | published images | target (today `otel-test-app`) |
+| `demo` | docker compose, sample services | published images | current |
 
 Rules: [ADR 0005](../project/adr/0005-module-layout/). Project paths equal directory names since
 M0 PR 2.

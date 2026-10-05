@@ -50,7 +50,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M4 Service map UI](../features/m4-service-map/) | done | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32, ARCHI-43, ARCHI-44, ARCHI-45, ARCHI-46 | PR 1–5 merged (#39, #55, #56, #58, #59): `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate, Projects list, shell, routing, Service map with React Flow and ELK, lenses, context rail, find, time, selection in the URL, scope switcher, namespace filter; follow-ups B1 and B3 from the real-data round |
 | [M5 Drift](../features/m5-drift/) | done | agreed | ARCHI-48, ARCHI-49 | PR 1 (#61: diff domain, algorithm, `diff/environments` and `diff/timeline` endpoints) and PR 2 (#62: Drift screen with modes, sides in the URL, counters, grouped list, map overlays, rail, user guide) merged; the changed-node semantics per mode awaits the maintainer's confirmation |
 | [M6 Architecture rules](../features/m6-architecture-rules/) | done | agreed · blast radius added 2026-10-05 (ARCHI-50) | ARCHI-53 to ARCHI-63 | eleven pull requests (#66–#70, #75–#80), one after the other: the rule engine and the seven rules (ARCHI-53 to ARCHI-55), the `finding` table (ARCHI-56), evaluation after every ingested snapshot (ARCHI-57), the `findings` and `impact` endpoints (ARCHI-58), counts on the scope summaries (ARCHI-59), the Findings screen (ARCHI-60), badges on the Projects list, the map and the rail (ARCHI-61), the impact lens with the rail card (ARCHI-62), the user guide (ARCHI-63); candidates B2 and B3 from the real-data round stay open |
-| [M7 Packaging and demo](../features/m7-packaging-demo/) | in progress | agreed | ARCHI-36 | images delivered with M0 PR 4; demo stack and guides pending; B5, B6 and B7 from the real-data round |
+| [M7 Packaging and demo](../features/m7-packaging-demo/) | in progress | agreed | ARCHI-36, ARCHI-64, ARCHI-65 | images delivered with M0 PR 4; the demo stack `demo/` with two environments, broker, database and external host and the Docker demo guide (ARCHI-64, #81), the repository pointed at it (ARCHI-65, #82); the removal of `otel-test-app`, B5, B6 and the deployment guide pending |
 
 ## History
 
@@ -115,3 +115,5 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-05 | M6 PR 9: finding badges on the Projects list, the map nodes and the map rail (ARCHI-61) |
 | 2026-10-05 | M6 PR 10: the impact lens with the card "If X fails" (ARCHI-62) |
 | 2026-10-05 | M6 PR 11: user guide and documentation close-out; M6 complete (ARCHI-63) |
+| 2026-10-05 | M7 PR 1: the demo stack `demo/` on the published images, validated end to end, with the Docker demo guide (ARCHI-64) |
+| 2026-10-05 | M7 PR 2: README, agent instructions, security policy and the pages point at `demo/` (ARCHI-65) |
