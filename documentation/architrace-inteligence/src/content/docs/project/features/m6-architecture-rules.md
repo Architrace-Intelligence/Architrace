@@ -13,7 +13,7 @@ fails" for any node of the graph.
 
 ## Scope
 
-In: rule engine, seven rules with configuration, evaluation after ingestion, persistence,
+In: rule engine, eight rules with configuration, evaluation after ingestion, persistence,
 findings API, findings view and map badges, blast radius analysis with its API, map lens and
 rail card.
 
@@ -51,6 +51,7 @@ graph the map and the drift use.
 | FanInHub | a service with inbound sync degree above N (direct callers, a coupling hotspot) | 8 | medium |
 | LongSyncChain | the longest sync path from an entry node (a node nobody calls), over the condensation of the strongly connected components: a cycle collapses to its smallest member and has its own finding, a database or external host counts as the last hop | 5 hops | medium |
 | UnknownExternal | an external node not in the allowlist | empty allowlist | low |
+| DataStreamWithoutProducer | a topic with `consume` edges but no `publish` edge in the observed traces, usually an outbox filled by change data capture (B2) | none | low |
 
 ### Blast radius
 
@@ -153,13 +154,12 @@ Delivered as eleven pull requests against `main`, one at a time, each at most tw
 9. Finding badges on the Projects list, the map and the map rail (ARCHI-61).
 10. Impact lens and the rail card (ARCHI-62).
 11. User guide and documentation close-out (ARCHI-63).
+12. `DataStreamWithoutProducer`, the B2 insight from the real-data round (ARCHI-72).
 
 ## Open points
 
 From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
 
-- B2: a data stream with consumers but no producer is usually an outbox filled by change data
-  capture; an insight should say so instead of leaving the topic dangling.
 - B3: a platform category in the external allowlist (feature-flag server, config server) so
   these hosts are grouped on the map and skipped by `UnknownExternal`.
 

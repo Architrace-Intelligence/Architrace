@@ -1,6 +1,6 @@
 ---
 title: Reading the architecture findings
-description: How to read the Findings screen, the seven deterministic rules behind it, and the blast radius of any node on the map.
+description: How to read the Findings screen, the eight deterministic rules behind it, and the blast radius of any node on the map.
 ---
 
 Findings are what the architecture rules say about the current graph of a scope: a cycle of
@@ -37,7 +37,7 @@ plane configuration.
 The rules that found nothing are listed too, so silence is never ambiguous. The context rail
 shows the totals per severity and every rule with its status, threshold and property.
 
-## The seven rules
+## The eight rules
 
 | Rule | Fires when | Default threshold | Severity |
 |------|-----------|-------------------|----------|
@@ -48,6 +48,7 @@ shows the totals per severity and every rule with its status, threshold and prop
 | Fan-in hub | a service has too many direct callers | more than 8 callers | medium |
 | Long synchronous chain | a request path has too many synchronous hops | more than 5 hops | medium |
 | Unknown external | an external host is not on the allowlist | empty allowlist | low |
+| Data stream without producer | a topic is consumed but nobody publishes to it in the traces (an outbox filled by change data capture looks like this) | none | low |
 
 Self-calls and paths that close through a data stream are never cycles: asynchronous
 decoupling is exactly what the rules give credit for. A cycle counts as one hop of a chain

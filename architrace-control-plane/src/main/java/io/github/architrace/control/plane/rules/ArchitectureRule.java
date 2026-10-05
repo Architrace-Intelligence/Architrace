@@ -15,7 +15,8 @@ public sealed interface ArchitectureRule
                 WideBlastRadius,
                 CrossDomainCoupling,
                 FanInHub,
-                LongSyncChain {
+                LongSyncChain,
+                DataStreamWithoutProducer {
 
     String id();
 

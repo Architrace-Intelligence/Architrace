@@ -420,4 +420,45 @@ class ArchitectureRulesTest {
                     .isEqualTo("api.github.com is not on the allowlist of known external systems");
         }
     }
+
+    @Nested
+    class DataStreamWithoutProducerRule {
+
+        private final DataStreamWithoutProducer rule = new DataStreamWithoutProducer();
+
+        @Test
+        void reportsATopicThatIsConsumedButNeverPublishedWithItsConsumersAsEvidence() {
+            TopologyGraph graph = graph(
+                    List.of(orders, ordersDb, events, reporting, billing),
+                    List.of(
+                            sync(orders, ordersDb),
+                            edge(events, reporting, EdgeKind.CONSUME, 5),
+                            edge(events, billing, EdgeKind.CONSUME, 5)));
+
+            List<Finding> findings = rule.evaluate(graph);
+
+            assertThat(findings).hasSize(1);
+            Finding finding = findings.getFirst();
+            assertThat(finding.ruleId()).isEqualTo("data-stream-without-producer");
+            assertThat(finding.severity()).isEqualTo(Finding.Severity.LOW);
+            assertThat(finding.subjectNodeIds()).containsExactly(events.id());
+            assertThat(finding.evidence()).containsExactly(billing.id(), reporting.id());
+            assertThat(finding.title()).isEqualTo("Data stream order-events has consumers but no producer");
+            assertThat(finding.detail())
+                    .isEqualTo("billing, reporting consume order-events; no service publishes to it in the observed"
+                            + " traces. A topic filled by change data capture from an outbox table looks like this:"
+                            + " the producing service only writes to its database");
+        }
+
+        @Test
+        void staysQuietForAPublishedTopicAndForATopicNobodyConsumes() {
+            TopologyGraph published = graph(
+                    List.of(orders, events, reporting),
+                    List.of(edge(orders, events, EdgeKind.PUBLISH, 5), edge(events, reporting, EdgeKind.CONSUME, 5)));
+            TopologyGraph idle = graph(List.of(orders, events), List.of());
+
+            assertThat(rule.evaluate(published)).isEmpty();
+            assertThat(rule.evaluate(idle)).isEmpty();
+        }
+    }
 }
