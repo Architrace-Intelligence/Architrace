@@ -35,6 +35,13 @@ export const NODE_TYPE_TOKENS: Record<NodeType, NodeTypeToken> = {
   EXTERNAL: "ext",
 };
 
+export type SeverityToken = "high" | "medium" | "low";
+
+export interface NodeFindings {
+  readonly count: number;
+  readonly severity: SeverityToken;
+}
+
 export type EdgeHealth = "ok" | "warn" | "bad";
 
 const WARN_ERROR_RATE = 0.01;

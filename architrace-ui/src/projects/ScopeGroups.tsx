@@ -50,6 +50,7 @@ export function ScopeGroups({ groups, groupBy, now }: ScopeGroupsProps) {
                 <th scope="col" className="num">
                   Data streams
                 </th>
+                <th scope="col">Findings</th>
                 <th scope="col">Agents</th>
                 <th scope="col" className="num">
                   Last snapshot
@@ -93,6 +94,7 @@ function ScopeRow({ scope, columns, now }: ScopeRowProps) {
       <td className="num">{scope.namespaces}</td>
       <td className="num">{scope.services}</td>
       <td className="num">{scope.dataStreams}</td>
+      <td>{describeFindings(scope, path)}</td>
       <td>{describeAgents(scope)}</td>
       <td className="num">{formatRelative(scope.lastSnapshotAt, now)}</td>
     </tr>
@@ -104,6 +106,20 @@ function cell(column: GroupBy, value: string) {
     return <span className="badge b-kind">{value}</span>;
   }
   return <span className={column === "cluster" ? "mono" : undefined}>{value}</span>;
+}
+
+function describeFindings(scope: ScopeSummary, path: string) {
+  const { high, medium, low } = scope.findings;
+  if (high + medium + low === 0) {
+    return <span className="faint">—</span>;
+  }
+  return (
+    <Link to={`${path}/findings`} className="badges">
+      {high > 0 && <span className="badge sev-high">{high} high</span>}
+      {medium > 0 && <span className="badge sev-medium">{medium} medium</span>}
+      {low > 0 && <span className="badge sev-low">{low} low</span>}
+    </Link>
+  );
 }
 
 function describeAgents(scope: ScopeSummary) {

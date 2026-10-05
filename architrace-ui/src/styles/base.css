@@ -1365,6 +1365,19 @@ button.node {
   margin-left: auto;
 }
 
+.node-badge {
+  margin-left: auto;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.node-badge + .node-flag {
+  margin-left: 0;
+}
+
 .react-flow__node.drift-added .node {
   border-color: var(--added);
 }

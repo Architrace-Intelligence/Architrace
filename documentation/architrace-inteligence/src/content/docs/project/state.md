@@ -76,7 +76,12 @@ Last updated: **2026-10-05**
   rows that expand to detail, evidence with names from the graph, "Show on map" linking to
   the map with the first subject selected, the allowlist line for unknown externals, the
   rules that pass, a rail with totals and every rule's status), the `Findings` entry in the
-  navigation rail and the `sev-*` classes. See the
+  navigation rail and the `sev-*` classes. PR 9 (ARCHI-61, #78) puts the findings where the
+  architect already looks: a Findings column on the Projects list (severity badges linking
+  to the Findings screen), a count badge on every map node that is the subject of a finding
+  (`findingsByNode`, the top severity colours it) and a "Findings · N" section in the map
+  rail for the selected node; the map asks for the findings only when it shows the present
+  (no `at`), because findings describe the current graph. See the
   [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
   delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a pull
   request may change at most twelve files; the rule table there still needs the chain
@@ -158,20 +163,18 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–7 (#66–#70, #75, #76) are merged. Merge M6 PR 8 (ARCHI-60, #77); the next pull
+M6 PR 1–8 (#66–#70, #75–#77) are merged. Merge M6 PR 9 (ARCHI-61, #78); the next pull
 request is opened only after it is merged. Then continue, one pull request against `main` at
 a time, each with the next free ticket number:
 
-1. M6 PR 9: finding counts on the Projects list, finding badges on the map nodes and the
-   findings of the selected node in the map rail.
-2. M6 PR 10: the impact lens (`lens=impact` with the selected node), the rail card "If X
+1. M6 PR 10: the impact lens (`lens=impact` with the selected node), the rail card "If X
    fails", "Show on map" of a wide blast radius finding opening the lens.
-3. M6 PR 11: the user guide page, the M6 feature page (status, chain semantics), progress
+2. M6 PR 11: the user guide page, the M6 feature page (status, chain semantics), progress
    log lines for ARCHI-59 onwards, README.
-4. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+3. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
    real data); the M6 candidates B2 and B3 along the way.
-5. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+4. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume
