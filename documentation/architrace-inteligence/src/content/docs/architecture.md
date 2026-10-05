@@ -20,7 +20,7 @@ Target to Current.
 - **Standard OpenTelemetry.** Identity and context come from OTel semantic conventions, with
   configurable fallbacks for legacy attribute names.
 
-## Current state (as of 2026-10-04)
+## Current state (as of 2026-10-05)
 
 ```mermaid
 flowchart LR
@@ -54,7 +54,13 @@ flowchart LR
   scheduled job removes snapshots older than the retention period. The `drift` package
   compares two such graphs: `GraphDiffer` is a pure set difference on node ids and edge keys
   with a mode-dependent notion of a changed node, `DriftQuery` resolves the two sides (two
-  scopes of a project at one instant, or one scope at two instants). The Query API under
+  scopes of a project at one instant, or one scope at two instants). The `rules` package
+  turns such a graph into findings: `RuleEngine` runs the sealed `ArchitectureRule` set,
+  built from `RulesProperties` (`CyclicDependency` over the strongly connected components
+  of the sync edges, `SharedDatabase` with a client threshold, `UnknownExternal` against an
+  allowlist), and orders the `Finding` records by severity, rule and subject; the
+  remaining rules, the impact analysis, evaluation after ingestion, storage and the
+  findings endpoint follow in the next M6 pull requests. The Query API under
   `/api/v1` exposes scopes, agents, graph, services, snapshot history, single snapshots and
   the two diffs of a scope, with domain errors as typed RFC 9457 problems; the control plane
   serves its OpenAPI document and Swagger UI. Health and metrics are on Actuator.
@@ -152,7 +158,7 @@ Packages are organised by feature, each with the same inner shape:
 | `ingestion` | `IncomingSnapshot` | validation, mapping to topology | gRPC |
 | `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent`, `NodeView`, `Page` | store, current graph, node views, history, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`: controllers, model mapping, problem details) |
 | `drift` | `GraphRef`, `NodeChange`, `TopologyDiff`, `DiffMode` | `GraphDiffer`, `DriftQuery` | REST (`drift.web`) |
-| `rules` | `ArchitectureRule`, `Finding` | engine, scheduling after ingest | repository, REST |
+| `rules` | `ArchitectureRule` (sealed: `CyclicDependency`, `SharedDatabase`, `UnknownExternal`), `Finding`, `RulesProperties` | `RuleEngine`; evaluation after ingest and impact analysis (next M6 PRs) | repository, REST (next M6 PRs) |
 | `web` | | | OpenAPI document, Swagger UI, UI bundle with single-page fallback |
 
 Design detail: [M2](../project/features/m2-control-plane-storage/), [M3](../project/features/m3-query-api/),
