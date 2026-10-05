@@ -44,7 +44,7 @@ class AgentStreamServiceTest {
     private final IngestionProperties properties =
             new IngestionProperties(Duration.ofSeconds(60), Duration.ofSeconds(30));
     private final AgentStreamService service = new AgentStreamService(
-            new IngestionService(agents, snapshots, metrics, clock),
+            new IngestionService(agents, snapshots, metrics, clock, event -> {}),
             properties,
             metrics,
             agents,

@@ -25,6 +25,7 @@ import io.github.architrace.control.plane.topology.NodeAttributes;
 import io.github.architrace.control.plane.topology.NodeType;
 import io.github.architrace.control.plane.topology.TopologyGraph;
 import io.github.architrace.control.plane.topology.TopologyNode;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ class RuleEngineTest {
     @Test
     void buildsTheRulesFromTheProperties() {
         RulesProperties properties = new RulesProperties(
+                Duration.ofSeconds(45),
                 new SharedDatabaseProperties(3),
                 new UnknownExternalProperties(List.of("api.github.com")),
                 new WideBlastRadiusProperties(60, 4),
@@ -104,11 +106,14 @@ class RuleEngineTest {
                 "architrace.rules.shared-database.min-services", "4",
                 "architrace.rules.unknown-external.allowlist", "api.github.com,api.stripe.com",
                 "architrace.rules.wide-blast-radius.min-share-percent", "70",
-                "architrace.rules.fan-in-hub.max-callers", "12"));
+                "architrace.rules.fan-in-hub.max-callers", "12",
+                "architrace.rules.evaluation-interval", "2m"));
 
         assertThat(defaults).isEqualTo(RulesProperties.defaults());
+        assertThat(defaults.evaluationInterval()).isEqualTo(Duration.ofSeconds(30));
         assertThat(defaults.sharedDatabase().minServices()).isEqualTo(2);
         assertThat(defaults.unknownExternal().allowlist()).isEmpty();
+        assertThat(overridden.evaluationInterval()).isEqualTo(Duration.ofMinutes(2));
         assertThat(overridden.sharedDatabase().minServices()).isEqualTo(4);
         assertThat(overridden.unknownExternal().allowlist()).containsExactly("api.github.com", "api.stripe.com");
         assertThat(overridden.wideBlastRadius()).isEqualTo(new WideBlastRadiusProperties(70, 3));
@@ -129,6 +134,17 @@ class RuleEngineTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("minServices must be at least 1");
         assertThatThrownBy(() -> new CrossDomainCouplingProperties(0)).isInstanceOf(IllegalArgumentException.class);
+        RulesProperties defaults = RulesProperties.defaults();
+        assertThatThrownBy(() -> new RulesProperties(
+                        Duration.ZERO,
+                        defaults.sharedDatabase(),
+                        defaults.unknownExternal(),
+                        defaults.wideBlastRadius(),
+                        defaults.crossDomainCoupling(),
+                        defaults.fanInHub(),
+                        defaults.longSyncChain()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("evaluationInterval must be positive");
         assertThatThrownBy(() -> new FanInHubProperties(0)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new LongSyncChainProperties(0)).isInstanceOf(IllegalArgumentException.class);
     }
