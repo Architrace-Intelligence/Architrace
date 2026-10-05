@@ -143,8 +143,9 @@ timeline mode only).
 ## Next step
 
 The MVP queue M0–M7 is merged (#90 closed M7). Merge the demo dependency bump (ARCHI-70, #91),
-which also retires the open Dependabot pull requests on `demo/services`. Then continue, one
-pull request against `main` at a time, each with the next free ticket number:
+which completes the set that the single Dependabot merges #84–#88 left inconsistent on
+`main`. Then continue, one pull request against `main` at a time, each with the next free
+ticket number:
 
 1. The M6 candidates B2 (an outbox topic with consumers but no producer as an insight) and
    B3 (a platform category in the external allowlist); the maintainer checklist of M0
