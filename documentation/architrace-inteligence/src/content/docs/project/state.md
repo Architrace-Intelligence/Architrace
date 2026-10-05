@@ -60,10 +60,16 @@ Last updated: **2026-10-05**
   evaluates the current graph at the control plane's `now` and replaces the findings of the
   scope; a failing evaluation is logged and never fails the ingestion. `RulesConfiguration`
   enables `RulesProperties` and the `RuleEngine` bean; the properties are on the
-  configuration reference page. See the [M6](../features/m6-architecture-rules/) page;
-  item 4 of its delivery plan is delivered in two pull requests (ARCHI-56 persistence,
-  ARCHI-57 evaluation) because a pull request may change at most twelve files; the rule
-  table there still needs the chain semantics and the plan the split (next docs touch).
+  configuration reference page. PR 6 (ARCHI-58, #75) exposes the results: `FindingsQuery`
+  (stored findings of a known scope filtered by severity and rule id; impact of a node on the
+  current graph at `at`, `NodeNotFoundException` when the id is not in it) behind
+  `rules.web.FindingsController` (`GET …/findings?severity=&rule=`, `GET …/impact?node=&at=`,
+  problem `node-not-found`), the OpenAPI schemas `Severity`, `Finding`, `Impact`,
+  `ImpactedNode` and the Query API reference section. `TopologyQuery.requireKnown` is public
+  now. See the [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan
+  is delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a
+  pull request may change at most twelve files; the rule table there still needs the chain
+  semantics and the plan the split (next docs touch).
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -141,13 +147,13 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–4 (#66–#69) are merged. Merge M6 PR 5 (ARCHI-57, #70); the next pull request is
+M6 PR 1–5 (#66–#70) are merged. Merge M6 PR 6 (ARCHI-58, #75); the next pull request is
 opened only after it is merged. Then continue, one pull request against `main` at a time,
 each with the next free ticket number:
 
-1. M6 PR 6: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
-   the Query API reference page, finding counts on the scope summaries.
-2. M6 PR 7 and following: Findings page, map badges, impact lens and rail card, user guide
+1. M6 PR 7: finding counts per severity on the scope summaries of `GET /scopes`
+   (`FindingStore.countBySeverity`, `ScopeSummary`, OpenAPI, Projects list badge).
+2. M6 PR 8 and following: Findings page, map badges, impact lens and rail card, user guide
    page.
 3. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with

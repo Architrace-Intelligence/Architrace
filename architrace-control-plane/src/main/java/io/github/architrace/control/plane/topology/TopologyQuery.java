@@ -75,7 +75,7 @@ public class TopologyQuery {
                 .toList();
     }
 
-    private void requireKnown(Scope scope) {
+    public void requireKnown(Scope scope) {
         if (agents.all().stream().noneMatch(agent -> agent.scope().equals(scope))) {
             throw new ScopeNotFoundException(scope);
         }
