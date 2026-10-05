@@ -25,16 +25,6 @@ public record CrossDomainCoupling(int maxDomains) implements ArchitectureRule {
     }
 
     @Override
-    public String id() {
-        return "cross-domain-coupling";
-    }
-
-    @Override
-    public Finding.Severity severity() {
-        return Finding.Severity.MEDIUM;
-    }
-
-    @Override
     public List<Finding> evaluate(TopologyGraph graph) {
         Map<String, TopologyNode> nodes = Nodes.byId(graph);
         Map<String, Set<String>> foreignCalleesBySource = Nodes.group(
@@ -51,6 +41,16 @@ public record CrossDomainCoupling(int maxDomains) implements ArchitectureRule {
                         entry.getValue().stream().sorted().toList(),
                         nodes))
                 .toList();
+    }
+
+    @Override
+    public String id() {
+        return "cross-domain-coupling";
+    }
+
+    @Override
+    public Finding.Severity severity() {
+        return Finding.Severity.MEDIUM;
     }
 
     private static Set<String> domains(Set<String> serviceIds) {
