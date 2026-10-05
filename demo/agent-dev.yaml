@@ -1,0 +1,22 @@
+project: demo
+environment: DEV
+cluster: demo
+
+agent:
+  name: demo-dev
+
+control-plane:
+  server: control-plane:9090
+  retry-seconds: 5
+
+otlp:
+  port: 4319
+
+snapshot:
+  interval-seconds: 30
+
+buffers:
+  pending-ttl-seconds: 20
+
+metrics:
+  port: 9464

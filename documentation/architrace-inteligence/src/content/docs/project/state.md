@@ -18,7 +18,8 @@ Last updated: **2026-10-05**
   design (#30), M1 (#50–#54), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1–5 (#39, #55, #56, #58,
   #59), the real-data backlog (ARCHI-47, #60), M5 PR 1–2 (#61, #62), the M6 blast-radius
   design (ARCHI-50, #63), the pull request size gate (ARCHI-51, #64) and the pipeline order
-  (ARCHI-52, #65). The `main` pipeline is green end to end; both images are in GHCR.
+  (ARCHI-52, #65), M6 (#66–#70, #75–#80), the Snyk hotfix (#71) and Gradle 9.8.0 (#74). The
+  `main` pipeline is green end to end; both images are in GHCR.
 - **M0 is complete in the repository.** What remains is the maintainer checklist on the
   [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
   ruleset (`.github/rulesets/main.json`) and the repository settings (§5 there), install the
@@ -29,72 +30,22 @@ Last updated: **2026-10-05**
   2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working
   assumption to confirm for M5: environment mode compares versions only, timeline mode versions
   and deployments.
-- **M6 is in progress.** PR 1 (ARCHI-53, #66) delivers the `rules` package of the control plane:
-  `Finding` (with its `Severity`), the sealed `ArchitectureRule`, `RulesProperties`
-  (`architrace.rules.*`, declared but not enabled yet), `RuleEngine`, and the rules
-  `CyclicDependency` (strongly connected components of the sync edges, one shortest cycle as
-  evidence), `SharedDatabase` (threshold `shared-database.min-services`, default 2) and
-  `UnknownExternal` (`unknown-external.allowlist` of host names). Nothing runs the engine yet:
-  the Spring wiring arrives with the evaluation trigger. PR 2 (ARCHI-54, #67) adds the blast
-  radius: `ImpactAnalysis.of(graph, nodeId)` returns an `Optional<Impact>` (`impaired` by a
-  reverse breadth-first search over sync edges, `delayed` one asynchronous passage further,
-  paths from the node to the subject, lexicographically smallest among equally short paths)
-  and the rule `WideBlastRadius` (`wide-blast-radius.min-share-percent` 50,
-  `wide-blast-radius.min-services` 3; the share must exceed the percentage). PR 3 (ARCHI-55, #68)
-  completes the rule set: Tarjan moves into the package-private
-  `StronglyConnectedComponents`, shared by `CyclicDependency` and `LongSyncChain`;
-  `CrossDomainCoupling` (`cross-domain-coupling.max-domains` 3, domain parsed from
-  `service:{domain}/{name}`, services without a domain share the empty one), `FanInHub`
-  (`fan-in-hub.max-callers` 8, direct service callers), `LongSyncChain`
-  (`long-sync-chain.max-hops` 5: longest path over the condensation of the strongly connected
-  components from every entry node, a cycle collapsed to its smallest member, databases and
-  externals counted as the last hop, subjects and evidence are the path in order).
-  PR 4 (ARCHI-56, #69) stores findings: `FindingStore` (`replace(scope, findings)`,
-  `findings(scope)`) with `JdbcFindingStore` in `rules.persistence` over the `finding` table
-  (Liquibase changelog `0002-finding.yaml`, scope columns, `subject_ids` and `evidence` as
-  jsonb id lists, index on the scope); replacing is one transaction (delete the scope, insert
-  the new rows); reads come back in `Finding.ORDER`. PR 5 (ARCHI-57, #70) runs the rules:
-  `IngestionService` publishes a `SnapshotIngested` event after every stored snapshot,
-  `RuleEvaluator` listens, claims the scope at most once per
-  `architrace.rules.evaluation-interval` (30s, compare-and-set on a per-scope instant),
-  evaluates the current graph at the control plane's `now` and replaces the findings of the
-  scope; a failing evaluation is logged and never fails the ingestion. `RulesConfiguration`
-  enables `RulesProperties` and the `RuleEngine` bean; the properties are on the
-  configuration reference page. PR 6 (ARCHI-58, #75) exposes the results: `FindingsQuery`
-  (stored findings of a known scope filtered by severity and rule id; impact of a node on the
-  current graph at `at`, `NodeNotFoundException` when the id is not in it) behind
-  `rules.web.FindingsController` (`GET …/findings?severity=&rule=`, `GET …/impact?node=&at=`,
-  problem `node-not-found`), the OpenAPI schemas `Severity`, `Finding`, `Impact`,
-  `ImpactedNode` and the Query API reference section. `TopologyQuery.requireKnown` is public
-  now. PR 7 (ARCHI-59, #76) joins the counts to the Projects list: `FindingStore.counts()` (every
-  scope with findings, `FindingCounts` per severity, computed in Java from all rows), merged
-  into `ScopeSummaryDto.findings` by `ScopesController` so `topology` never depends on
-  `rules`; the UI fixture carries the new required field. PR 8 (ARCHI-60, #77) is the first UI
-  part: the Findings screen (`src/findings`: `listFindings` and `findingsQuery`, a rule
-  catalogue with label, default threshold and property, severity chips and a rule select
-  kept in the URL as `severity` and `rule`, findings grouped by rule in severity order,
-  rows that expand to detail, evidence with names from the graph, "Show on map" linking to
-  the map with the first subject selected, the allowlist line for unknown externals, the
-  rules that pass, a rail with totals and every rule's status), the `Findings` entry in the
-  navigation rail and the `sev-*` classes. PR 9 (ARCHI-61, #78) puts the findings where the
-  architect already looks: a Findings column on the Projects list (severity badges linking
-  to the Findings screen), a count badge on every map node that is the subject of a finding
-  (`findingsByNode`, the top severity colours it) and a "Findings · N" section in the map
-  rail for the selected node; the map asks for the findings only when it shows the present
-  (no `at`), because findings describe the current graph. PR 10 (ARCHI-62, #79) adds the impact
-  lens: `lens=impact` with the selected node asks `GET …/impact?node=` (`getImpact`,
-  `impactQuery`), `impactOverlay` turns the answer into node marks (subject, impaired with
-  its hop, delayed) and the set of lit nodes (every path), `looks` dims everything else,
-  the canvas carries the classes `impact-subject`, `impact-impaired impact-hop-{1,2,3}` and
-  `impact-delayed` (hatched), the legend explains them, the rail shows the card "If X fails"
-  with the share and the rows by distance (each with its path, clicking one moves the
-  subject), the rail offers "What breaks if it fails" outside the lens, "Open as JSON"
-  points at the impact request, and "Show on map" of a wide blast radius finding opens the
-  lens. PR 11 (ARCHI-63, #80) closes M6 in the documentation: the user guide "Reading the
-  architecture findings", the M6 page (status, chain and domain semantics, the eleven-step
-  delivery plan), the progress log, the architecture page (four screens) and the README. M6
-  is complete once #80 is merged; see the [M6](../features/m6-architecture-rules/)
-  page.
+- **M6 is done** (ARCHI-53 to ARCHI-63, #66–#70 and #75–#80): seven deterministic rules, the
+  `finding` table, evaluation after every ingested snapshot, the `findings` and `impact`
+  endpoints, the Findings screen, badges on the Projects list and the map, the impact lens and
+  the user guide. Semantics and the eleven-step delivery plan are on the
+  [M6](../features/m6-architecture-rules/) page; candidates B2 and B3 stay open there.
+- Housekeeping merged on 2026-10-05: the Snyk policy of the documentation site (ARCHI-68, #71:
+  `overrides` for `postcss-selector-parser`, a time-boxed ignore for `zod`) and Gradle 9.8.0
+  with regenerated lockfiles (ARCHI-69, #74; the unused `guava` catalog entry is gone). Open
+  follow-up: drop the JVM 24 pin in `build-logic` now that Kotlin 2.4 targets 25.
+- **M7 is in progress.** PR 1 (ARCHI-64, #81) adds `demo/`: `docker-compose.yml` with the
+  control plane, one agent per environment (`agent-dev.yaml`, `agent-stage.yaml`), one
+  OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
+  external host and four Flask services from one parameterised `services/app.py` (`ROLE`), plus
+  the rewritten [Docker demo](../../guides/docker-demo/) guide. The repository still points at
+  `otel-test-app` until PR 2; the published images are private on GHCR until the maintainer
+  checklist is done, so the guide shows the locally built alternative.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -172,15 +123,18 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–10 (#66–#70, #75–#79) are merged. Merge M6 PR 11 (ARCHI-63, #80), the last of the
-chain. Then continue, one pull request against `main` at a time, each with the next free
+M6 is complete. Merge M7 PR 1 (ARCHI-64, #81); the next pull request is opened only after it
+is merged. Then continue, one pull request against `main` at a time, each with the next free
 ticket number:
 
-1. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
-   services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
-   real data); the M6 candidates B2 and B3 along the way.
-2. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
-   as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
+1. M7 PR 2 (ARCHI-65): point every reference at `demo/` (README, AGENTS, SECURITY,
+   getting-started, local development, modules, architecture, the M7 page, progress).
+2. M7 PR 3 (ARCHI-66): remove `otel-test-app`, move the Snyk excludes and Dependabot to `demo/`.
+3. M7 PR 4 (ARCHI-67): the deployment guide with the B6 Spring Boot section, the agent image
+   `HEALTHCHECK` on `/health` (B5), the B7 note on the configuration page; M7 done on the pages.
+4. Then the M6 candidates B2 and B3, the agent follow-ups B1 (fold Kafka Streams internal
+   topics) and B4 (sub-millisecond latency) as small pull requests, and the `build-logic` JVM
+   24 pin.
 
 ## How to resume
 

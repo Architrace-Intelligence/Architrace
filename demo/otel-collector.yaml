@@ -1,0 +1,37 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+connectors:
+  routing:
+    default_pipelines: [traces/dev]
+    table:
+      - context: resource
+        condition: attributes["deployment.environment.name"] == "STAGE"
+        pipelines: [traces/stage]
+
+exporters:
+  otlp/agent-dev:
+    endpoint: agent-dev:4319
+    tls:
+      insecure: true
+  otlp/agent-stage:
+    endpoint: agent-stage:4319
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces/in:
+      receivers: [otlp]
+      exporters: [routing]
+    traces/dev:
+      receivers: [routing]
+      exporters: [otlp/agent-dev]
+    traces/stage:
+      receivers: [routing]
+      exporters: [otlp/agent-stage]

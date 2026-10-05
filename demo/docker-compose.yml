@@ -1,0 +1,200 @@
+name: architrace-demo
+
+x-demo-service: &demo-service
+  build: ./services
+  restart: unless-stopped
+  depends_on:
+    otel-collector:
+      condition: service_started
+    demo-db:
+      condition: service_healthy
+    redpanda-init:
+      condition: service_completed_successfully
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: architrace
+      POSTGRES_USER: architrace
+      POSTGRES_PASSWORD: architrace
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U architrace -d architrace"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  control-plane:
+    image: ${ARCHITRACE_CONTROL_PLANE_IMAGE:-ghcr.io/architrace-intelligence/architrace-control-plane:latest}
+    ports:
+      - "${ARCHITRACE_UI_PORT:-8085}:8085"
+    environment:
+      ARCHITRACE_DB_URL: jdbc:postgresql://postgres:5432/architrace
+      ARCHITRACE_DB_USERNAME: architrace
+      ARCHITRACE_DB_PASSWORD: architrace
+      ARCHITRACE_INGESTION_SNAPSHOTINTERVAL: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  agent-dev:
+    image: ${ARCHITRACE_AGENT_IMAGE:-ghcr.io/architrace-intelligence/architrace-agent:latest}
+    volumes:
+      - ./agent-dev.yaml:/config/architrace-agent.yaml:ro
+    environment:
+      ARCHITRACE_OTLP_PORT: "4319"
+    depends_on:
+      - control-plane
+
+  agent-stage:
+    image: ${ARCHITRACE_AGENT_IMAGE:-ghcr.io/architrace-intelligence/architrace-agent:latest}
+    volumes:
+      - ./agent-stage.yaml:/config/architrace-agent.yaml:ro
+    environment:
+      ARCHITRACE_OTLP_PORT: "4319"
+    depends_on:
+      - control-plane
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.118.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
+    depends_on:
+      agent-dev:
+        condition: service_healthy
+      agent-stage:
+        condition: service_healthy
+
+  redpanda:
+    image: redpandadata/redpanda:v24.3.5
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --smp=1
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redpanda-init:
+    image: redpandadata/redpanda:v24.3.5
+    entrypoint: ["sh", "-c"]
+    command:
+      - rpk topic create order-events -X brokers=redpanda:9092 || rpk topic describe order-events -X brokers=redpanda:9092
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  demo-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: shop
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD: shop
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shop -d shop"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  payments:
+    image: nginx:1.27-alpine
+    networks:
+      default:
+        aliases:
+          - api.payments.example
+
+  dev-gateway:
+    <<: *demo-service
+    environment:
+      ROLE: gateway
+      OTEL_SERVICE_NAME: gateway
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=edge,service.version=3.2.0,deployment.environment.name=DEV,k8s.cluster.name=demo,k8s.namespace.name=edge
+      ORDER_URL: http://dev-order:8080
+    ports:
+      - "${DEMO_DEV_PORT:-8080}:8080"
+
+  dev-order:
+    <<: *demo-service
+    environment:
+      ROLE: order
+      OTEL_SERVICE_NAME: order
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=sales,service.version=1.5.0,deployment.environment.name=DEV,k8s.cluster.name=demo,k8s.namespace.name=sales
+      INVENTORY_URL: http://dev-inventory:8080
+      PAYMENTS_URL: http://api.payments.example
+
+  dev-inventory:
+    <<: *demo-service
+    environment:
+      ROLE: inventory
+      OTEL_SERVICE_NAME: inventory
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=sales,service.version=2.0.1,deployment.environment.name=DEV,k8s.cluster.name=demo,k8s.namespace.name=sales
+      ORDER_URL: http://dev-order:8080
+
+  dev-notification:
+    <<: *demo-service
+    environment:
+      ROLE: notification
+      OTEL_SERVICE_NAME: notification
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=crm,service.version=0.9.0,deployment.environment.name=DEV,k8s.cluster.name=demo,k8s.namespace.name=crm
+      KAFKA_GROUP: notification-dev
+
+  stage-gateway:
+    <<: *demo-service
+    environment:
+      ROLE: gateway
+      OTEL_SERVICE_NAME: gateway
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=edge,service.version=3.2.0,deployment.environment.name=STAGE,k8s.cluster.name=demo,k8s.namespace.name=edge
+      ORDER_URL: http://stage-order:8080
+    ports:
+      - "${DEMO_STAGE_PORT:-8081}:8080"
+
+  stage-order:
+    <<: *demo-service
+    environment:
+      ROLE: order
+      OTEL_SERVICE_NAME: order
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=sales,service.version=1.4.0,deployment.environment.name=STAGE,k8s.cluster.name=demo,k8s.namespace.name=sales
+      INVENTORY_URL: http://stage-inventory:8080
+      PAYMENTS_URL: http://api.payments.example
+
+  stage-inventory:
+    <<: *demo-service
+    environment:
+      ROLE: inventory
+      OTEL_SERVICE_NAME: inventory
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=sales,service.version=2.0.1,deployment.environment.name=STAGE,k8s.cluster.name=demo,k8s.namespace.name=sales
+
+  stage-notification:
+    <<: *demo-service
+    environment:
+      ROLE: notification
+      OTEL_SERVICE_NAME: notification
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=crm,service.version=0.9.0,deployment.environment.name=STAGE,k8s.cluster.name=demo,k8s.namespace.name=crm
+      KAFKA_GROUP: notification-stage
+
+  traffic:
+    image: curlimages/curl:8.11.1
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          curl -s -o /dev/null http://dev-gateway:8080/ || true
+          curl -s -o /dev/null http://stage-gateway:8080/ || true
+          sleep 1
+        done
+    depends_on:
+      - dev-gateway
+      - stage-gateway
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
