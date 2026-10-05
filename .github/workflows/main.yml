@@ -112,13 +112,13 @@ jobs:
         if: env.SNYK_TOKEN != ''
         env:
           SNYK_ORG: ${{ vars.SNYK_ORG }}
-        run: snyk test --all-projects --exclude=otel-test-app,build-logic --severity-threshold=high --org="$SNYK_ORG"
+        run: snyk test --all-projects --exclude=demo,build-logic --severity-threshold=high --org="$SNYK_ORG"
 
       - name: Record the dependency snapshot in Snyk
         if: ${{ !cancelled() && env.SNYK_TOKEN != '' }}
         env:
           SNYK_ORG: ${{ vars.SNYK_ORG }}
-        run: snyk monitor --all-projects --exclude=otel-test-app,build-logic --org="$SNYK_ORG"
+        run: snyk monitor --all-projects --exclude=demo,build-logic --org="$SNYK_ORG"
 
       - name: Report the skipped Snyk test
         if: env.SNYK_TOKEN == ''

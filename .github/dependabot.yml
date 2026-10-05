@@ -64,7 +64,7 @@ updates:
       prefix: "build(deps)"
 
   - package-ecosystem: pip
-    directory: /otel-test-app
+    directory: /demo/services
     schedule:
       interval: monthly
     labels: [chore]
