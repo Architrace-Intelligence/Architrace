@@ -55,6 +55,7 @@ Gradle project paths equal directory names (`:architrace-agent`, not `:agent`). 
 pr.yml        build ──► quality ──► security       (required checks)
               └ docs
 pr-title.yml  title                                (required check)
+pr-size.yml   size                                 (required check)
 codeql.yml    CodeQL (java-kotlin | javascript-typescript | actions)
 main.yml      build ──► quality ──► security ──► release ──► images (agent | control-plane)
               └ dependency graph                  └ docs deploy
@@ -91,7 +92,7 @@ main.yml      build ──► quality ──► security ──► release ─�
   guideline document.
 - `main` ruleset per [ADR 0003](../../adr/0003-review-identity-and-merge-gate/), kept as code
   in `.github/rulesets/main.json`: PR required, 0 approvals, required checks `build`, `quality`,
-  `security`, `docs`, `title` and the three CodeQL analyses, conversation resolution, squash as
+  `security`, `docs`, `title`, `size` and the three CodeQL analyses, conversation resolution, squash as
   the only merge method, linear history, no force push or deletion, no bypass, plus the CodeQL
   code scanning threshold. The maintainer applies the file; the commands are on the
   [GitHub setup](../../github-access/#5-the-main-ruleset-and-the-repository-settings) page.
@@ -188,6 +189,11 @@ What landed and the decisions behind it:
   expression accepts the nine commit types, the scope `ARCHI-<n>` or `deps` (Dependabot) and an
   optional `!`. The title reaches the script through an environment variable, never by
   interpolation.
+- **Size check** in its own workflow `pr-size.yml` (ARCHI-51) on `opened`, `reopened` and
+  `synchronize`: the job `size` reads `changed_files` of the pull request through the GitHub
+  API with the workflow token (read-only on pull requests, no checkout, no third-party action)
+  and fails above 12 files, listing them. The ruleset requires the check, so a larger pull
+  request cannot be merged; work is split into sequential pull requests instead.
 - **CodeQL** (`codeql.yml`, advanced setup) on pull requests, pushes to `main` and weekly:
   `java-kotlin` in manual build mode (`./gradlew --no-daemon --no-build-cache compileJava`, so the
   tracer sees every javac invocation), `javascript-typescript` and `actions` without a build.

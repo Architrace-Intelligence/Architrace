@@ -2,6 +2,7 @@
 Title format: <type>(ARCHI-<n>): <Imperative subject>
 Types: feat | fix | perf | refactor | build | ci | docs | test | chore   (add "!" for breaking)
 The title becomes the squash commit on main and drives the next version number.
+A pull request changes at most 12 files; the size check fails otherwise.
 -->
 
 ## Summary

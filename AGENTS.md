@@ -34,7 +34,11 @@ Development is feature-driven and PR-only.
 3. Branch from `main`: `ARCHI-<n>-<short-topic>`. Ticket numbers are sequential: the next
    number is one above the highest used in existing branches and PR titles.
 4. Implement, test locally (all quality gates green), update docs.
-5. Open a PR using `.github/PULL_REQUEST_TEMPLATE.md`; fill every section honestly.
+5. Open a PR using `.github/PULL_REQUEST_TEMPLATE.md`; fill every section honestly. A pull
+   request changes **at most 12 files**: the `size` check fails otherwise and the `main`
+   ruleset requires it, so there is no way around it. Plan the split into sequential pull
+   requests before starting, one against `main` at a time, each leaving `main` green and the
+   documentation current.
 6. CI runs the quality gates and CodeRabbit reviews the PR. Resolve every review thread
    (fix or answer), then the maintainer reviews and merges; the merge is the approval.
 7. After merge the main pipeline builds, versions and publishes artifacts.
