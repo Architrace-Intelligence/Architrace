@@ -47,9 +47,17 @@ describe("ProjectsPage", () => {
     expect(prodRow).toHaveTextContent("k8s-prod-eu1");
     expect(prodRow).toHaveTextContent("2 live");
     expect(prodRow).toHaveTextContent("1 min ago");
+    expect(prodRow).toHaveTextContent("2 high1 medium1 low");
+    expect(within(prodRow as HTMLElement).getByRole("link", { name: /2 high/ })).toHaveAttribute(
+      "href",
+      "/scopes/webshop/PROD/k8s-prod-eu1/findings",
+    );
+    expect(within(webshop).getAllByText("—")).toHaveLength(3);
     expect(within(webshop).getByText("stale · 1")).toBeInTheDocument();
     expect(within(webshop).getByText("2 h ago")).toBeInTheDocument();
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "billing" })).getAllByText("—")).toHaveLength(
+      2,
+    );
     expect(
       screen.getByText("6 scopes · 2 projects · 3 environments · 5 clusters · 6 agents, 1 stale"),
     ).toBeInTheDocument();

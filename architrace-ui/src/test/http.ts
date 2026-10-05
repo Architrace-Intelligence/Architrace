@@ -83,7 +83,12 @@ export function scopeSummary(
 }
 
 export const demoScopes: ScopeSummary[] = [
-  scopeSummary("webshop", "PROD", "k8s-prod-eu1", { services: 8, dataStreams: 2, namespaces: 6 }),
+  scopeSummary("webshop", "PROD", "k8s-prod-eu1", {
+    services: 8,
+    dataStreams: 2,
+    namespaces: 6,
+    findings: { high: 2, medium: 1, low: 1 },
+  }),
   scopeSummary("webshop", "PROD", "k8s-prod-eu2", { agents: 1, liveAgents: 1, services: 3 }),
   scopeSummary("webshop", "DEV", "k8s-dev-eu1", { agents: 1, liveAgents: 1, services: 7 }),
   scopeSummary("webshop", "DEV", "k8s-dev-ci", {
@@ -94,7 +99,12 @@ export const demoScopes: ScopeSummary[] = [
     namespaces: 0,
     lastSnapshotAt: "2026-10-01T10:00:00Z",
   }),
-  scopeSummary("billing", "PROD", "k8s-prod-eu1", { agents: 1, liveAgents: 1, services: 4 }),
+  scopeSummary("billing", "PROD", "k8s-prod-eu1", {
+    agents: 1,
+    liveAgents: 1,
+    services: 4,
+    findings: { high: 0, medium: 1, low: 0 },
+  }),
   scopeSummary("billing", "STAGE", "k8s-stage-eu1", {
     agents: 0,
     liveAgents: 0,

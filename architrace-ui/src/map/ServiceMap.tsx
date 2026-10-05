@@ -32,6 +32,7 @@ import {
   type Selection,
   type SideLabels,
   type VisibleGraph,
+  type NodeFindings,
 } from "./model";
 import { type CardNode, NodeCard } from "./NodeCard";
 
@@ -51,9 +52,10 @@ interface ServiceMapProps {
   readonly onSelect: (selection: Selection | undefined) => void;
   readonly overlay?: DriftOverlay;
   readonly sides?: SideLabels;
+  readonly findings?: ReadonlyMap<string, NodeFindings>;
 }
 
-export function ServiceMap({ graph, state, onSelect, overlay, sides }: ServiceMapProps) {
+export function ServiceMap({ graph, state, onSelect, overlay, sides, findings }: ServiceMapProps) {
   const key = [...graph.nodes.map((node) => node.id), ...graph.edges.map(edgeId)].join("|");
   const layout = useQuery({
     queryKey: ["layout", key],
@@ -79,6 +81,7 @@ export function ServiceMap({ graph, state, onSelect, overlay, sides }: ServiceMa
       onSelect={onSelect}
       overlay={overlay}
       sides={sides}
+      findings={findings}
     />
   );
 }
@@ -90,9 +93,18 @@ interface MapCanvasProps {
   readonly onSelect: (selection: Selection | undefined) => void;
   readonly overlay: DriftOverlay | undefined;
   readonly sides: SideLabels | undefined;
+  readonly findings: ReadonlyMap<string, NodeFindings> | undefined;
 }
 
-function MapCanvas({ graph, positions, state, onSelect, overlay, sides }: MapCanvasProps) {
+function MapCanvas({
+  graph,
+  positions,
+  state,
+  onSelect,
+  overlay,
+  sides,
+  findings,
+}: MapCanvasProps) {
   const look = useMemo(() => looks(graph, state), [graph, state]);
   const nodes = useMemo<CardNode[]>(
     () =>
@@ -105,7 +117,13 @@ function MapCanvas({ graph, positions, state, onSelect, overlay, sides }: MapCan
           position: positions.get(node.id) ?? { x: 0, y: 0 },
           width: NODE_WIDTH,
           height: NODE_HEIGHT,
-          data: { node, onSelect, change, subtitle: overlay?.subtitles.get(node.id) },
+          data: {
+            node,
+            onSelect,
+            change,
+            subtitle: overlay?.subtitles.get(node.id),
+            findings: findings?.get(node.id),
+          },
           selected: nodeLook?.selected ?? false,
           className: classNames([
             [nodeLook?.dimmed ?? false, "dimmed"],
@@ -114,7 +132,7 @@ function MapCanvas({ graph, positions, state, onSelect, overlay, sides }: MapCan
           ]),
         };
       }),
-    [graph, positions, look, onSelect, overlay],
+    [graph, positions, look, onSelect, overlay, findings],
   );
   const edges = useMemo<Edge[]>(
     () =>

@@ -4,10 +4,9 @@
  */
 
 import type { Finding, FindingCounts, Severity, TopologyGraph } from "../api/client";
+import type { NodeFindings, SeverityToken } from "../map/model";
 
 export const SEVERITIES: readonly Severity[] = ["HIGH", "MEDIUM", "LOW"];
-
-export type SeverityToken = "high" | "medium" | "low";
 
 export const SEVERITY_LABELS: Record<Severity, SeverityToken> = {
   HIGH: "high",
@@ -183,4 +182,28 @@ export function allowlistLine(finding: Finding): string | undefined {
 export function mapSearch(finding: Finding): string {
   const subject = finding.subjectNodeIds[0];
   return subject === undefined ? "" : `?node=${encodeURIComponent(subject)}`;
+}
+
+const SEVERITY_RANK: Record<SeverityToken, number> = { high: 0, medium: 1, low: 2 };
+
+export function findingsByNode(findings: readonly Finding[]): ReadonlyMap<string, NodeFindings> {
+  const byNode = new Map<string, NodeFindings>();
+  findings.forEach((finding) => {
+    const severity = severityToken(finding.severity);
+    finding.subjectNodeIds.forEach((id) => {
+      const current = byNode.get(id);
+      byNode.set(id, {
+        count: (current?.count ?? 0) + 1,
+        severity:
+          current === undefined || SEVERITY_RANK[severity] < SEVERITY_RANK[current.severity]
+            ? severity
+            : current.severity,
+      });
+    });
+  });
+  return byNode;
+}
+
+export function findingsOf(findings: readonly Finding[], nodeId: string): Finding[] {
+  return findings.filter((finding) => finding.subjectNodeIds.includes(nodeId));
 }

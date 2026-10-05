@@ -5,7 +5,8 @@
 
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 import type { TopologyNode } from "../api/client";
-import { type ChangeKind, GLYPHS, type Selection, subtitle } from "./model";
+import { plural } from "../projects/format";
+import { type ChangeKind, GLYPHS, type NodeFindings, type Selection, subtitle } from "./model";
 import { NodeIcon } from "./NodeIcon";
 
 export type CardNode = Node<
@@ -14,6 +15,7 @@ export type CardNode = Node<
     readonly onSelect: (selection: Selection | undefined) => void;
     readonly change?: ChangeKind;
     readonly subtitle?: string;
+    readonly findings?: NodeFindings;
   },
   "card"
 >;
@@ -39,6 +41,14 @@ export function NodeCard({ data, selected }: NodeProps<CardNode>) {
           <span className="node-name">{node.name}</span>
           <span className="node-sub mono">{data.subtitle ?? subtitle(node)}</span>
         </span>
+        {data.findings !== undefined && (
+          <span
+            className={`badge node-badge sev-${data.findings.severity}`}
+            aria-label={plural(data.findings.count, "finding")}
+          >
+            {data.findings.count}
+          </span>
+        )}
         {change !== undefined && (
           <span className={`glyph node-flag b-${change}`} aria-label={change}>
             {GLYPHS[change]}

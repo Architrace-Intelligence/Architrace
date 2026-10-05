@@ -5,9 +5,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import { describeError, type TopologyGraph } from "../api/client";
-import { graphQuery, scopesQuery } from "../api/queries";
+import { describeError, type Finding, type TopologyGraph } from "../api/client";
+import { findingsQuery, graphQuery, scopesQuery } from "../api/queries";
 import { Shell } from "../app/Shell";
+import { findingsByNode } from "../findings/model";
 import { ContextPanel } from "../map/ContextPanel";
 import {
   countByType,
@@ -36,6 +37,8 @@ export function ScopePage() {
   const state = parseMapState(params);
   const graph = useQuery(graphQuery(scope, state.at));
   const scopes = useQuery(scopesQuery());
+  const findings = useQuery({ ...findingsQuery(scope), enabled: state.at === undefined });
+  const current = state.at === undefined ? findings.data : undefined;
   const update = (next: MapState) => {
     setParams(toMapParams(next), { replace: true });
   };
@@ -74,7 +77,7 @@ export function ScopePage() {
   );
   const aside =
     graph.isSuccess && graph.data.nodes.length > 0 ? (
-      <ContextPanel graph={graph.data} state={state} onSelect={select} />
+      <ContextPanel graph={graph.data} state={state} onSelect={select} findings={current} />
     ) : undefined;
 
   return (
@@ -86,7 +89,13 @@ export function ScopePage() {
         </p>
       )}
       {graph.isSuccess && (
-        <MapView graph={graph.data} state={state} onChange={update} onSelect={select} />
+        <MapView
+          graph={graph.data}
+          state={state}
+          findings={current}
+          onChange={update}
+          onSelect={select}
+        />
       )}
     </Shell>
   );
@@ -95,11 +104,12 @@ export function ScopePage() {
 interface MapViewProps {
   readonly graph: TopologyGraph;
   readonly state: MapState;
+  readonly findings: readonly Finding[] | undefined;
   readonly onChange: (state: MapState) => void;
   readonly onSelect: (selection: Selection | undefined) => void;
 }
 
-function MapView({ graph, state, onChange, onSelect }: MapViewProps) {
+function MapView({ graph, state, findings, onChange, onSelect }: MapViewProps) {
   if (graph.nodes.length === 0) {
     return (
       <p className="empty">
@@ -172,7 +182,12 @@ function MapView({ graph, state, onChange, onSelect }: MapViewProps) {
       {visible.nodes.length === 0 ? (
         <p className="empty">Every node type is hidden. Switch one back on to see the map.</p>
       ) : (
-        <ServiceMap graph={visible} state={state} onSelect={onSelect} />
+        <ServiceMap
+          graph={visible}
+          state={state}
+          onSelect={onSelect}
+          findings={findings === undefined ? undefined : findingsByNode(findings)}
+        />
       )}
     </>
   );

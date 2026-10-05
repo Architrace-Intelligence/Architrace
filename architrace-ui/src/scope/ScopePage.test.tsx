@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../app/App";
 import {
+  demoFindings,
   demoGraph,
   demoScopes,
   emptyGraph,
@@ -47,7 +48,10 @@ function requestPaths(fetch: ReturnType<typeof respondByPath>): string[] {
 
 describe("ScopePage", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", respondByPath({ "/graph": demoGraph, "/scopes": demoScopes }));
+    vi.stubGlobal(
+      "fetch",
+      respondByPath({ "/graph": demoGraph, "/scopes": demoScopes, "/findings": demoFindings }),
+    );
   });
 
   afterEach(() => {
@@ -171,6 +175,35 @@ describe("ScopePage", () => {
     expect(count(".react-flow__edge.touching")).toBe(5);
     expect(count(".react-flow__edge.dimmed")).toBe(6);
     expect(screen.getAllByText("12.4k · 0.3 %").length).toBeGreaterThan(1);
+  });
+
+  it("badges the nodes with their findings and lists them for the selected node", async () => {
+    renderAt(`${SCOPE}?node=service%3Aorders-service`, <App />);
+
+    expect(await screen.findByText("Findings · 2")).toBeInTheDocument();
+    expect(rail().getByText("Cyclic dependency between 2 services")).toBeInTheDocument();
+    expect(rail().getByText("orders-service has 2 direct callers")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByLabelText("2 findings")).toHaveLength(1);
+    });
+    expect(screen.getAllByLabelText("1 finding")).toHaveLength(3);
+    const orders = screen.getByRole("button", { name: /orders-service/ });
+    expect(within(orders).getByLabelText("2 findings")).toHaveClass("sev-high");
+    expect(count(".node-badge.sev-low")).toBe(1);
+  });
+
+  it("keeps the badges off a graph of the past and says so for a clean node", async () => {
+    const fetch = respondByPath({
+      "/graph": demoGraph,
+      "/scopes": demoScopes,
+      "/findings": demoFindings,
+    });
+    vi.stubGlobal("fetch", fetch);
+    renderAt(`${SCOPE}?at=2026-10-01T11%3A00%3A00Z&node=service%3Aapi-gateway`, <App />);
+
+    expect(await screen.findByText("Service · PROD")).toBeInTheDocument();
+    expect(rail().queryByText(/^Findings ·/)).not.toBeInTheDocument();
+    expect(requestPaths(fetch).some((request) => request.endsWith("/findings"))).toBe(false);
   });
 
   it("selects an edge from the URL and describes the dependency", async () => {

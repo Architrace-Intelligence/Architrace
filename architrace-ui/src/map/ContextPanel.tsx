@@ -4,7 +4,8 @@
  */
 
 import { Fragment, type ReactNode } from "react";
-import type { TopologyGraph, TopologyNode } from "../api/client";
+import type { Finding, TopologyGraph, TopologyNode } from "../api/client";
+import { findingsOf, SEVERITY_LABELS, severityToken } from "../findings/model";
 import { plural } from "../projects/format";
 import { describeMetrics, formatCount, formatInstant, formatMillis, formatRate } from "./metrics";
 import {
@@ -31,6 +32,7 @@ interface ContextPanelProps {
   readonly graph: TopologyGraph;
   readonly state: MapState;
   readonly onSelect: (selection: Selection | undefined) => void;
+  readonly findings?: readonly Finding[];
 }
 
 const HEALTH_LABELS: Record<EdgeHealth, string> = {
@@ -39,12 +41,19 @@ const HEALTH_LABELS: Record<EdgeHealth, string> = {
   bad: "errors ≥ 3 %",
 };
 
-export function ContextPanel({ graph, state, onSelect }: ContextPanelProps) {
+export function ContextPanel({ graph, state, onSelect, findings }: ContextPanelProps) {
   const environment = graph.scope.environment;
   const node =
     state.selection?.kind === "node" ? nodeDetails(graph, state.selection.id) : undefined;
   if (node !== undefined) {
-    return <NodePanel details={node} environment={environment} onSelect={onSelect} />;
+    return (
+      <NodePanel
+        details={node}
+        environment={environment}
+        onSelect={onSelect}
+        findings={findings === undefined ? undefined : findingsOf(findings, node.node.id)}
+      />
+    );
   }
   const edge =
     state.selection?.kind === "edge" ? edgeDetails(graph, state.selection.id) : undefined;
@@ -129,9 +138,10 @@ interface NodePanelProps {
   readonly details: NodeDetails;
   readonly environment: string;
   readonly onSelect: (selection: Selection | undefined) => void;
+  readonly findings?: readonly Finding[];
 }
 
-function NodePanel({ details, environment, onSelect }: NodePanelProps) {
+function NodePanel({ details, environment, onSelect, findings }: NodePanelProps) {
   const { node, inbound, outbound } = details;
   const namespaces = namespacesOf(node);
   const clusters = clustersOf(node);
@@ -239,6 +249,19 @@ function NodePanel({ details, environment, onSelect }: NodePanelProps) {
               ))}
             </Section>
           </>
+        )}
+        {findings !== undefined && (
+          <Section title={`Findings · ${String(findings.length)}`}>
+            {findings.length === 0 && <span className="faint">No finding on this node.</span>}
+            {findings.map((finding) => (
+              <span className="panel-row" key={`${finding.ruleId}:${finding.title}`}>
+                <span className={`badge sev-${severityToken(finding.severity)}`}>
+                  {SEVERITY_LABELS[finding.severity]}
+                </span>
+                <span>{finding.title}</span>
+              </span>
+            ))}
+          </Section>
         )}
         {node.type !== "TOPIC" && (
           <Section
