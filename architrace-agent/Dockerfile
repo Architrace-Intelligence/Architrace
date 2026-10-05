@@ -13,13 +13,13 @@ WORKDIR /app
 COPY build/libs/architrace-agent-*-all.jar /app/architrace-agent.jar
 
 ENV JDK_JAVA_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError" \
-    ARCHITRACE_OTLP_PORT=4317
+    ARCHITRACE_METRICS_PORT=9464
 
 USER architrace
-EXPOSE 4317
+EXPOSE 4319 9464
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
-    CMD nc -z 127.0.0.1 "$ARCHITRACE_OTLP_PORT" || exit 1
+    CMD wget -qO- "http://127.0.0.1:$ARCHITRACE_METRICS_PORT/health" || exit 1
 
 ENTRYPOINT ["java", "--enable-preview", "-jar", "/app/architrace-agent.jar"]
 CMD ["run", "--config", "/config/architrace-agent.yaml"]

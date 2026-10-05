@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | in progress | M0 (maintainer checklist open), M1, M2, M3, M4, M5 and M6 done; the rest of M7 open |
+| 3 | Implementation (feature by feature)     | done        | M1 to M7 done; M0 waits for the maintainer checklist (ruleset, CodeRabbit, public packages, `v0.1.0`) |
 | 4 | Testing, hardening, release 1.0         | in progress | First real-data round on 2026-10-04: no Architrace change needed, backlog B1–B7 in [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) |
 
 ## Process foundation
@@ -50,7 +50,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M4 Service map UI](../features/m4-service-map/) | done | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32, ARCHI-43, ARCHI-44, ARCHI-45, ARCHI-46 | PR 1–5 merged (#39, #55, #56, #58, #59): `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate, Projects list, shell, routing, Service map with React Flow and ELK, lenses, context rail, find, time, selection in the URL, scope switcher, namespace filter; follow-ups B1 and B3 from the real-data round |
 | [M5 Drift](../features/m5-drift/) | done | agreed | ARCHI-48, ARCHI-49 | PR 1 (#61: diff domain, algorithm, `diff/environments` and `diff/timeline` endpoints) and PR 2 (#62: Drift screen with modes, sides in the URL, counters, grouped list, map overlays, rail, user guide) merged; the changed-node semantics per mode awaits the maintainer's confirmation |
 | [M6 Architecture rules](../features/m6-architecture-rules/) | done | agreed · blast radius added 2026-10-05 (ARCHI-50) | ARCHI-53 to ARCHI-63 | eleven pull requests (#66–#70, #75–#80), one after the other: the rule engine and the seven rules (ARCHI-53 to ARCHI-55), the `finding` table (ARCHI-56), evaluation after every ingested snapshot (ARCHI-57), the `findings` and `impact` endpoints (ARCHI-58), counts on the scope summaries (ARCHI-59), the Findings screen (ARCHI-60), badges on the Projects list, the map and the rail (ARCHI-61), the impact lens with the rail card (ARCHI-62), the user guide (ARCHI-63); candidates B2 and B3 from the real-data round stay open |
-| [M7 Packaging and demo](../features/m7-packaging-demo/) | in progress | agreed | ARCHI-36, ARCHI-64, ARCHI-65 | images delivered with M0 PR 4; the demo stack `demo/` with two environments, broker, database and external host and the Docker demo guide (ARCHI-64, #81), the repository pointed at it (ARCHI-65, #82); the removal of `otel-test-app`, B5, B6 and the deployment guide pending |
+| [M7 Packaging and demo](../features/m7-packaging-demo/) | done | agreed | ARCHI-36, ARCHI-64 to ARCHI-67 | images with M0 PR 4; the demo stack `demo/` with two environments, broker, database and external host and the Docker demo guide (ARCHI-64, #81), the repository pointed at it (ARCHI-65, #82), `otel-test-app` removed (ARCHI-66, #83), the deployment guide with the Spring Boot instrumentation section, B5 and B7 (ARCHI-67, #90) |
 
 ## History
 
@@ -117,3 +117,5 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-05 | M6 PR 11: user guide and documentation close-out; M6 complete (ARCHI-63) |
 | 2026-10-05 | M7 PR 1: the demo stack `demo/` on the published images, validated end to end, with the Docker demo guide (ARCHI-64) |
 | 2026-10-05 | M7 PR 2: README, agent instructions, security policy and the pages point at `demo/` (ARCHI-65) |
+| 2026-10-05 | M7 PR 3: `otel-test-app` removed; Snyk and Dependabot follow `demo/` (ARCHI-66) |
+| 2026-10-05 | M7 PR 4: deployment guide, agent health check on `/health`, B5 to B7 closed; M7 complete (ARCHI-67) |

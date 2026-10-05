@@ -52,10 +52,14 @@ Last updated: **2026-10-05**
   `architrace.ingestion.snapshot-interval` overrides the agent's interval; the Python
   requests instrumentation needs `OTEL_SEMCONV_STABILITY_OPT_IN=http` to emit
   `server.address`; `psycopg2-binary` needs `skip_dep_check`. PR 3 (ARCHI-66, #83) removes
-  `otel-test-app/` and moves the Snyk excludes and the Dependabot pip entry to `demo/` (its
-  progress line travels with the next pull request, the size gate is full). The GHCR
-  packages are still private (maintainer checklist), so `docker compose up` on a clean
-  machine waits for that; the guide shows the locally built alternative.
+  `otel-test-app/` and moves the Snyk excludes and the Dependabot pip entry to `demo/`. PR 4
+  (ARCHI-67, #90) closes M7: the deployment guide (control plane, one agent per environment,
+  collector snippet, the Spring Boot instrumentation section of B6, a checklist), B5 (the
+  agent image's health check probes `/health` on `ARCHITRACE_METRICS_PORT`, `4319` is the one
+  default OTLP port, the demo drops its workaround) and B7 (the delay explained next to
+  `buffers.pending-ttl-seconds`). The GHCR packages are still private (maintainer
+  checklist), so `docker compose up` on a clean machine waits for that; the MVP (M0 to M7) is
+  complete once #90 is merged.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -133,17 +137,16 @@ timeline mode only).
 
 ## Next step
 
-M6 is complete; M7 PR 1–2 (#81, #82) are merged. Merge M7 PR 3 (ARCHI-66, #83); the next
-pull request is opened only after it is merged. Then continue, one pull request against
-`main` at a time, each with the next free ticket number:
+M6 is complete; M7 PR 1–3 (#81–#83) are merged. Merge M7 PR 4 (ARCHI-67, #90), the last pull
+request of the MVP queue. Then continue, one pull request against `main` at a time, each
+with the next free ticket number:
 
-1. M7 PR 4 (ARCHI-67): B5 (agent `HEALTHCHECK` on `/health` of the metrics port, one default
-   OTLP port `4319` in the Dockerfile, the configuration and the docs), B6 (deployment guide
-   with the Spring Boot instrumentation section), B7 note next to
-   `buffers.pending-ttl-seconds`; M7 done on the pages, the progress line of PR 3.
-2. Then the M6 candidates B2 and B3, the agent follow-ups B1 (fold Kafka Streams internal
-   topics) and B4 (sub-millisecond latency) as small pull requests, and the `build-logic` JVM
-   24 pin.
+1. The M6 candidates B2 (an outbox topic with consumers but no producer as an insight) and
+   B3 (a platform category in the external allowlist); the maintainer checklist of M0
+   (ruleset, CodeRabbit, public GHCR packages, `v0.1.0`).
+2. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+   as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
+   Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.
 
 ## How to resume
 
