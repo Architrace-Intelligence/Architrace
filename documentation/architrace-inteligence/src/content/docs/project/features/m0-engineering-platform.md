@@ -52,13 +52,15 @@ Gradle project paths equal directory names (`:architrace-agent`, not `:agent`). 
 ### Pipelines
 
 ```
-pr.yml        build ──► quality ──► security       (required checks)
-              └ docs
-pr-title.yml  title                                (required check)
-pr-size.yml   size                                 (required check)
-codeql.yml    CodeQL (java-kotlin | javascript-typescript | actions)
+pr.yml        size ──► build ──► quality                                  (required checks)
+                  │          ├─► security
+                  │          └─► codeql / (java-kotlin | javascript-typescript | actions)
+                  └──► docs
+pr-title.yml  title                                                       (required check)
+codeql.yml    codeql / (java-kotlin | javascript-typescript | actions)    on main and weekly
 main.yml      build ──► quality ──► security ──► release ──► images (agent | control-plane)
-              └ dependency graph                  └ docs deploy
+              ├ dependency graph
+              └ docs deploy
 ```
 
 - `build`: `./gradlew build`, the same gate as on a developer machine (compile, Spotless,
@@ -92,7 +94,7 @@ main.yml      build ──► quality ──► security ──► release ─�
   guideline document.
 - `main` ruleset per [ADR 0003](../../adr/0003-review-identity-and-merge-gate/), kept as code
   in `.github/rulesets/main.json`: PR required, 0 approvals, required checks `build`, `quality`,
-  `security`, `docs`, `title`, `size` and the three CodeQL analyses, conversation resolution, squash as
+  `security`, `docs`, `title`, `size` and `codeql / <language>` for the three analyses, conversation resolution, squash as
   the only merge method, linear history, no force push or deletion, no bypass, plus the CodeQL
   code scanning threshold. The maintainer applies the file; the commands are on the
   [GitHub setup](../../github-access/#5-the-main-ruleset-and-the-repository-settings) page.
@@ -189,19 +191,22 @@ What landed and the decisions behind it:
   expression accepts the nine commit types, the scope `ARCHI-<n>` or `deps` (Dependabot) and an
   optional `!`. The title reaches the script through an environment variable, never by
   interpolation.
-- **Size check** in its own workflow `pr-size.yml` (ARCHI-51) on `opened`, `reopened` and
-  `synchronize`: the job `size` reads `changed_files` of the pull request through the GitHub
-  API with the workflow token (read-only on pull requests, no checkout, no third-party action)
-  and fails above 12 files, listing them. The ruleset requires the check, so a larger pull
-  request cannot be merged; work is split into sequential pull requests instead.
-- **CodeQL** (`codeql.yml`, advanced setup) on pull requests, pushes to `main` and weekly:
-  `java-kotlin` in manual build mode (`./gradlew --no-daemon --no-build-cache compileJava`, so the
-  tracer sees every javac invocation), `javascript-typescript` and `actions` without a build.
-  `build-logic` is compiled by a plain `./gradlew help` before `codeql init`: under the tracer the
-  Kotlin compile daemon receives the CodeQL Kotlin extractor and ran out of its default heap, and
-  the convention plugins are not analysis targets anyway.
+- **Size check** (ARCHI-51, moved into `pr.yml` by ARCHI-52): the job `size` reads
+  `changed_files` of the pull request through the GitHub API with the workflow token (read-only
+  on pull requests, no checkout, no third-party action) and fails above 12 files, listing them.
+  The ruleset requires the check, so a larger pull request cannot be merged; work is split into
+  sequential pull requests instead.
+- **CodeQL** (advanced setup) as the reusable workflow `codeql-analysis.yml`, called by `pr.yml`
+  after the build and by `codeql.yml` on pushes to `main` and weekly, so one definition serves
+  both: `java-kotlin` in manual build mode (`./gradlew --no-daemon --no-build-cache compileJava`,
+  so the tracer sees every javac invocation), `javascript-typescript` and `actions` without a
+  build. `build-logic` is compiled by a plain `./gradlew help` before `codeql init`: under the
+  tracer the Kotlin compile daemon receives the CodeQL Kotlin extractor and ran out of its
+  default heap, and the convention plugins are not analysis targets anyway.
   `.github/codeql/codeql-config.yml` keeps generated sources, bundles and `node_modules` out of the
   results. Default setup is not enabled on the repository, so the workflow is the only analysis.
+  The checks of a called workflow are named `<caller job> / <called job>`, hence
+  `codeql / java-kotlin`, `codeql / javascript-typescript` and `codeql / actions`.
 - **Snyk** tests every manifest it finds (`--all-projects`) except the Python demo and
   `build-logic` (no wrapper in that directory), fails on high and critical findings and is skipped
   with a notice when the token is absent (Dependabot runs).
@@ -217,6 +222,30 @@ What landed and the decisions behind it:
   requires a licence key for organisation repositories.
 - `docs-deploy.yml` runs only on pushes to `main` (pull requests build the site in `pr.yml`), with
   pinned actions and Node.js 24. `ci-cd.yml` stays until PR 4 replaces it with `main.yml`.
+
+### Pipeline order (ARCHI-52)
+
+The pull request pipeline is one directed graph ordered by cost and by what a failure means:
+
+- **`size` first.** It takes seconds, needs no checkout, and a failure can only be fixed by a
+  push, which re-runs everything anyway, so nothing that runs after it is ever wasted on a
+  pull request that cannot be merged. `build`, `docs` and, through `build`, every analysis
+  wait for it.
+- **`title` stays outside the chain.** It is as cheap, but a wrong title is fixed by editing
+  the pull request, not by a push. If the expensive jobs waited for it, an edit would leave
+  them skipped, and a skipped required check counts as passed; keeping the title check
+  independent means the build result of the commit stays valid and complete while the title is
+  corrected. It also keeps the `edited` trigger out of `pr.yml`, so a title edit never re-runs
+  the pipeline.
+- **`build` before every analysis.** `quality` needs its reports, `security` resolves the same
+  dependencies, and CodeQL compiles the Java sources again under its tracer: a compile error
+  now stops at one job instead of three. This costs no wall-clock time, because the
+  `build → quality` path was already the longest.
+- **`docs` after `size` only.** The site build is independent of the code build; it waits
+  for the gate and nothing else.
+- **On `main`, the docs deploy waits for `build` only.** The site describes what has been
+  merged; a SonarCloud or scanner failure on the merge commit blocks the release, not the
+  documentation.
 
 ### PR 4: main pipeline, release and images (ARCHI-36)
 
