@@ -165,6 +165,53 @@ class ArchitectureRulesTest {
     }
 
     @Nested
+    class WideBlastRadiusRule {
+
+        private final TopologyNode authDb = database("auth");
+        private final TopologyNode standalone = service("standalone");
+        private final TopologyGraph graph = graph(
+                List.of(checkout, orders, payments, inventory, standalone, authDb),
+                List.of(
+                        sync(checkout, orders),
+                        sync(checkout, payments),
+                        sync(checkout, inventory),
+                        sync(orders, authDb),
+                        sync(payments, authDb),
+                        sync(inventory, authDb)));
+
+        @Test
+        void reportsANodeWhoseFailureImpairsMoreThanTheShareOfServices() {
+            List<Finding> findings = new WideBlastRadius(50, 3).evaluate(graph);
+
+            assertThat(findings).hasSize(1);
+            Finding finding = findings.getFirst();
+            assertThat(finding.ruleId()).isEqualTo("wide-blast-radius");
+            assertThat(finding.severity()).isEqualTo(Finding.Severity.HIGH);
+            assertThat(finding.subjectNodeIds()).containsExactly("db:postgresql/auth");
+            assertThat(finding.evidence())
+                    .containsExactly("service:inventory", "service:orders", "service:payments", "service:checkout");
+            assertThat(finding.title()).isEqualTo("Failure of auth impairs 4 of 5 services");
+            assertThat(finding.detail())
+                    .isEqualTo("If auth fails, 80 % of the services of the scope stop working: inventory, orders,"
+                            + " payments, checkout");
+        }
+
+        @Test
+        void staysQuietBelowTheShareOrTheMinimumNumberOfServices() {
+            assertThat(new WideBlastRadius(80, 3).evaluate(graph)).isEmpty();
+            assertThat(new WideBlastRadius(50, 5).evaluate(graph)).isEmpty();
+            assertThat(new WideBlastRadius(79, 4).evaluate(graph)).hasSize(1);
+        }
+
+        @Test
+        void rejectsThresholdsOutsideTheirRange() {
+            assertThatThrownBy(() -> new WideBlastRadius(0, 3)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> new WideBlastRadius(101, 3)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> new WideBlastRadius(50, 0)).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
     class UnknownExternalRule {
 
         @Test

@@ -8,7 +8,7 @@ package io.github.architrace.control.plane.rules;
 import io.github.architrace.control.plane.topology.TopologyGraph;
 import java.util.List;
 
-public sealed interface ArchitectureRule permits CyclicDependency, SharedDatabase, UnknownExternal {
+public sealed interface ArchitectureRule permits CyclicDependency, SharedDatabase, UnknownExternal, WideBlastRadius {
 
     String id();
 

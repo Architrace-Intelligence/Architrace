@@ -3,7 +3,7 @@ title: M6. Architecture rules
 description: Deterministic checks that turn a topology into findings with severity and evidence, and the blast radius of any node.
 ---
 
-Status: design agreed, blast radius added on 2026-10-05 · Order: 7 · Requirements: F10
+Status: in progress since 2026-10-05 (engine and three rules in PR 1, impact analysis in PR 2) · Order: 7 · Requirements: F10
 
 ## Goal
 
@@ -77,8 +77,14 @@ Propagation follows the data, edge kind by edge kind:
 
 - `impaired` is the reverse reachability over `sync` edges from the subject (a reverse
   breadth-first search), each node with its distance in hops and one shortest path as
-  evidence. `delayed` is one hop further through `publish` and `consume` edges, minus the
-  nodes already impaired. Both lists are ordered by distance, then id.
+  evidence; the path runs from the node to the subject, so `distance` is its length in hops.
+  `delayed` is one hop further through `publish` and `consume` edges, minus the nodes already
+  impaired: the consumers of every topic the subject or an impaired service publishes to,
+  with the topic on the path (`distance` therefore counts the asynchronous passage as two
+  hops), and the consumers of the subject itself when it is a topic. Both lists are ordered
+  by distance, then id; among equally short paths the lexicographically smallest wins. An
+  unknown node id yields no analysis (an empty `Optional` in the engine, a 404 problem in the
+  API).
 - `services` counts the impaired service nodes, `servicesTotal` the service nodes of the
   graph; the share is theirs. Delayed nodes are reported but never counted as failures:
   asynchronous decoupling is exactly what the analysis must give credit for.
@@ -127,10 +133,18 @@ Propagation follows the data, edge kind by edge kind:
 
 ## Delivery plan
 
-1. Engine, `CyclicDependency`, `SharedDatabase`, `UnknownExternal`, configuration, tests.
-2. `ImpactAnalysis` with `WideBlastRadius`, the remaining rules, persistence, evaluation
-   trigger, findings and impact endpoints, OpenAPI update, reference pages.
-3. Findings page, map badges, impact lens and rail card, user guide page.
+One pull request against `main` at a time, each at most twelve files:
+
+1. Engine, `CyclicDependency`, `SharedDatabase`, `UnknownExternal`, configuration, tests
+   (ARCHI-53).
+2. `ImpactAnalysis` with `WideBlastRadius` and its thresholds (ARCHI-54).
+3. `CrossDomainCoupling`, `FanInHub`, `LongSyncChain` with their thresholds.
+4. Persistence (`finding` table), evaluation after ingestion, Spring wiring of the engine and
+   the properties, configuration reference page.
+5. Findings and impact endpoints, OpenAPI update, Query API reference page, finding counts on
+   the scope summaries.
+6. Findings page, map badges, impact lens and rail card, user guide page (split further as
+   the size gate requires).
 
 ## Open points
 

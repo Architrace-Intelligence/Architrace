@@ -35,9 +35,14 @@ Last updated: **2026-10-05**
   `CyclicDependency` (strongly connected components of the sync edges, one shortest cycle as
   evidence), `SharedDatabase` (threshold `shared-database.min-services`, default 2) and
   `UnknownExternal` (`unknown-external.allowlist` of host names). Nothing runs the engine yet:
-  the Spring wiring arrives with the evaluation trigger. See the
-  [M6](../features/m6-architecture-rules/) page; its three-step delivery plan is split further
-  below because a pull request may change at most twelve files.
+  the Spring wiring arrives with the evaluation trigger. PR 2 (ARCHI-54, #67) adds the blast
+  radius: `ImpactAnalysis.of(graph, nodeId)` returns an `Optional<Impact>` (`impaired` by a
+  reverse breadth-first search over sync edges, `delayed` one asynchronous passage further,
+  paths from the node to the subject, lexicographically smallest among equally short paths)
+  and the rule `WideBlastRadius` (`wide-blast-radius.min-share-percent` 50,
+  `wide-blast-radius.min-services` 3; the share must exceed the percentage). See the
+  [M6](../features/m6-architecture-rules/) page; its delivery plan is split into six pull
+  requests because a pull request may change at most twelve files.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -115,19 +120,19 @@ timeline mode only).
 
 ## Next step
 
-Merge M6 PR 1 (ARCHI-53, #66). Then continue, one pull request against `main` at a time, each with
-the next free ticket number:
+Merge M6 PR 1 (ARCHI-53, #66), then M6 PR 2 (ARCHI-54, #67). Then continue, one pull request
+against `main` at a time, each with the next free ticket number:
 
-1. M6 PR 2: `ImpactAnalysis` (`Impact`, `ImpactedNode`, reverse breadth-first search over
-   sync edges plus one hop through publish and consume) with the rule `WideBlastRadius`, and
-   the rules `CrossDomainCoupling` (domain parsed from `service:{domain}/{name}`), `FanInHub`,
-   `LongSyncChain` with their properties; update the M6 page's delivery plan to this split.
-2. M6 PR 3: persistence (`finding` table in a Liquibase changelog, store interface, JDBC
+1. M6 PR 3: the rules `CrossDomainCoupling` (domain parsed from `service:{domain}/{name}`),
+   `FanInHub`, `LongSyncChain` (longest path over the condensation of the strongly connected
+   components, which moves Tarjan out of `CyclicDependency` into a shared class) with their
+   properties.
+2. M6 PR 4: persistence (`finding` table in a Liquibase changelog, store interface, JDBC
    store), evaluation after every ingested snapshot bounded to once per scope per interval,
    `RulesConfiguration` enabling `RulesProperties`, the configuration reference page.
-3. M6 PR 4: `findings` and `impact` endpoints, OpenAPI schemas, the Query API reference page,
-   finding counts on the scope summaries.
-4. M6 PR 5 and following: Findings page, map badges, impact lens and rail card, user guide
+3. M6 PR 5: `findings` and `impact` endpoints (unknown node: 404 problem), OpenAPI schemas,
+   the Query API reference page, finding counts on the scope summaries.
+4. M6 PR 6 and following: Findings page, map badges, impact lens and rail card, user guide
    page.
 5. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with

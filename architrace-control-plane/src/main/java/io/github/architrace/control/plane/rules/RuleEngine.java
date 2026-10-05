@@ -19,7 +19,10 @@ public record RuleEngine(List<ArchitectureRule> rules) {
         return new RuleEngine(List.of(
                 new CyclicDependency(),
                 new SharedDatabase(properties.sharedDatabase().minServices()),
-                new UnknownExternal(Set.copyOf(properties.unknownExternal().allowlist()))));
+                new UnknownExternal(Set.copyOf(properties.unknownExternal().allowlist())),
+                new WideBlastRadius(
+                        properties.wideBlastRadius().minSharePercent(),
+                        properties.wideBlastRadius().minServices())));
     }
 
     public List<Finding> evaluate(TopologyGraph graph) {
