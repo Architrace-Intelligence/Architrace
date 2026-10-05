@@ -75,6 +75,7 @@ export function scopeSummary(
     services: 14,
     dataStreams: 3,
     namespaces: 4,
+    findings: { high: 0, medium: 0, low: 0 },
     lastSnapshotAt: "2026-10-01T12:00:00Z",
     ...overrides,
   };

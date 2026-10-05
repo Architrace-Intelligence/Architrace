@@ -14,6 +14,8 @@ import static io.github.architrace.control.plane.topology.TestTopology.snapshot;
 import static io.github.architrace.control.plane.topology.TestTopology.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.architrace.control.plane.rules.Finding;
+import io.github.architrace.control.plane.rules.InMemoryFindingStore;
 import io.github.architrace.control.plane.topology.Agent;
 import io.github.architrace.control.plane.topology.AgentLiveness;
 import io.github.architrace.control.plane.topology.AgentRegistration;
@@ -67,6 +69,11 @@ class QueryApiTest {
         }
 
         @Bean
+        InMemoryFindingStore findingStore() {
+            return new InMemoryFindingStore();
+        }
+
+        @Bean
         Clock clock() {
             return Clock.fixed(NOW, ZoneOffset.UTC);
         }
@@ -91,6 +98,9 @@ class QueryApiTest {
     @Autowired
     InMemorySnapshotStore snapshots;
 
+    @Autowired
+    InMemoryFindingStore findings;
+
     @Test
     void listsScopeSummariesAsJson() {
         Agent live = register("prod-eu1-a", SCOPE, NOW);
@@ -100,6 +110,13 @@ class QueryApiTest {
                 NOW.minusSeconds(60),
                 List.of(service("orders", "2.8.1", "orders"), database("orders"), topic("order-events")),
                 List.of()));
+
+        findings.replace(
+                SCOPE,
+                List.of(
+                        finding("shared-database", Finding.Severity.HIGH, "db:postgresql/orders"),
+                        finding("unknown-external", Finding.Severity.LOW, "ext:api.stripe.com"),
+                        finding("unknown-external", Finding.Severity.LOW, "ext:api.github.com")));
 
         assertThat(mvc.get().uri("/api/v1/scopes"))
                 .hasStatusOk()
@@ -114,6 +131,7 @@ class QueryApiTest {
                 "services": 1,
                 "dataStreams": 1,
                 "namespaces": 1,
+                "findings": {"high": 1, "medium": 0, "low": 2},
                 "lastSnapshotAt": "2026-10-01T11:59:00Z"
               }
             ]
@@ -395,5 +413,10 @@ class QueryApiTest {
 
     private Agent register(String name, Scope scope, Instant lastSeen) {
         return agents.register(new AgentRegistration(name, "0.4.0", scope), lastSeen);
+    }
+
+    private static Finding finding(String ruleId, Finding.Severity severity, String subject) {
+        return new Finding(
+                ruleId, severity, SCOPE, List.of(subject), ruleId + " on " + subject, "detail", List.of(), NOW);
     }
 }

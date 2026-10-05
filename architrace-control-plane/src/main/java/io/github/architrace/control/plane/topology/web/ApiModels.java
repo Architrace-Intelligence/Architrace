@@ -10,6 +10,7 @@ import io.github.architrace.control.plane.api.model.DependencyDto;
 import io.github.architrace.control.plane.api.model.DeploymentDto;
 import io.github.architrace.control.plane.api.model.EdgeKindDto;
 import io.github.architrace.control.plane.api.model.EdgeMetricsDto;
+import io.github.architrace.control.plane.api.model.FindingCountsDto;
 import io.github.architrace.control.plane.api.model.NodeTypeDto;
 import io.github.architrace.control.plane.api.model.NodeViewDto;
 import io.github.architrace.control.plane.api.model.ScopeDto;
@@ -21,6 +22,7 @@ import io.github.architrace.control.plane.api.model.TimeWindowDto;
 import io.github.architrace.control.plane.api.model.TopologyEdgeDto;
 import io.github.architrace.control.plane.api.model.TopologyGraphDto;
 import io.github.architrace.control.plane.api.model.TopologyNodeDto;
+import io.github.architrace.control.plane.rules.FindingCounts;
 import io.github.architrace.control.plane.topology.AgentStatus;
 import io.github.architrace.control.plane.topology.Dependency;
 import io.github.architrace.control.plane.topology.Deployment;
@@ -70,14 +72,15 @@ public final class ApiModels {
         return new ScopeDto(scope.project(), scope.environment(), scope.cluster());
     }
 
-    static ScopeSummaryDto toDto(ScopeSummary summary) {
+    static ScopeSummaryDto toDto(ScopeSummary summary, FindingCounts findings) {
         return new ScopeSummaryDto(
                         toDto(summary.scope()),
                         summary.agents(),
                         summary.liveAgents(),
                         summary.services(),
                         summary.dataStreams(),
-                        summary.namespaces())
+                        summary.namespaces(),
+                        new FindingCountsDto(findings.high(), findings.medium(), findings.low()))
                 .lastSnapshotAt(summary.lastSnapshotAt().map(ApiModels::atUtc).orElse(null));
     }
 

@@ -6,10 +6,14 @@
 package io.github.architrace.control.plane.rules.persistence;
 
 import io.github.architrace.control.plane.rules.Finding;
+import io.github.architrace.control.plane.rules.FindingCounts;
 import io.github.architrace.control.plane.rules.FindingStore;
 import io.github.architrace.control.plane.topology.Scope;
 import io.github.architrace.control.plane.topology.persistence.JsonDocument;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
@@ -40,6 +44,22 @@ class JdbcFindingStore implements FindingStore {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Scope, FindingCounts> counts() {
+        return StreamSupport.stream(repository.findAll().spliterator(), false)
+                .collect(Collectors.groupingBy(
+                        JdbcFindingStore::scope,
+                        Collectors.collectingAndThen(
+                                Collectors.mapping(
+                                        row -> Finding.Severity.valueOf(row.severity()), Collectors.toList()),
+                                severities -> FindingCounts.of(severities.stream()))));
+    }
+
+    private static Scope scope(FindingRow row) {
+        return new Scope(row.project(), row.environment(), row.cluster());
+    }
+
     private FindingRow toRow(Finding finding) {
         return new FindingRow(
                 null,
@@ -59,7 +79,7 @@ class JdbcFindingStore implements FindingStore {
         return new Finding(
                 row.ruleId(),
                 Finding.Severity.valueOf(row.severity()),
-                new Scope(row.project(), row.environment(), row.cluster()),
+                scope(row),
                 decode(row.subjectIds()),
                 row.title(),
                 row.detail(),
