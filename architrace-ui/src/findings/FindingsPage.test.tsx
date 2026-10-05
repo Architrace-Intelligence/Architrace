@@ -64,7 +64,7 @@ describe("FindingsPage", () => {
       within(screen.getByRole("region", { name: "Rules that pass" })).getAllByText(/./, {
         selector: ".badge",
       }),
-    ).toHaveLength(3);
+    ).toHaveLength(4);
   });
 
   it("filters by severity and rule, keeps the filter in the URL and in the JSON link", async () => {
@@ -117,7 +117,7 @@ describe("FindingsPage", () => {
     );
     const { unmount } = renderAt(FINDINGS, <App />);
     expect(await screen.findByText(/No findings\./)).toBeInTheDocument();
-    expect(rail().getAllByText("pass")).toHaveLength(7);
+    expect(rail().getAllByText("pass")).toHaveLength(8);
     unmount();
 
     vi.stubGlobal("fetch", respondWithJson(problem, 404, "application/problem+json"));

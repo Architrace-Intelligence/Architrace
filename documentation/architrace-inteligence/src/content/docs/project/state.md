@@ -50,6 +50,10 @@ Last updated: **2026-10-05**
   the README shows the pipeline, CodeQL, tests, SonarCloud quality gate and coverage, Snyk, the
   release and the version on `main`, the images, and the stack versions read live from the
   repository files. The release badge says "no releases found" until `v0.1.0` exists.
+- B2 from the real-data round (ARCHI-72, #94): the rule `DataStreamWithoutProducer` (id
+  `data-stream-without-producer`, low, no threshold) reports a topic with consumers but no
+  producer in the observed traces as the outbox insight; subject is the topic, evidence the
+  consumers. Eight rules now, on the M6 page, the guide and the UI catalogue.
 - **M7 is in progress.** PR 1 (ARCHI-64, #81) adds `demo/`: `docker-compose.yml` with the
   control plane, one agent per environment (`agent-dev.yaml`, `agent-stage.yaml`), one
   OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
@@ -148,13 +152,13 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7 and the demo dependency bump (#91) are merged. Merge the README badges
-(ARCHI-71, #93); the first `main` run after it publishes the badge data. Then continue, one
-pull request against `main` at a time, each with the next free ticket number:
+The MVP queue M0–M7, the demo dependency bump (#91) and the README badges (#93) are merged.
+Merge the B2 rule (ARCHI-72, #94). Then continue, one pull request against `main` at a time,
+each with the next free ticket number:
 
-1. The M6 candidates B2 (an outbox topic with consumers but no producer as an insight) and
-   B3 (a platform category in the external allowlist); the maintainer checklist of M0
-   (ruleset, CodeRabbit, public GHCR packages, `v0.1.0`).
+1. The M6 candidate B3 (a platform category in the external allowlist, grouped on the map and
+   skipped by `UnknownExternal`; touches the rules, the configuration and the map); the
+   maintainer checklist of M0 (ruleset, CodeRabbit, public GHCR packages, `v0.1.0`).
 2. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
    Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.

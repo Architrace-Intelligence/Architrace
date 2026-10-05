@@ -62,7 +62,8 @@ class RuleEngineTest {
                         new WideBlastRadius(60, 4),
                         new CrossDomainCoupling(2),
                         new FanInHub(10),
-                        new LongSyncChain(6));
+                        new LongSyncChain(6),
+                        new DataStreamWithoutProducer());
     }
 
     @Test

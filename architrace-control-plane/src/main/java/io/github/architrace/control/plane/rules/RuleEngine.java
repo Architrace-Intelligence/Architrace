@@ -25,7 +25,8 @@ public record RuleEngine(List<ArchitectureRule> rules) {
                         properties.wideBlastRadius().minServices()),
                 new CrossDomainCoupling(properties.crossDomainCoupling().maxDomains()),
                 new FanInHub(properties.fanInHub().maxCallers()),
-                new LongSyncChain(properties.longSyncChain().maxHops())));
+                new LongSyncChain(properties.longSyncChain().maxHops()),
+                new DataStreamWithoutProducer()));
     }
 
     public List<Finding> evaluate(TopologyGraph graph) {

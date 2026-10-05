@@ -54,6 +54,12 @@ const RULE_TABLE: readonly (readonly [string, string, Severity, string, string?]
     "any external host outside the allowlist",
     "allowlist",
   ],
+  [
+    "data-stream-without-producer",
+    "Data stream without producer",
+    "LOW",
+    "a topic with consumers but no producer in the traces",
+  ],
 ];
 
 export const RULES: readonly RuleInfo[] = RULE_TABLE.map(
