@@ -22,7 +22,10 @@ public record RuleEngine(List<ArchitectureRule> rules) {
                 new UnknownExternal(Set.copyOf(properties.unknownExternal().allowlist())),
                 new WideBlastRadius(
                         properties.wideBlastRadius().minSharePercent(),
-                        properties.wideBlastRadius().minServices())));
+                        properties.wideBlastRadius().minServices()),
+                new CrossDomainCoupling(properties.crossDomainCoupling().maxDomains()),
+                new FanInHub(properties.fanInHub().maxCallers()),
+                new LongSyncChain(properties.longSyncChain().maxHops())));
     }
 
     public List<Finding> evaluate(TopologyGraph graph) {

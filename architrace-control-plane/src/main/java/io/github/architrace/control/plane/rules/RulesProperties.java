@@ -14,19 +14,28 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record RulesProperties(
         @DefaultValue SharedDatabaseProperties sharedDatabase,
         @DefaultValue UnknownExternalProperties unknownExternal,
-        @DefaultValue WideBlastRadiusProperties wideBlastRadius) {
+        @DefaultValue WideBlastRadiusProperties wideBlastRadius,
+        @DefaultValue CrossDomainCouplingProperties crossDomainCoupling,
+        @DefaultValue FanInHubProperties fanInHub,
+        @DefaultValue LongSyncChainProperties longSyncChain) {
 
     public RulesProperties {
         Objects.requireNonNull(sharedDatabase, "sharedDatabase");
         Objects.requireNonNull(unknownExternal, "unknownExternal");
         Objects.requireNonNull(wideBlastRadius, "wideBlastRadius");
+        Objects.requireNonNull(crossDomainCoupling, "crossDomainCoupling");
+        Objects.requireNonNull(fanInHub, "fanInHub");
+        Objects.requireNonNull(longSyncChain, "longSyncChain");
     }
 
     public static RulesProperties defaults() {
         return new RulesProperties(
                 new SharedDatabaseProperties(2),
                 new UnknownExternalProperties(List.of()),
-                new WideBlastRadiusProperties(50, 3));
+                new WideBlastRadiusProperties(50, 3),
+                new CrossDomainCouplingProperties(3),
+                new FanInHubProperties(8),
+                new LongSyncChainProperties(5));
     }
 
     public record SharedDatabaseProperties(
@@ -56,6 +65,34 @@ public record RulesProperties(
             }
             if (minServices < 1) {
                 throw new IllegalArgumentException("minServices must be at least 1");
+            }
+        }
+    }
+
+    public record CrossDomainCouplingProperties(
+            @DefaultValue("3") int maxDomains) {
+
+        public CrossDomainCouplingProperties {
+            if (maxDomains < 1) {
+                throw new IllegalArgumentException("maxDomains must be at least 1");
+            }
+        }
+    }
+
+    public record FanInHubProperties(@DefaultValue("8") int maxCallers) {
+
+        public FanInHubProperties {
+            if (maxCallers < 1) {
+                throw new IllegalArgumentException("maxCallers must be at least 1");
+            }
+        }
+    }
+
+    public record LongSyncChainProperties(@DefaultValue("5") int maxHops) {
+
+        public LongSyncChainProperties {
+            if (maxHops < 1) {
+                throw new IllegalArgumentException("maxHops must be at least 1");
             }
         }
     }
