@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | in progress | M0 (maintainer checklist open), M1, M2, M3 and M4 done; M5 in progress, M6 and the rest of M7 open |
+| 3 | Implementation (feature by feature)     | in progress | M0 (maintainer checklist open), M1, M2, M3, M4 and M5 done; M6 and the rest of M7 open |
 | 4 | Testing, hardening, release 1.0         | in progress | First real-data round on 2026-10-04: no Architrace change needed, backlog B1–B7 in [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) |
 
 ## Process foundation
@@ -48,8 +48,8 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
 | [M4 Service map UI](../features/m4-service-map/) | done | agreed · [UI design](../features/ui-design/) in review | ARCHI-25, ARCHI-32, ARCHI-43, ARCHI-44, ARCHI-45, ARCHI-46 | PR 1–5 merged (#39, #55, #56, #58, #59): `architrace-ui` scaffold, Gradle and SPA integration, typed client, UI gate, Projects list, shell, routing, Service map with React Flow and ELK, lenses, context rail, find, time, selection in the URL, scope switcher, namespace filter; follow-ups B1 and B3 from the real-data round |
-| [M5 Drift](../features/m5-drift/) | review | agreed · UI design in review | ARCHI-48, ARCHI-49 | PR 1 (diff domain, algorithm, `diff/environments` and `diff/timeline` endpoints) and PR 2 (Drift screen: modes, sides in the URL, counters, grouped list, map overlays, rail, user guide) |
-| [M6 Architecture rules](../features/m6-architecture-rules/) | todo | agreed · UI design in review | | candidates B2 and B3 from the real-data round |
+| [M5 Drift](../features/m5-drift/) | done | agreed | ARCHI-48, ARCHI-49 | PR 1 (#61: diff domain, algorithm, `diff/environments` and `diff/timeline` endpoints) and PR 2 (#62: Drift screen with modes, sides in the URL, counters, grouped list, map overlays, rail, user guide) merged; the changed-node semantics per mode awaits the maintainer's confirmation |
+| [M6 Architecture rules](../features/m6-architecture-rules/) | todo | agreed · blast radius added 2026-10-05 (ARCHI-50) | | seven rules, impact analysis with lens and rail card; candidates B2 and B3 from the real-data round |
 | [M7 Packaging and demo](../features/m7-packaging-demo/) | in progress | agreed | ARCHI-36 | images delivered with M0 PR 4; demo stack and guides pending; B5, B6 and B7 from the real-data round |
 
 ## History
@@ -102,3 +102,5 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-04 | First real-data test round: Architrace unchanged against a private eight-service stack with Kafka, Kafka Streams, a Debezium outbox and Redis; backlog B1–B7 recorded in Requirements §9 (ARCHI-47) |
 | 2026-10-04 | M5 PR 1: drift domain and `GraphDiffer`, `DriftQuery`, environment and timeline diff endpoints in the Query API, reference and feature pages (ARCHI-48) |
 | 2026-10-04 | M5 PR 2: Drift screen with environment and timeline modes, both sides in the URL, counters, grouped list, map overlays with ghosts, context rail sentences, guide page (ARCHI-49) |
+| 2026-10-04 | M5 PR 1 merged (#61) and M5 PR 2 merged (#62): M5 complete |
+| 2026-10-05 | Maintainer: blast radius added to M6 as an impact query, a map lens, a rail card and the rule `WideBlastRadius` (ARCHI-50) |

@@ -41,7 +41,7 @@ Numbered so that MVP decisions can refer to them.
 | C8  | Environment drift | Diff two environments: services and dependencies present in one and not the other, version differences. |
 | C9  | Release drift | Diff two snapshots of the same environment (before / after a release): added, removed, changed dependencies; version changes. |
 | C10 | Data streams view | Topics / queues as first-class nodes with producers and consumers, fan-in / fan-out, orphan topics. |
-| C11 | Architecture rules | Deterministic checks: cyclic dependencies, cross-domain coupling, single points of failure, synchronous chains over N hops, direct DB sharing, unknown external calls. |
+| C11 | Architecture rules | Deterministic checks: cyclic dependencies, cross-domain coupling, single points of failure, synchronous chains over N hops, direct DB sharing, unknown external calls; the blast radius of any node (what is impaired and what is delayed if it fails). |
 | C12 | AI insights | LLM-assisted narrative: explain the graph, summarise drift, propose improvements; provider-agnostic, optional. |
 | C13 | Declared vs actual | Import an intended architecture model and report violations. |
 | C14 | Exports | Mermaid / C4-style diagrams, JSON, event catalogue. |
@@ -152,7 +152,7 @@ Gaps and defects found:
 | F7 | Expose a REST API with OpenAPI for environments, services, graph, snapshots, diffs and findings. | C6 |
 | F8 | Provide a web UI with an interactive service map per environment, filters, node / edge details and a snapshot time selector. | C7 |
 | F9 | Compute and display environment drift (A vs B) and release drift (snapshot vs snapshot). | C8, C9 |
-| F10 | Run deterministic architecture rules on each snapshot and show findings with severity. | C11 |
+| F10 | Run deterministic architecture rules on each snapshot and show findings with severity; answer the blast radius of any node on request. | C11 |
 | F11 | Offer AI insights on demand through a pluggable LLM provider; the product works fully without it. | C12 |
 | F12 | Ship Docker images for agent and control plane and a one-command demo. | C17 |
 
@@ -285,7 +285,7 @@ architecture value from within a day?
 | M3 | **Query API** with OpenAPI. | F7 | Needed by UI and by scripts. |
 | M4 | **Service map UI**: per-environment graph, filters, details, time selector. | F8 | The visible value. |
 | M5 | **Drift**: environment diff and release diff, API + UI. | F9 | The differentiator the maintainer asked for. |
-| M6 | **Architecture rules** (deterministic set, 5–6 rules) with findings in API and UI. | F10 | Immediate architecture feedback without an LLM. |
+| M6 | **Architecture rules** (deterministic set, 7 rules) with findings in API and UI, and the blast radius of a node as a query, a map lens and a rule. | F10 | Immediate architecture feedback without an LLM. |
 | M7 | **Packaging and demo**: images for agent and control plane, docker compose with collector + demo services + PostgreSQL, docs. | F12 | Deployable at work. |
 | M0 | **Engineering platform**: §5.1–5.5. | P1–P7 | Required before feature work. |
 
