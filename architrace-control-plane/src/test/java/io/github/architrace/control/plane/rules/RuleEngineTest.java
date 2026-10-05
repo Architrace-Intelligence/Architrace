@@ -16,6 +16,7 @@ import static org.assertj.core.groups.Tuple.tuple;
 
 import io.github.architrace.control.plane.rules.RulesProperties.SharedDatabaseProperties;
 import io.github.architrace.control.plane.rules.RulesProperties.UnknownExternalProperties;
+import io.github.architrace.control.plane.rules.RulesProperties.WideBlastRadiusProperties;
 import io.github.architrace.control.plane.topology.EdgeKind;
 import io.github.architrace.control.plane.topology.NodeAttributes;
 import io.github.architrace.control.plane.topology.NodeType;
@@ -39,13 +40,18 @@ class RuleEngineTest {
     @Test
     void buildsTheRulesFromTheProperties() {
         RulesProperties properties = new RulesProperties(
-                new SharedDatabaseProperties(3), new UnknownExternalProperties(List.of("api.github.com")));
+                new SharedDatabaseProperties(3),
+                new UnknownExternalProperties(List.of("api.github.com")),
+                new WideBlastRadiusProperties(60, 4));
 
         RuleEngine engine = RuleEngine.of(properties);
 
         assertThat(engine.rules())
                 .containsExactly(
-                        new CyclicDependency(), new SharedDatabase(3), new UnknownExternal(Set.of("api.github.com")));
+                        new CyclicDependency(),
+                        new SharedDatabase(3),
+                        new UnknownExternal(Set.of("api.github.com")),
+                        new WideBlastRadius(60, 4));
     }
 
     @Test
@@ -87,20 +93,28 @@ class RuleEngineTest {
         RulesProperties defaults = bind(Map.of());
         RulesProperties overridden = bind(Map.of(
                 "architrace.rules.shared-database.min-services", "4",
-                "architrace.rules.unknown-external.allowlist", "api.github.com,api.stripe.com"));
+                "architrace.rules.unknown-external.allowlist", "api.github.com,api.stripe.com",
+                "architrace.rules.wide-blast-radius.min-share-percent", "70"));
 
         assertThat(defaults).isEqualTo(RulesProperties.defaults());
         assertThat(defaults.sharedDatabase().minServices()).isEqualTo(2);
         assertThat(defaults.unknownExternal().allowlist()).isEmpty();
         assertThat(overridden.sharedDatabase().minServices()).isEqualTo(4);
         assertThat(overridden.unknownExternal().allowlist()).containsExactly("api.github.com", "api.stripe.com");
+        assertThat(overridden.wideBlastRadius()).isEqualTo(new WideBlastRadiusProperties(70, 3));
     }
 
     @Test
-    void propertiesRejectAThresholdBelowTwo() {
+    void propertiesRejectThresholdsOutsideTheirRange() {
         assertThatThrownBy(() -> new SharedDatabaseProperties(1))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("minServices must be at least 2");
+        assertThatThrownBy(() -> new WideBlastRadiusProperties(101, 3))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("minSharePercent must be between 1 and 100");
+        assertThatThrownBy(() -> new WideBlastRadiusProperties(50, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("minServices must be at least 1");
     }
 
     @Test
