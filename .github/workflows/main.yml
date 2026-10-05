@@ -32,6 +32,16 @@ jobs:
       - name: Build and run the quality gates
         run: ./gradlew build --continue
 
+      - name: Write the badge data
+        run: ./gradlew -q writeBadges
+
+      - name: Upload the badge data
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: badges
+          if-no-files-found: error
+          path: build/badges
+
       - name: Upload the reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -371,6 +381,12 @@ jobs:
 
       - name: Build the site
         run: npm run build
+
+      - name: Add the badge data to the site
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: badges
+          path: documentation/architrace-inteligence/dist/badges
 
       - name: Upload the Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

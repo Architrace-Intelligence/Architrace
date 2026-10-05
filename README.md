@@ -8,9 +8,25 @@
     <br/><br/>
   </p>
 
-  ![Java](https://img.shields.io/badge/Java-25-blue)
-  ![Gradle](https://img.shields.io/badge/Gradle-9.8.0-02303A?logo=gradle)
-  ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
+  [![Main pipeline](https://github.com/Architrace-Intelligence/Architrace/actions/workflows/main.yml/badge.svg)](https://github.com/Architrace-Intelligence/Architrace/actions/workflows/main.yml)
+  [![CodeQL](https://github.com/Architrace-Intelligence/Architrace/actions/workflows/codeql.yml/badge.svg)](https://github.com/Architrace-Intelligence/Architrace/actions/workflows/codeql.yml)
+  [![Tests](https://img.shields.io/endpoint?url=https%3A%2F%2Farchitrace-intelligence.github.io%2FArchitrace%2Fbadges%2Ftests.json)](https://github.com/Architrace-Intelligence/Architrace/actions/workflows/main.yml)
+  [![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=Architrace-Intelligence_Architrace-agent&metric=alert_status)](https://sonarcloud.io/summary/overall?id=Architrace-Intelligence_Architrace-agent)
+  [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Architrace-Intelligence_Architrace-agent&metric=coverage)](https://sonarcloud.io/component_measures?id=Architrace-Intelligence_Architrace-agent&metric=coverage)
+  [![Snyk](https://snyk.io/test/github/Architrace-Intelligence/Architrace/badge.svg)](https://snyk.io/test/github/Architrace-Intelligence/Architrace)
+
+  [![Release](https://img.shields.io/github/v/release/Architrace-Intelligence/Architrace?sort=semver&display_name=tag&label=release)](https://github.com/Architrace-Intelligence/Architrace/releases)
+  [![Version on main](https://img.shields.io/endpoint?url=https%3A%2F%2Farchitrace-intelligence.github.io%2FArchitrace%2Fbadges%2Fversion.json)](https://github.com/Architrace-Intelligence/Architrace/commits/main)
+  [![Images](https://img.shields.io/badge/ghcr.io-agent%20%7C%20control--plane-2496ED?logo=docker&logoColor=white)](https://github.com/orgs/Architrace-Intelligence/packages?repo_name=Architrace)
+  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+
+  [![Java](https://img.shields.io/badge/dynamic/regex?url=https://raw.githubusercontent.com/Architrace-Intelligence/Architrace/main/gradle.properties&search=javaVersion%3D%28%5B0-9%5D%2B%29&replace=%241&label=Java&logo=openjdk&color=blue)](./gradle.properties)
+  [![Gradle](https://img.shields.io/badge/dynamic/regex?url=https://raw.githubusercontent.com/Architrace-Intelligence/Architrace/main/gradle/wrapper/gradle-wrapper.properties&search=gradle-%28%5B0-9.%5D%2B%29-bin&replace=%241&label=Gradle&logo=gradle&color=02303A)](./gradle/wrapper/gradle-wrapper.properties)
+  [![Spring Boot](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/Architrace-Intelligence/Architrace/main/gradle/libs.versions.toml&query=%24.versions.spring-boot&label=Spring%20Boot&logo=springboot&color=6DB33F)](./gradle/libs.versions.toml)
+  [![Node.js](https://img.shields.io/badge/dynamic/regex?url=https://raw.githubusercontent.com/Architrace-Intelligence/Architrace/main/gradle.properties&search=nodeVersion%3D%28%5B0-9.%5D%2B%29&replace=%241&label=Node.js&logo=nodedotjs&color=5FA04E)](./gradle.properties)
+  [![React](https://img.shields.io/github/package-json/dependency-version/Architrace-Intelligence/Architrace/react?filename=architrace-ui%2Fpackage.json&label=React&logo=react&color=20232A)](./architrace-ui/package.json)
+  [![TypeScript](https://img.shields.io/github/package-json/dependency-version/Architrace-Intelligence/Architrace/dev/typescript?filename=architrace-ui%2Fpackage.json&label=TypeScript&logo=typescript&color=3178C6)](./architrace-ui/package.json)
+  [![Vite](https://img.shields.io/github/package-json/dependency-version/Architrace-Intelligence/Architrace/dev/vite?filename=architrace-ui%2Fpackage.json&label=Vite&logo=vite&color=646CFF)](./architrace-ui/package.json)
 
   [Documentation](https://architrace-intelligence.github.io/Architrace/) | [Quick Start](#quick-start) | [Docker Demo](#docker-demo) | [Contributing](#contributing)
 </div>

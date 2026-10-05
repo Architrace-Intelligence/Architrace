@@ -22,6 +22,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    reporters: ["default", "junit"],
+    outputFile: { junit: "build/test-results/vitest.xml" },
     coverage: {
       provider: "v8",
       reportsDirectory: "build/coverage",
