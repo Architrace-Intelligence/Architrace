@@ -119,4 +119,3 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-05 | M7 PR 2: README, agent instructions, security policy and the pages point at `demo/` (ARCHI-65) |
 | 2026-10-05 | M7 PR 3: `otel-test-app` removed; Snyk and Dependabot follow `demo/` (ARCHI-66) |
 | 2026-10-05 | M7 PR 4: deployment guide, agent health check on `/health`, B5 to B7 closed; M7 complete (ARCHI-67) |
-| 2026-10-06 | README badges: tests, version, quality and stack versions, published by the `main` pipeline (ARCHI-71) |
