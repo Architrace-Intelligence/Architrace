@@ -27,14 +27,21 @@ public class TopologyQuery {
 
     private final AgentStore agents;
     private final SnapshotStore snapshots;
+    private final PlatformHosts platformHosts;
     private final AgentLiveness liveness;
     private final TopologyMetrics metrics;
     private final Clock clock;
 
     public TopologyQuery(
-            AgentStore agents, SnapshotStore snapshots, AgentLiveness liveness, TopologyMetrics metrics, Clock clock) {
+            AgentStore agents,
+            SnapshotStore snapshots,
+            PlatformHosts platformHosts,
+            AgentLiveness liveness,
+            TopologyMetrics metrics,
+            Clock clock) {
         this.agents = agents;
         this.snapshots = snapshots;
+        this.platformHosts = platformHosts;
         this.liveness = liveness;
         this.metrics = metrics;
         this.clock = clock;
@@ -42,7 +49,8 @@ public class TopologyQuery {
 
     public TopologyGraph currentGraph(Scope scope, Instant at) {
         requireKnown(scope);
-        return metrics.recordGraphQuery(() -> GraphMerger.merge(scope, at, snapshots.latestPerAgent(scope, at)));
+        return metrics.recordGraphQuery(
+                () -> platformHosts.classify(GraphMerger.merge(scope, at, snapshots.latestPerAgent(scope, at))));
     }
 
     public List<NodeView> services(Scope scope, Instant at) {

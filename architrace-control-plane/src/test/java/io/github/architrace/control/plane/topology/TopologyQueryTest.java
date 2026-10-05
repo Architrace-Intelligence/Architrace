@@ -21,7 +21,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class TopologyQueryTest {
@@ -35,6 +37,7 @@ class TopologyQueryTest {
     private final TopologyQuery query = new TopologyQuery(
             agents,
             snapshots,
+            PlatformHosts.none(),
             new AgentLiveness(Duration.ofSeconds(30)),
             new TopologyMetrics(registry),
             Clock.fixed(NOW, ZoneOffset.UTC));
@@ -66,6 +69,37 @@ class TopologyQueryTest {
         assertThat(graph.nodes().get(1).attributes().versions()).containsExactlyInAnyOrder("2.8.0", "2.8.1");
         assertThat(graph.edges()).hasSize(2);
         assertThat(registry.get("architrace.topology.query").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void currentGraphLabelsTheConfiguredPlatformHostsAndLeavesEveryOtherNodeAlone() {
+        TopologyQuery withPlatform = new TopologyQuery(
+                agents,
+                snapshots,
+                new PlatformHosts(Set.of("flags.internal")),
+                new AgentLiveness(Duration.ofSeconds(30)),
+                new TopologyMetrics(registry),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        Agent a = register("a", SCOPE, NOW);
+        TopologyNode orders = service("orders", "2.8.1", "orders");
+        TopologyNode flags = external("flags.internal", Map.of("team", "platform-team"));
+        TopologyNode stripe = external("api.stripe.com", Map.of());
+        snapshots.save(snapshot(
+                a.id(),
+                NOW.minusSeconds(60),
+                List.of(orders, flags, stripe),
+                List.of(edge(orders, flags, EdgeKind.SYNC, 5), edge(orders, stripe, EdgeKind.SYNC, 5))));
+
+        TopologyGraph graph = withPlatform.currentGraph(SCOPE, NOW);
+
+        assertThat(graph.nodes()).extracting(TopologyNode::id).containsExactly(stripe.id(), flags.id(), orders.id());
+        assertThat(graph.nodes().getFirst()).isEqualTo(stripe);
+        assertThat(graph.nodes().get(1).attributes().labels())
+                .containsExactlyInAnyOrderEntriesOf(Map.of("team", "platform-team", "category", "platform"));
+        assertThat(graph.nodes().get(2)).isEqualTo(orders);
+        assertThat(PlatformHosts.isPlatform(graph.nodes().get(1))).isTrue();
+        assertThat(PlatformHosts.isPlatform(stripe)).isFalse();
+        assertThat(query.currentGraph(SCOPE, NOW).nodes().get(1)).isEqualTo(flags);
     }
 
     @Test
@@ -175,6 +209,10 @@ class TopologyQueryTest {
         assertThat(statuses)
                 .containsExactly(
                         new AgentStatus(dev, true), new AgentStatus(fresh, true), new AgentStatus(silent, false));
+    }
+
+    private static TopologyNode external(String host, Map<String, String> labels) {
+        return new TopologyNode("ext:" + host, NodeType.EXTERNAL, host, new NodeAttributes(Set.of(), Set.of(), labels));
     }
 
     private Agent register(String name, Scope scope, Instant lastSeen) {

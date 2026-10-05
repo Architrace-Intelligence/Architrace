@@ -23,6 +23,7 @@ import io.github.architrace.control.plane.topology.AgentRegistration;
 import io.github.architrace.control.plane.topology.EdgeKind;
 import io.github.architrace.control.plane.topology.InMemoryAgentStore;
 import io.github.architrace.control.plane.topology.InMemorySnapshotStore;
+import io.github.architrace.control.plane.topology.PlatformHosts;
 import io.github.architrace.control.plane.topology.TopologyMetrics;
 import io.github.architrace.control.plane.topology.TopologyNode;
 import io.github.architrace.control.plane.topology.TopologyQuery;
@@ -80,6 +81,7 @@ class FindingsApiTest {
             TopologyQuery topology = new TopologyQuery(
                     agents,
                     snapshots,
+                    PlatformHosts.none(),
                     new AgentLiveness(Duration.ofSeconds(30)),
                     new TopologyMetrics(new SimpleMeterRegistry()),
                     clock);
