@@ -754,7 +754,7 @@ components:
     ScopeSummary:
       type: object
       description: One row of the Projects list.
-      required: [scope, agents, liveAgents, services, dataStreams, namespaces]
+      required: [scope, agents, liveAgents, services, dataStreams, namespaces, findings]
       properties:
         scope:
           $ref: "#/components/schemas/Scope"
@@ -783,6 +783,8 @@ components:
           format: int32
           minimum: 0
           description: Distinct namespaces of the deployments in the current graph
+        findings:
+          $ref: "#/components/schemas/FindingCounts"
         lastSnapshotAt:
           type: string
           format: date-time
@@ -1117,6 +1119,23 @@ components:
           type: string
         kind:
           $ref: "#/components/schemas/EdgeKind"
+    FindingCounts:
+      type: object
+      description: Findings of the last rule evaluation of the scope, counted per severity; all zero before the first evaluation and when the graph is clean.
+      required: [high, medium, low]
+      properties:
+        high:
+          type: integer
+          format: int32
+          minimum: 0
+        medium:
+          type: integer
+          format: int32
+          minimum: 0
+        low:
+          type: integer
+          format: int32
+          minimum: 0
     Severity:
       type: string
       description: How urgent a finding is; the severity is fixed per rule.

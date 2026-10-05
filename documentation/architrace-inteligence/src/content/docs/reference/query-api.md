@@ -43,6 +43,7 @@ curl -s http://localhost:8085/api/v1/scopes | jq .
     "services": 14,
     "dataStreams": 3,
     "namespaces": 4,
+    "findings": { "high": 1, "medium": 0, "low": 2 },
     "lastSnapshotAt": "2026-10-01T12:00:00Z"
   }
 ]
@@ -50,7 +51,10 @@ curl -s http://localhost:8085/api/v1/scopes | jq .
 
 The counts of a scope come from its current graph: the latest snapshot of every agent of the
 scope, merged. `lastSnapshotAt` is absent until the first snapshot arrives. An agent is `live`
-while fewer than three heartbeat intervals have passed since it was last seen.
+while fewer than three heartbeat intervals have passed since it was last seen. `findings`
+counts the findings of the last rule evaluation of the scope per severity (see
+[Findings and blast radius](#findings-and-blast-radius)); all three are zero before the first
+evaluation and when the graph is clean.
 
 ## Graph
 

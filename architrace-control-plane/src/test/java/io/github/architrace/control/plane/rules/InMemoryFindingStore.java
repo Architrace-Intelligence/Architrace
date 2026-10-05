@@ -9,6 +9,7 @@ import io.github.architrace.control.plane.topology.Scope;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class InMemoryFindingStore implements FindingStore {
 
@@ -17,6 +18,15 @@ public final class InMemoryFindingStore implements FindingStore {
     @Override
     public void replace(Scope scope, List<Finding> findings) {
         this.findings.put(scope, List.copyOf(findings));
+    }
+
+    @Override
+    public Map<Scope, FindingCounts> counts() {
+        return findings.entrySet().stream()
+                .filter(entry -> !entry.getValue().isEmpty())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> FindingCounts.of(entry.getValue().stream().map(Finding::severity))));
     }
 
     @Override

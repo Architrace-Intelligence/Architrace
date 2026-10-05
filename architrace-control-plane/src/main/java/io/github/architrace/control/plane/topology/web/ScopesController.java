@@ -9,6 +9,8 @@ import io.github.architrace.control.plane.api.ScopesApi;
 import io.github.architrace.control.plane.api.model.NodeViewDto;
 import io.github.architrace.control.plane.api.model.ScopeSummaryDto;
 import io.github.architrace.control.plane.api.model.TopologyGraphDto;
+import io.github.architrace.control.plane.rules.FindingCounts;
+import io.github.architrace.control.plane.rules.FindingStore;
 import io.github.architrace.control.plane.topology.Scope;
 import io.github.architrace.control.plane.topology.TopologyQuery;
 import io.github.architrace.control.plane.web.ApiPaths;
@@ -16,6 +18,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,16 +27,21 @@ import org.springframework.web.bind.annotation.RestController;
 class ScopesController implements ScopesApi {
 
     private final TopologyQuery query;
+    private final FindingStore findings;
     private final Clock clock;
 
-    ScopesController(TopologyQuery query, Clock clock) {
+    ScopesController(TopologyQuery query, FindingStore findings, Clock clock) {
         this.query = query;
+        this.findings = findings;
         this.clock = clock;
     }
 
     @Override
     public List<ScopeSummaryDto> listScopes() {
-        return query.scopes().stream().map(ApiModels::toDto).toList();
+        Map<Scope, FindingCounts> counts = findings.counts();
+        return query.scopes().stream()
+                .map(summary -> ApiModels.toDto(summary, counts.getOrDefault(summary.scope(), FindingCounts.NONE)))
+                .toList();
     }
 
     @Override

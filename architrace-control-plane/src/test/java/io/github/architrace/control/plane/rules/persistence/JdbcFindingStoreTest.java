@@ -9,10 +9,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.architrace.control.plane.PostgresTestcontainers;
 import io.github.architrace.control.plane.rules.Finding;
+import io.github.architrace.control.plane.rules.FindingCounts;
 import io.github.architrace.control.plane.topology.Scope;
 import io.github.architrace.control.plane.topology.persistence.PersistenceConfiguration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest;
@@ -60,6 +62,20 @@ class JdbcFindingStoreTest {
     }
 
     @Test
+    void countsTheFindingsOfEveryScopePerSeverity() {
+        store.replace(
+                PROD,
+                List.of(
+                        finding(PROD, "cyclic-dependency", Finding.Severity.HIGH, "service:sales/orders", NOW),
+                        finding(PROD, "shared-database", Finding.Severity.HIGH, "db:postgresql/orders", NOW),
+                        finding(PROD, "unknown-external", Finding.Severity.LOW, "ext:api.stripe.com", NOW)));
+        store.replace(DEV, List.of(finding(DEV, "fan-in-hub", Finding.Severity.MEDIUM, "service:sales/payments", NOW)));
+
+        assertThat(store.counts())
+                .containsOnly(Map.entry(PROD, new FindingCounts(2, 0, 1)), Map.entry(DEV, new FindingCounts(0, 1, 0)));
+    }
+
+    @Test
     void replacingWithNothingClearsTheScope() {
         store.replace(
                 PROD, List.of(finding(PROD, "fan-in-hub", Finding.Severity.MEDIUM, "service:sales/payments", NOW)));
@@ -67,6 +83,7 @@ class JdbcFindingStoreTest {
         store.replace(PROD, List.of());
 
         assertThat(store.findings(PROD)).isEmpty();
+        assertThat(store.counts()).isEmpty();
     }
 
     private static Finding finding(Scope scope, String ruleId, Finding.Severity severity, String subject, Instant at) {

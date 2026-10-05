@@ -66,9 +66,13 @@ Last updated: **2026-10-05**
   `rules.web.FindingsController` (`GET …/findings?severity=&rule=`, `GET …/impact?node=&at=`,
   problem `node-not-found`), the OpenAPI schemas `Severity`, `Finding`, `Impact`,
   `ImpactedNode` and the Query API reference section. `TopologyQuery.requireKnown` is public
-  now. See the [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan
-  is delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a
-  pull request may change at most twelve files; the rule table there still needs the chain
+  now. PR 7 (ARCHI-59, #76) joins the counts to the Projects list: `FindingStore.counts()` (every
+  scope with findings, `FindingCounts` per severity, computed in Java from all rows), merged
+  into `ScopeSummaryDto.findings` by `ScopesController` so `topology` never depends on
+  `rules`; the UI fixture carries the new required field. See the
+  [M6](../features/m6-architecture-rules/) page; item 4 of its delivery plan is
+  delivered in two pull requests (ARCHI-56 persistence, ARCHI-57 evaluation) because a pull
+  request may change at most twelve files; the rule table there still needs the chain
   semantics and the plan the split (next docs touch).
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
@@ -147,18 +151,16 @@ timeline mode only).
 
 ## Next step
 
-M6 PR 1–5 (#66–#70) are merged. Merge M6 PR 6 (ARCHI-58, #75); the next pull request is
-opened only after it is merged. Then continue, one pull request against `main` at a time,
+M6 PR 1–6 (#66–#70, #75) are merged. Merge M6 PR 7 (ARCHI-59, #76); the next pull request
+is opened only after it is merged. Then continue, one pull request against `main` at a time,
 each with the next free ticket number:
 
-1. M6 PR 7: finding counts per severity on the scope summaries of `GET /scopes`
-   (`FindingStore.countBySeverity`, `ScopeSummary`, OpenAPI, Projects list badge).
-2. M6 PR 8 and following: Findings page, map badges, impact lens and rail card, user guide
+1. M6 PR 8 and following: Findings page, map badges, impact lens and rail card, user guide
    page.
-3. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+2. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
    real data); the M6 candidates B2 and B3 along the way.
-4. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+3. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume
