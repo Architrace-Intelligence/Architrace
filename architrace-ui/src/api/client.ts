@@ -19,6 +19,9 @@ export type TopologyDiff = components["schemas"]["TopologyDiff"];
 export type GraphRef = components["schemas"]["GraphRef"];
 export type NodeChange = components["schemas"]["NodeChange"];
 export type EdgeRef = components["schemas"]["EdgeRef"];
+export type Finding = components["schemas"]["Finding"];
+export type Severity = components["schemas"]["Severity"];
+export type FindingCounts = components["schemas"]["FindingCounts"];
 
 export class ProblemError extends Error {
   readonly problem: Problem;
@@ -84,6 +87,14 @@ export async function getTimelineDiff(
   const { data, error, response } = await client.GET(
     "/scopes/{project}/{environment}/{cluster}/diff/timeline",
     { params: { path: scope, query: to === undefined ? { from } : { from, to } }, signal },
+  );
+  return unwrap(data, error, response);
+}
+
+export async function listFindings(scope: Scope, signal?: AbortSignal): Promise<Finding[]> {
+  const { data, error, response } = await client.GET(
+    "/scopes/{project}/{environment}/{cluster}/findings",
+    { params: { path: scope }, signal },
   );
   return unwrap(data, error, response);
 }

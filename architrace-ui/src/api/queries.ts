@@ -4,7 +4,14 @@
  */
 
 import { queryOptions } from "@tanstack/react-query";
-import { getEnvironmentDiff, getGraph, getTimelineDiff, listScopes, type Scope } from "./client";
+import {
+  getEnvironmentDiff,
+  getGraph,
+  getTimelineDiff,
+  listFindings,
+  listScopes,
+  type Scope,
+} from "./client";
 
 export function scopesQuery() {
   return queryOptions({
@@ -53,5 +60,12 @@ export function timelineDiffQuery(scope: Scope, from: string, to?: string) {
       to ?? "live",
     ],
     queryFn: ({ signal }) => getTimelineDiff(scope, from, to, signal),
+  });
+}
+
+export function findingsQuery(scope: Scope) {
+  return queryOptions({
+    queryKey: ["findings", scope.project, scope.environment, scope.cluster],
+    queryFn: ({ signal }) => listFindings(scope, signal),
   });
 }

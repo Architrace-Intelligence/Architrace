@@ -5,6 +5,7 @@
 
 import { type Mock, vi } from "vitest";
 import type {
+  Finding,
   ScopeSummary,
   TopologyDiff,
   TopologyEdge,
@@ -172,6 +173,61 @@ export const demoGraph: TopologyGraph = {
 };
 
 export const emptyGraph: TopologyGraph = { ...demoGraph, nodes: [], edges: [] };
+
+function finding(
+  ruleId: string,
+  severity: Finding["severity"],
+  subjectNodeIds: string[],
+  title: string,
+  detail: string,
+  evidence: string[],
+): Finding {
+  return {
+    ruleId,
+    severity,
+    scope: { project: "webshop", environment: "PROD", cluster: "k8s-prod-eu1" },
+    subjectNodeIds,
+    title,
+    detail,
+    evidence,
+    evaluatedAt: "2026-10-01T12:00:00Z",
+  };
+}
+
+export const demoFindings: Finding[] = [
+  finding(
+    "cyclic-dependency",
+    "HIGH",
+    ["service:inventory-service", "service:orders-service"],
+    "Cyclic dependency between 2 services",
+    "inventory-service -> orders-service -> inventory-service over synchronous calls; a failure or a slowdown in any of them propagates around the cycle",
+    ["service:inventory-service", "service:orders-service"],
+  ),
+  finding(
+    "wide-blast-radius",
+    "HIGH",
+    ["db:postgresql/orders"],
+    "Failure of postgresql/orders impairs 3 of 5 services",
+    "If postgresql/orders fails, 60 % of the services of the scope stop working: orders-service, api-gateway, inventory-service",
+    ["service:orders-service", "service:api-gateway", "service:inventory-service"],
+  ),
+  finding(
+    "fan-in-hub",
+    "MEDIUM",
+    ["service:orders-service"],
+    "orders-service has 2 direct callers",
+    "2 services call orders-service synchronously, which makes it a coupling hotspot: an incompatible change or an outage there touches all of them",
+    ["service:api-gateway", "service:inventory-service"],
+  ),
+  finding(
+    "unknown-external",
+    "LOW",
+    ["external:api.stripe.com"],
+    "Unknown external system api.stripe.com",
+    "payments-service call api.stripe.com, which is not on the allowlist of known external systems",
+    ["service:payments-service"],
+  ),
+];
 
 export const demoDiff: TopologyDiff = {
   left: {

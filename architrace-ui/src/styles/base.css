@@ -342,6 +342,7 @@ legend {
   border-radius: 12px;
   background: var(--surface);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .group-h {
@@ -961,6 +962,101 @@ button.node {
 .b-bad {
   background: color-mix(in srgb, var(--sev-high) 16%, transparent);
   color: var(--sev-high);
+}
+
+.sev-high {
+  background: color-mix(in srgb, var(--sev-high) 16%, transparent);
+  color: var(--sev-high);
+}
+
+.sev-medium {
+  background: color-mix(in srgb, var(--sev-med) 16%, transparent);
+  color: var(--sev-med);
+}
+
+.sev-low {
+  background: color-mix(in srgb, var(--sev-low) 18%, transparent);
+  color: var(--sev-low);
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.stat b {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.finding {
+  border-top: 1px solid var(--line);
+}
+
+.finding:first-of-type {
+  border-top: 0;
+}
+
+.finding > summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+}
+
+.finding > summary::-webkit-details-marker {
+  display: none;
+}
+
+.finding-subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.finding-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 14px 52px;
+}
+
+.finding-body p {
+  margin: 0;
+}
+
+.evidence {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.finding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.finding-actions code {
+  font-size: 12px;
+  color: var(--ink-2);
 }
 
 .popover-form {
