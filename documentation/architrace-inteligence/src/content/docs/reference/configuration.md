@@ -135,6 +135,7 @@ The control plane is a Spring Boot application; every property below can be set 
 | `architrace.topology.retention.period` | `30d` | snapshots whose window ended before `now - period` are deleted |
 | `architrace.topology.retention.batch-size` | `1000` | snapshots deleted per statement |
 | `architrace.topology.retention.cron` | `0 0 3 * * *` | when the retention job runs (UTC) |
+| `architrace.topology.platform-hosts` | empty | host names of platform services every workload talks to (feature-flag server, configuration server); their external nodes carry the label `category=platform` in every graph the Query API serves, so the UI can group them and the rules can skip them |
 | `architrace.rules.evaluation-interval` | `30s` | the architecture rules run right after an ingested snapshot, at most once per scope per interval; the next snapshot after the interval catches up |
 | `architrace.rules.shared-database.min-services` | `2` | services using one database directly before `shared-database` fires |
 | `architrace.rules.unknown-external.allowlist` | empty | host names of known external systems; every other external host raises `unknown-external` |
