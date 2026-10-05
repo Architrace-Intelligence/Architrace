@@ -29,7 +29,7 @@ Last updated: **2026-10-05**
   2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working
   assumption to confirm for M5: environment mode compares versions only, timeline mode versions
   and deployments.
-- **M6 is in progress.** PR 1 (ARCHI-53) delivers the `rules` package of the control plane:
+- **M6 is in progress.** PR 1 (ARCHI-53, #66) delivers the `rules` package of the control plane:
   `Finding` (with its `Severity`), the sealed `ArchitectureRule`, `RulesProperties`
   (`architrace.rules.*`, declared but not enabled yet), `RuleEngine`, and the rules
   `CyclicDependency` (strongly connected components of the sync edges, one shortest cycle as
@@ -115,7 +115,7 @@ timeline mode only).
 
 ## Next step
 
-Merge M6 PR 1 (ARCHI-53). Then continue, one pull request against `main` at a time, each with
+Merge M6 PR 1 (ARCHI-53, #66). Then continue, one pull request against `main` at a time, each with
 the next free ticket number:
 
 1. M6 PR 2: `ImpactAnalysis` (`Impact`, `ImpactedNode`, reverse breadth-first search over
