@@ -16,23 +16,28 @@ Last updated: **2026-10-05**
   M6, M7.
 - Merged: M0 PR 1–5 (#26, #42, #44, #48, #49), the dependency update (ARCHI-35, #46), the UI
   design (#30), M1 (#50–#54), M2 (#31, #33, #35), M3 (#36, #38), M4 PR 1–5 (#39, #55, #56, #58,
-  #59), the real-data backlog (ARCHI-47, #60), M5 (ARCHI-48 #61, ARCHI-49 #62). The `main` pipeline is green end to end; both
-  images are in GHCR.
+  #59), the real-data backlog (ARCHI-47, #60), M5 PR 1–2 (#61, #62), the M6 blast-radius
+  design (ARCHI-50, #63), the pull request size gate (ARCHI-51, #64) and the pipeline order
+  (ARCHI-52, #65). The `main` pipeline is green end to end; both images are in GHCR.
 - **M0 is complete in the repository.** What remains is the maintainer checklist on the
   [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
   ruleset (`.github/rulesets/main.json`) and the repository settings (§5 there), install the
   CodeRabbit app, make the two GHCR packages public, seed `v0.1.0`. Until the ruleset is active
   the merge gate is discipline, not platform.
-- **M1 and M4 are done**, see the [M1](../features/m1-agent-pipeline/) and
-  [M4](../features/m4-service-map/) pages. Lesson recorded on 2026-10-04: **no stacked pull
-  requests**, one pull request against `main` at a time.
-- **M5 is done** (#61 drift domain and endpoints, #62 Drift screen), see the
-  [M5](../features/m5-drift/) page. Still to confirm by the maintainer: environment mode
-  compares versions only, timeline mode versions and deployments (`DiffMode`).
-- **M6 is next.** On 2026-10-05 the maintainer added blast radius to it: an impact query on
-  any node (`…/impact?node=`), an impact lens with a rail card on the map and the rule
-  `WideBlastRadius`; the API is scope-based like the rest. Design and delivery plan on the
-  [M6](../features/m6-architecture-rules/) page (three PRs).
+- **M1, M4 and M5 are done**, see the [M1](../features/m1-agent-pipeline/),
+  [M4](../features/m4-service-map/) and [M5](../features/m5-drift/) pages. Lesson recorded on
+  2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working
+  assumption to confirm for M5: environment mode compares versions only, timeline mode versions
+  and deployments.
+- **M6 is in progress.** PR 1 (ARCHI-53) delivers the `rules` package of the control plane:
+  `Finding` (with its `Severity`), the sealed `ArchitectureRule`, `RulesProperties`
+  (`architrace.rules.*`, declared but not enabled yet), `RuleEngine`, and the rules
+  `CyclicDependency` (strongly connected components of the sync edges, one shortest cycle as
+  evidence), `SharedDatabase` (threshold `shared-database.min-services`, default 2) and
+  `UnknownExternal` (`unknown-external.allowlist` of host names). Nothing runs the engine yet:
+  the Spring wiring arrives with the evaluation trigger. See the
+  [M6](../features/m6-architecture-rules/) page; its three-step delivery plan is split further
+  below because a pull request may change at most twelve files.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -59,6 +64,14 @@ instead of a per-id resource; the snapshot history filters on window end, inclus
 ARCHI-48: a diff is a resource of the scope that is its right side; the left side comes as
 query parameters; everything "added" is only on the right, "removed" only on the left.
 
+Rules conventions since ARCHI-53: a rule is a record that carries its own thresholds and is
+built from `RulesProperties` by `RuleEngine.of`; rule ids are kebab-case
+(`cyclic-dependency`, `shared-database`, `unknown-external`) and will be the `rule` filter of
+the findings endpoint; `subjectNodeIds` and `evidence` hold node ids, names appear only in
+`title` and `detail`; findings are ordered by severity, rule id, then subject ids; the
+evidence of a cycle is the shortest cycle through its smallest node id; self-calls and paths
+through topics are never cycles; the external allowlist matches the host name.
+
 UI conventions since ARCHI-32: feature folders under `src/`; server state only through
 `queryOptions` factories; the generated `src/api/schema.d.ts` is never committed; tests stub
 `fetch` with the helpers in `src/test/http.ts`; TypeScript stays on 5.x until
@@ -80,7 +93,9 @@ Pipeline conventions since ARCHI-34: every job name is a required-check name; ac
 by commit SHA with the version in a trailing comment (Dependabot keeps both current); a scanner
 whose action needs a licence runs as a pinned, checksum-verified binary instead; a step that needs
 a secret skips with a notice when the secret is absent (Dependabot runs) rather than failing;
-the Gradle gate in CI is the same command as locally.
+the Gradle gate in CI is the same command as locally. Since ARCHI-51 and ARCHI-52: the `size`
+job fails a pull request with more than twelve changed files and runs first; CodeQL runs after
+the build.
 
 Merge gate conventions since ARCHI-37: the ruleset lives in `.github/rulesets/main.json` and
 changes with the job names it requires; squash merge only, the pull request title is the commit
@@ -100,22 +115,25 @@ timeline mode only).
 
 ## Next step
 
-Merge the docs pull request of ARCHI-50 (blast radius in M6, M5 closed). Then continue, one
-PR each with the next free ticket number:
+Merge M6 PR 1 (ARCHI-53). Then continue, one pull request against `main` at a time, each with
+the next free ticket number:
 
-1. M6 PR 1: rule engine, `CyclicDependency`, `SharedDatabase`, `UnknownExternal`,
-   configuration `architrace.rules.*`, fixture tests.
-2. M6 PR 2: `ImpactAnalysis` and `WideBlastRadius`, the remaining rules, `finding` table,
-   evaluation after ingestion, findings and impact endpoints, OpenAPI, reference pages
-   (candidates B2 and B3 on the way).
-3. M6 PR 3: Findings page, map badges, impact lens and rail card, guide page.
-4. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
+1. M6 PR 2: `ImpactAnalysis` (`Impact`, `ImpactedNode`, reverse breadth-first search over
+   sync edges plus one hop through publish and consume) with the rule `WideBlastRadius`, and
+   the rules `CrossDomainCoupling` (domain parsed from `service:{domain}/{name}`), `FanInHub`,
+   `LongSyncChain` with their properties; update the M6 page's delivery plan to this split.
+2. M6 PR 3: persistence (`finding` table in a Liquibase changelog, store interface, JDBC
+   store), evaluation after every ingested snapshot bounded to once per scope per interval,
+   `RulesConfiguration` enabling `RulesProperties`, the configuration reference page.
+3. M6 PR 4: `findings` and `impact` endpoints, OpenAPI schemas, the Query API reference page,
+   finding counts on the scope summaries.
+4. M6 PR 5 and following: Findings page, map badges, impact lens and rail card, user guide
+   page.
+5. M7 Packaging and demo (B5 health check on `/health`, B6 deployment guide for Spring Boot
    services, B7 demo TTL; the demo stack exercises the map, the drift and the findings with
-   real data).
-5. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
-   as small PRs; the Dependabot Gradle bumps of #47 in a maintainer PR; test hygiene:
-   `AgentRuntimeServiceTest` binds the metrics port `9464` from `TestDataProvider`, give it a
-   free port so a local agent container no longer breaks the gate.
+   real data); the M6 candidates B2 and B3 along the way.
+6. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
+   as small pull requests; take over the Dependabot Gradle bumps of #47 in a maintainer PR.
 
 ## How to resume
 
