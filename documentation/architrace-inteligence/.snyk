@@ -10,3 +10,7 @@ ignore:
     - '*':
         reason: Transitive build-time dependency of Astro used only while generating the static site; no fixed release of http-cache-semantics is available yet.
         expires: 2026-11-30T00:00:00.000Z
+  SNYK-JS-ZOD-20510278:
+    - '*':
+        reason: Transitive build-time dependency of Astro and Starlight used only while generating the static site from trusted content; no fixed release of zod is available yet.
+        expires: 2026-11-05T00:00:00.000Z
