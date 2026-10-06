@@ -117,11 +117,11 @@ paths:
                       - sourceId: "service:orders"
                         targetId: "db:postgresql/orders"
                         kind: SYNC
-                        metrics: { calls: 24000, errors: 3, p50Millis: 3, p95Millis: 9, p99Millis: 22, maxMillis: 140 }
+                        metrics: { calls: 24000, errors: 3, p50Millis: 3.2, p95Millis: 9.4, p99Millis: 22.1, maxMillis: 140.3 }
                       - sourceId: "service:orders"
                         targetId: "topic:kafka/order-events"
                         kind: PUBLISH
-                        metrics: { calls: 8700, errors: 0, p50Millis: 2, p95Millis: 5, p99Millis: 9, maxMillis: 60 }
+                        metrics: { calls: 8700, errors: 0, p50Millis: 0.35, p95Millis: 5.1, p99Millis: 9.0, maxMillis: 60.2 }
         "400":
           $ref: "#/components/responses/InvalidQuery"
         "404":
@@ -175,7 +175,7 @@ paths:
                             sourceId: "service:checkout"
                             targetId: "service:orders"
                             kind: SYNC
-                            metrics: { calls: 12400, errors: 37, p50Millis: 12, p95Millis: 48, p99Millis: 90, maxMillis: 410 }
+                            metrics: { calls: 12400, errors: 37, p50Millis: 12.4, p95Millis: 48.0, p99Millis: 90.7, maxMillis: 410.9 }
                       outbound:
                         - node:
                             id: "db:postgresql/orders"
@@ -188,7 +188,7 @@ paths:
                             sourceId: "service:orders"
                             targetId: "db:postgresql/orders"
                             kind: SYNC
-                            metrics: { calls: 24000, errors: 3, p50Millis: 3, p95Millis: 9, p99Millis: 22, maxMillis: 140 }
+                            metrics: { calls: 24000, errors: 3, p50Millis: 3.2, p95Millis: 9.4, p99Millis: 22.1, maxMillis: 140.3 }
         "400":
           $ref: "#/components/responses/InvalidQuery"
         "404":
@@ -878,7 +878,9 @@ components:
       enum: [SYNC, PUBLISH, CONSUME]
     EdgeMetrics:
       type: object
-      description: Calls, errors and latency percentiles of an edge in the window.
+      description: >-
+        Calls, errors and latency percentiles of an edge in the window. Latencies are
+        milliseconds with microsecond precision, so a database call of 350 µs reads 0.35.
       required: [calls, errors, p50Millis, p95Millis, p99Millis, maxMillis]
       properties:
         calls:
@@ -890,20 +892,20 @@ components:
           format: int64
           minimum: 0
         p50Millis:
-          type: integer
-          format: int64
+          type: number
+          format: double
           minimum: 0
         p95Millis:
-          type: integer
-          format: int64
+          type: number
+          format: double
           minimum: 0
         p99Millis:
-          type: integer
-          format: int64
+          type: number
+          format: double
           minimum: 0
         maxMillis:
-          type: integer
-          format: int64
+          type: number
+          format: double
           minimum: 0
     NodeView:
       type: object

@@ -18,7 +18,13 @@ export function formatRate(metrics: EdgeMetrics): string {
 }
 
 export function formatMillis(millis: number): string {
-  return millis >= 1_000 ? `${(millis / 1_000).toFixed(1)} s` : `${String(millis)} ms`;
+  if (millis >= 1_000) {
+    return `${(millis / 1_000).toFixed(1)} s`;
+  }
+  if (millis > 0 && millis < 1) {
+    return `${String(Math.round(millis * 1_000))} µs`;
+  }
+  return `${String(Number(millis.toFixed(1)))} ms`;
 }
 
 export function describeMetrics(metrics: EdgeMetrics): string {
