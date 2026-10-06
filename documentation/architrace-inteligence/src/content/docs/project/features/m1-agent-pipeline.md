@@ -359,9 +359,11 @@ streams of a real landscape.
   span yields neither node nor edge, while `GraphBuilder` still records the service and
   everything else in the pipeline stays untouched. Spans are still counted as received.
 - **Globs, not regular expressions.** `topics.ignore` takes patterns where `*` matches any
-  run of characters and everything else is literal; `TopicFilter` quotes the literal parts
-  and joins them with `.*`, case-insensitively, so a `.` in a topic name never acts as a
-  wildcard and the defaults match the upper-case names Kafka Streams generates.
+  run of characters and everything else is literal; `TopicFilter` matches them with the
+  classic two-pointer wildcard walk (linear in pattern times topic length, no regular
+  expression and so no backtracking blow-up on a hostile destination) after folding both
+  sides to lower case with `Locale.ROOT`, so a `.` in a topic name never acts as a wildcard
+  and the defaults match the upper-case names Kafka Streams generates.
 - **Defaults in the configuration record.** `AgentConfig.DEFAULT_IGNORED_TOPICS` lists the
   changelog, repartition and foreign-key join subscription topics; the document applies them
   when the key is absent, `[]` switches the filter off, and a blank pattern is a validation

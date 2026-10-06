@@ -5,20 +5,18 @@
 
 package io.github.architrace.graph;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
 public final class TopicFilter {
 
     private static final TopicFilter NONE = new TopicFilter(List.of());
-    private static final String WILDCARD = "*";
+    private static final char WILDCARD = '*';
 
-    private final List<Pattern> patterns;
+    private final List<String> globs;
 
     public TopicFilter(List<String> globs) {
-        this.patterns = globs.stream().map(TopicFilter::compile).toList();
+        this.globs = globs.stream().map(TopicFilter::fold).toList();
     }
 
     public static TopicFilter none() {
@@ -26,14 +24,36 @@ public final class TopicFilter {
     }
 
     public boolean ignores(String topic) {
-        return patterns.stream().anyMatch(pattern -> pattern.matcher(topic).matches());
+        String folded = fold(topic);
+        return globs.stream().anyMatch(glob -> matches(glob, folded));
     }
 
-    private static Pattern compile(String glob) {
-        return Pattern.compile(
-                Arrays.stream(glob.split(Pattern.quote(WILDCARD), -1))
-                        .map(Pattern::quote)
-                        .collect(Collectors.joining(".*")),
-                Pattern.CASE_INSENSITIVE);
+    private static String fold(String value) {
+        return value.toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean matches(String glob, String topic) {
+        int g = 0;
+        int t = 0;
+        int star = -1;
+        int mark = 0;
+        while (t < topic.length()) {
+            if (g < glob.length() && glob.charAt(g) == WILDCARD) {
+                star = g++;
+                mark = t;
+            } else if (g < glob.length() && glob.charAt(g) == topic.charAt(t)) {
+                g++;
+                t++;
+            } else if (star >= 0) {
+                g = star + 1;
+                t = ++mark;
+            } else {
+                return false;
+            }
+        }
+        while (g < glob.length() && glob.charAt(g) == WILDCARD) {
+            g++;
+        }
+        return g == glob.length();
     }
 }

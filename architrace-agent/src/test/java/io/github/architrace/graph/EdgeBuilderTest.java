@@ -99,7 +99,7 @@ class EdgeBuilderTest {
         EdgeBuilder filtering = new EdgeBuilder(
                 new PendingSpanIndex(Duration.ofSeconds(120)),
                 clock,
-                new TopicFilter(List.of("*-changelog", "orders.*", "audit")));
+                new TopicFilter(List.of("*-changelog", "orders.*", "audit", "Ä*", "a*b*c")));
 
         assertThat(filtering.onSpan(producerTo("shop-orders-store-changelog"))).isEmpty();
         assertThat(filtering.onSpan(consumerFrom("shop-orders-store-changelog")))
@@ -109,6 +109,10 @@ class EdgeBuilderTest {
         assertThat(filtering.onSpan(producerTo("ordersXevents"))).hasSize(1);
         assertThat(filtering.onSpan(producerTo("audit-log"))).hasSize(1);
         assertThat(filtering.onSpan(producerTo("orders"))).hasSize(1);
+        assertThat(filtering.onSpan(producerTo("ä-events"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("axxbxxc"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("axxbxx"))).hasSize(1);
+        assertThat(filtering.onSpan(producerTo("a" + "x".repeat(10_000) + "b"))).hasSize(1);
         assertThat(filtering.pendingSpans()).isZero();
     }
 

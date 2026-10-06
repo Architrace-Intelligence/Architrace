@@ -61,11 +61,6 @@ Last updated: **2026-10-06**
   default and groups them into one node `platform` behind the **Platform** chip
   (`platformView` in `map/model.ts`, `platform=on` in the URL; the drift map still shows them
   one by one). Design notes on the M4 and M6 pages.
-- B1 from the real-data round (ARCHI-77): `topics.ignore` in the agent configuration
-  (`AgentConfig.TopicSettings`, defaults `*-changelog`, `*-repartition`,
-  `*-subscription-registration-*topic`, `*-subscription-response-*topic`) feeds a
-  case-insensitive glob `TopicFilter` that `EdgeBuilder.topic` applies, so a matching producer
-  or consumer span yields neither node nor edge; design notes on the M1 page.
 - **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
   published images (two environments, one collector routing by environment to one agent each,
   Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
