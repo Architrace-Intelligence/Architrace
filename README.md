@@ -28,267 +28,166 @@
   [![TypeScript](https://img.shields.io/github/package-json/dependency-version/Architrace-Intelligence/Architrace/dev/typescript?filename=architrace-ui%2Fpackage.json&label=TypeScript&logo=typescript&color=3178C6)](./architrace-ui/package.json)
   [![Vite](https://img.shields.io/github/package-json/dependency-version/Architrace-Intelligence/Architrace/dev/vite?filename=architrace-ui%2Fpackage.json&label=Vite&logo=vite&color=646CFF)](./architrace-ui/package.json)
 
-  [Documentation](https://architrace-intelligence.github.io/Architrace/) | [Quick Start](#quick-start) | [Docker Demo](#docker-demo) | [Container images](#container-images) | [Contributing](#contributing)
+  [Documentation](https://architrace-intelligence.github.io/Architrace/) | [Try the demo](#try-it-in-two-minutes) | [Install in production](#install-in-production) | [Connect your services](#connect-your-services) | [Develop](#develop) | [Contributing](#contributing)
 </div>
 
 ---
 
-## Quick Start
+Architrace shows the **runtime architecture of your system as it actually is**: which services
+talk to which, over HTTP or through which topics, which databases they share, which external
+hosts they depend on, how that differs between environments and releases, and where the
+structure violates rules you care about. It needs no code change: your services send
+OpenTelemetry traces, as most of them already do, and Architrace builds the picture from the
+spans.
 
-Run the quality gates (formatting, Checkstyle, tests with coverage, UI gate):
+What you get:
 
-```bash
-./gradlew spotlessApply check
-```
+- **Service map** per project, environment and cluster: services, databases, topics and
+  external hosts with calls, errors and latency percentiles on every edge.
+- **Drift** between two environments or two points in time: versions, deployments and
+  dependencies that were added, removed or changed.
+- **Architecture findings** from eight deterministic rules (cyclic dependency, shared
+  database, wide blast radius, cross-domain coupling, fan-in hub, long synchronous chain,
+  unknown external, data stream without producer) with the evidence behind each one.
+- **Query API** (OpenAPI 3.1, `/api/v1`) for everything the UI shows, so scripts and CI jobs can
+  ask the same questions.
 
-Build all modules:
-
-```bash
-./gradlew build
-```
-
-Run control-plane locally:
-
-```bash
-./gradlew :architrace-control-plane:bootRun
-```
-
-Build runnable agent fat jar, validate a configuration, run the agent:
-
-```bash
-./gradlew :architrace-agent:shadowJar
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./demo/agent-dev.yaml
-java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./demo/agent-dev.yaml --prop control-plane.server=localhost:9090
-```
-
-Print the version the build computes from git tags and Conventional Commits:
-
-```bash
-./gradlew printVersion printReleaseVersion
-```
-
----
-
-## Features
-
-- **OTLP Ingestion** - Receives traces on OTLP gRPC (`:4319`) from collectors and SDKs; service identity, deployment and peers come from the standard OpenTelemetry semantic conventions (current and legacy keys), with a configurable attribute mapping
-- **Graph Transformation** - Converts spans into nodes/edges and graph batches
-- **Control Plane Stream** - Bidirectional gRPC session between agent and control-plane with registration, heartbeats, acknowledged snapshots and automatic reconnection
-- **Agent Metrics** - Prometheus `/metrics` and `/health` on port `9464`, rate-limited reporting of rejected and evicted spans
-- **Architecture rules** - eight deterministic rules (cyclic dependency, shared database, wide blast radius, cross-domain coupling, fan-in hub, long synchronous chain, unknown external, data stream without producer) evaluated after every snapshot with the evidence attached, and the blast radius of any node computed on request
-- **Query API** - REST under `/api/v1` from an OpenAPI 3.1 contract: scopes, agents, the graph and services of a scope at a point in time, snapshot history, the drift of a scope against another scope of its project or against its own past, its findings and the impact of one of its nodes; Swagger UI at `/swagger-ui`
-- **Web UI** - React + TypeScript single-page application served by the control plane at `/`, talking to the Query API through a client typed from the same contract: a Projects list filtered by environment and cluster, the Service map of a scope (React Flow with an ELK layered layout, finding badges and an impact lens), the Drift screen that compares a scope with another environment or with its own past, as a grouped list and as map overlays, and the Findings screen with the rules, their evidence and the rail
-- **Structured Concurrency** - Runtime built on Java 25 concurrency primitives
-- **Modular Monorepo** - Separate modules for runtime agent, control-plane, shared API contracts and the UI, with shared build conventions in `build-logic`
-- **Versioned from git** - the version is computed from the last `v*` tag and the Conventional Commits since it; the CLI reports it from the jar manifest
-
----
-
-## Monorepo Structure
-
-- **[`architrace-agent`](./architrace-agent)** - Runtime agent CLI, OTLP receiver, graph pipeline
-- **[`architrace-control-plane`](./architrace-control-plane)** - Spring Boot service (HTTP + gRPC)
-- **[`architrace-api`](./architrace-api)** - Shared protobuf and OpenAPI contracts and generated classes
-- **[`architrace-ui`](./architrace-ui)** - Web UI (Vite, React, TypeScript), built by Gradle and bundled into the control plane jar
-- **[`build-logic`](./build-logic)** - Gradle convention plugins: Java toolchain and quality gates, Spring Boot defaults, versioning from git
-- **[`demo`](./demo)** - One-command demo: two environments of a small shop, a broker, a database and an external host on the published images
-
----
-
-## Architecture
+## How it works
 
 ```mermaid
 flowchart LR
-  OTel[OTel SDK / Collector] -->|OTLP gRPC :4319| Agent[Architrace Agent]
-  Agent -->|Bidirectional gRPC :9090| CP[Control Plane]
-  CP -->|HTTP :8085| UI[Web UI / Query API clients]
-  Agent --> API[Shared API]
-  CP --> API
+  Services[Your services<br/>OpenTelemetry SDK or Java agent] -->|OTLP| Collector[OpenTelemetry Collector]
+  Collector -->|OTLP gRPC :4319| Agent[Architrace agent<br/>one per environment]
+  Agent -->|gRPC :9090| CP[Control plane<br/>PostgreSQL]
+  CP -->|HTTP :8085| UI[Web UI and Query API]
 ```
 
----
+1. The **agent** receives the traces of one environment, pairs client and server spans into a
+   service graph and publishes one snapshot per minute. It keeps the current window in memory
+   and nothing else.
+2. The **control plane** stores the snapshots, evaluates the rules, and serves the Query API
+   and the UI from one port.
+3. Your **collector** forwards traces to the agent next to your tracing backend; Architrace is
+   one more destination, not a replacement.
 
-## Docker Demo
+## Try it in two minutes
 
-Run the full stack with two environments, a drift between them and findings out of the box:
+The demo runs two environments of a small shop, a broker, a database and an external host on
+the published images, with a drift between the environments and findings out of the box:
 
 ```bash
 cd demo
 docker compose up -d
 ```
 
-Open <http://localhost:8085>: the Projects list shows the project `demo` with the scopes `DEV`
+Open <http://localhost:8085>. The Projects list shows the project `demo` with the scopes `DEV`
 and `STAGE` within a minute; the map, the Drift screen and the Findings screen have something
 to show from the first snapshot on. What runs and what to click first is in the
 [Docker demo guide](https://architrace-intelligence.github.io/Architrace/guides/docker-demo/).
+Stop it with `docker compose down -v`.
+
+## Install in production
+
+Three things: a PostgreSQL database, one control plane and one agent per environment (one
+per project, environment and cluster, to be exact). The
+[installation guide](https://architrace-intelligence.github.io/Architrace/guides/deployment/)
+walks through it step by step with Docker and Kubernetes examples, sizing, security and
+upgrades. In short:
+
+1. Create a PostgreSQL 15+ database and a user that owns it.
+2. Run `ghcr.io/architrace-intelligence/architrace-control-plane` with `ARCHITRACE_DB_URL`,
+   `ARCHITRACE_DB_USERNAME` and `ARCHITRACE_DB_PASSWORD`; give it 1 GiB; put port `8085` behind
+   your reverse proxy with authentication.
+3. Run `ghcr.io/architrace-intelligence/architrace-agent` once per environment with a small YAML
+   file (`project`, `environment`, `cluster`, `agent.name`, `control-plane.server`); give it
+   512 MiB.
+4. Add an OTLP/gRPC exporter to the collector of each environment pointing at its agent on
+   port `4319`, and stamp `deployment.environment.name` there.
+5. Open the UI: the scope appears within a minute, the map fills with the first traffic.
+
+The images are public, pinned to one `X.Y.Z` tag per release, run as a non-root user on
+Eclipse Temurin 25 JRE, size their heap from the container memory limit and carry a health
+check:
 
 ```bash
-docker compose down -v
+docker pull ghcr.io/architrace-intelligence/architrace-control-plane:0.6.0
+docker pull ghcr.io/architrace-intelligence/architrace-agent:0.6.0
 ```
 
-## Common Commands
+Every setting is on the
+[configuration reference](https://architrace-intelligence.github.io/Architrace/reference/configuration/).
 
-Format all modules:
+## Connect your services
+
+Architrace reads traces only, so the instrumentation decides what appears on the map. Nothing
+in the code changes: attach the **OpenTelemetry Java agent** with `JAVA_TOOL_OPTIONS`, or add
+the **Spring Boot starter** and configure it through properties, then set a handful of `OTEL_*`
+variables (`OTEL_EXPORTER_OTLP_PROTOCOL=grpc`, the service name, namespace and version). The
+[instrumentation guide](https://architrace-intelligence.github.io/Architrace/guides/instrumenting-services/)
+compares the two options, lists the attributes Architrace keys on, and covers sampling, the
+rollout order and the usual gaps (Kafka Streams, Redis and OkHttp need the Java agent).
+
+## Features
+
+| Area | What it does |
+|------|--------------|
+| OTLP ingestion | OTLP/gRPC receiver on `4319`; service identity, deployment and peers from the OpenTelemetry semantic conventions, current and legacy keys, with a configurable attribute mapping |
+| Graph pipeline | pairs client and server spans into service, database, topic and external nodes with sync, publish and consume edges; latency histogram in microseconds; bounded queues, pending TTL, internal topics ignored by pattern |
+| Agent to control plane | bidirectional gRPC session with registration, heartbeats, acknowledged snapshots and automatic reconnection; a bounded snapshot queue bridges control plane restarts |
+| Agent metrics | Prometheus `/metrics` and `/health` on `9464`; every loss is counted and logged |
+| Storage | PostgreSQL with Liquibase migrations; retention job; one scope per project, environment and cluster |
+| Architecture rules | eight deterministic rules evaluated after every snapshot, thresholds configurable, findings with subject and evidence |
+| Query API | REST under `/api/v1` from an OpenAPI 3.1 contract: scopes, agents, graph, services, snapshot history, drift, findings, blast radius; Swagger UI at `/swagger-ui` |
+| Web UI | React and TypeScript single-page application served by the control plane: Projects list, service map with lenses and context panel, Drift screen, Findings screen |
+| Runtime | Java 25, structured concurrency, picocli CLI with `run`, `dry-run` and `version` |
+| Delivery | version computed from git tags and Conventional Commits; images and release on every merge |
+
+## Develop
+
+Prerequisites: JDK 25 (Gradle downloads the pinned Node.js for the UI). Everything runs
+through the Gradle wrapper.
 
 ```bash
-./gradlew spotlessApply
+./gradlew spotlessApply check            # format, Checkstyle, tests with coverage, UI gate
+./gradlew build                          # all modules and jars
+./gradlew :architrace-control-plane:bootRun
+./gradlew :architrace-agent:shadowJar
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar dry-run --config ./demo/agent-dev.yaml
+java --enable-preview -jar architrace-agent/build/libs/architrace-agent-*-all.jar run --config ./demo/agent-dev.yaml --prop control-plane.server=localhost:9090
+./gradlew printVersion printReleaseVersion
 ```
 
-Run only agent tests:
+UI against a running control plane (Node.js 22.12+; `/api` is proxied to `localhost:8085`):
 
 ```bash
-./gradlew :architrace-agent:test
+cd architrace-ui && npm ci && npm run dev
 ```
 
-Run only control-plane tests:
+More in the
+[local development guide](https://architrace-intelligence.github.io/Architrace/guides/local-development/).
 
-```bash
-./gradlew :architrace-control-plane:test
-```
+### Repository layout
 
-Generate protobuf classes:
+| Module | Contents |
+|--------|----------|
+| [`architrace-agent`](./architrace-agent) | agent CLI, OTLP receiver, graph pipeline, publisher |
+| [`architrace-control-plane`](./architrace-control-plane) | Spring Boot service: gRPC ingestion, storage, rules, Query API, UI bundle |
+| [`architrace-api`](./architrace-api) | protobuf and OpenAPI contracts, generated classes |
+| [`architrace-ui`](./architrace-ui) | React and TypeScript UI, built by Gradle and packed into the control plane |
+| [`build-logic`](./build-logic) | Gradle convention plugins: toolchain, quality gates, Spring Boot defaults, versioning |
+| [`demo`](./demo) | the two-environment demo stack |
+| [`documentation`](./documentation) | the documentation site (Astro Starlight) |
 
-```bash
-./gradlew :architrace-agent:generateProto :architrace-control-plane:generateProto :architrace-api:generateProto
-```
+### CI and releases
 
-Run the UI quality gate (types, lint, formatting, tests) or build its bundle; Gradle downloads the
-pinned Node.js on first use:
-
-```bash
-./gradlew :architrace-ui:test
-./gradlew :architrace-ui:npmBuild
-```
-
-Develop the UI against a running control plane (Node.js 22.12+, requests to `/api` are proxied
-to `localhost:8085`):
-
-```bash
-cd architrace-ui
-npm ci
-npm run dev
-```
-
----
-
-## CI
-
-Pull requests run [`PR`](./.github/workflows/pr.yml): `build` (`./gradlew build`: Spotless,
-Checkstyle, tests with the JaCoCo coverage gate, the UI gate, jars), `quality` (SonarCloud with
-the quality gate on new code), `security` (Snyk, OWASP Dependency-Check, gitleaks) and `docs`
-(site build). [`PR title`](./.github/workflows/pr-title.yml) checks the title convention and
-[`CodeQL`](./.github/workflows/codeql.yml) analyses the Java and TypeScript sources and the
-workflows. Merges to `main` run [`Main`](./.github/workflows/main.yml): the same gates, then a
-release when the commits since the last tag contain a releasing type (tag, notes, jars), the
-container images, the documentation site and the dependency graph. The `main` ruleset
-([`.github/rulesets/main.json`](./.github/rulesets/main.json)) makes those checks, resolved review
-threads and a squash merge mandatory, and CodeRabbit ([`.coderabbit.yaml`](./.coderabbit.yaml))
-reviews every pull request. Details on the
+Every pull request runs the quality gates ([`PR`](./.github/workflows/pr.yml): build with
+Spotless, Checkstyle, tests and coverage, the UI gate; SonarCloud; Snyk, OWASP Dependency-Check
+and gitleaks; the site build), the title check and CodeQL, and CodeRabbit reviews it. The
+`main` ruleset requires the checks, resolved review threads and a squash merge. Every merge to
+`main` runs the same gates, then tags a release when the commits since the last tag contain a
+releasing type, publishes the jars, the images (`X.Y.Z`, `latest`, `sha-<short>`) and the
+documentation site. Details on the
 [M0 page](https://architrace-intelligence.github.io/Architrace/project/features/m0-engineering-platform/).
-
-## Container images
-
-Every merge to `main` publishes `ghcr.io/architrace-intelligence/architrace-agent` and
-`ghcr.io/architrace-intelligence/architrace-control-plane` tagged `sha-<short>`; releases add
-`X.Y.Z` and `latest` (the first release is `0.1.0`). The images are public, run as a non-root
-user on Eclipse Temurin 25 JRE and carry a health check. Use `latest` or pin a release:
-
-```bash
-docker pull ghcr.io/architrace-intelligence/architrace-control-plane:0.1.0
-docker pull ghcr.io/architrace-intelligence/architrace-agent:0.1.0
-```
-
-### Run the control plane
-
-The control plane needs PostgreSQL 15 or newer; Liquibase applies the schema on start-up.
-Port `8085` serves the UI, the Query API, Swagger UI and the actuator, port `9090` serves the
-agents over gRPC.
-
-```bash
-docker network create architrace
-
-docker run -d --name architrace-db --network architrace \
-  -e POSTGRES_DB=architrace -e POSTGRES_USER=architrace -e POSTGRES_PASSWORD=architrace \
-  -v architrace-db:/var/lib/postgresql/data \
-  postgres:17-alpine
-
-for i in $(seq 1 30); do
-  docker exec architrace-db pg_isready -U architrace -d architrace && break
-  [ "$i" = 30 ] && { echo "PostgreSQL did not become ready" >&2; exit 1; }
-  sleep 1
-done
-
-docker run -d --name architrace-control-plane --network architrace \
-  -p 127.0.0.1:8085:8085 \
-  -e ARCHITRACE_DB_URL=jdbc:postgresql://architrace-db:5432/architrace \
-  -e ARCHITRACE_DB_USERNAME=architrace \
-  -e ARCHITRACE_DB_PASSWORD=architrace \
-  ghcr.io/architrace-intelligence/architrace-control-plane:latest
-```
-
-`curl localhost:8085/actuator/health` answers `{"status":"UP"}` once the schema is in place;
-the UI is at <http://localhost:8085> and Swagger UI at <http://localhost:8085/swagger-ui>. The
-examples publish ports on the loopback interface only: the control plane has no user accounts
-and the agent accepts traces from anyone, so put them behind your reverse proxy, authentication
-or firewall before publishing on other interfaces. Add `-p 127.0.0.1:9090:9090` when an agent
-runs on the host instead of the Docker network.
-
-Every property of the [configuration reference](https://architrace-intelligence.github.io/Architrace/reference/configuration/#control-plane)
-can be set as an environment variable in Spring's relaxed form, for example
-`ARCHITRACE_INGESTION_SNAPSHOTINTERVAL=30s`.
-
-### Run an agent
-
-Run one agent per environment. The agent reads `/config/architrace-agent.yaml`, receives OTLP
-traces over gRPC on `4319` and serves `/metrics` and `/health` on `9464`. Only `environment`,
-`cluster`, `agent.name` and `control-plane.server` are required:
-
-```yaml
-# architrace-agent.yaml
-project: webshop
-environment: PROD
-cluster: eu-1
-agent:
-  name: eu-1-prod
-control-plane:
-  server: architrace-control-plane:9090
-```
-
-```bash
-docker run -d --name architrace-agent --network architrace \
-  -p 127.0.0.1:4319:4319 -p 127.0.0.1:9464:9464 \
-  -v "$PWD/architrace-agent.yaml:/config/architrace-agent.yaml:ro" \
-  ghcr.io/architrace-intelligence/architrace-agent:latest
-```
-
-`docker logs architrace-agent` shows the registration with the control plane and
-`curl localhost:9464/health` answers once the receiver listens. Point the OpenTelemetry SDK or
-collector of that environment at the agent. The agent speaks OTLP over gRPC only, and most SDKs
-default to HTTP/protobuf, so select the transport explicitly:
-
-```bash
-export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
-export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4319          # from the host
-# export OTEL_EXPORTER_OTLP_ENDPOINT=http://architrace-agent:4319 # from a container on the network
-```
-
-The scope appears on the Projects list after the first snapshot interval (one minute by
-default). The image entrypoint is the agent CLI with the default command
-`run --config /config/architrace-agent.yaml`, so `dry-run` validates a configuration without
-starting anything:
-
-```bash
-docker run --rm -v "$PWD/architrace-agent.yaml:/config/architrace-agent.yaml:ro" \
-  ghcr.io/architrace-intelligence/architrace-agent:latest dry-run --config /config/architrace-agent.yaml
-```
-
-Every key is on the [configuration reference](https://architrace-intelligence.github.io/Architrace/reference/configuration/#agent);
-Kubernetes, one agent per environment and collector routing are in the
-[deployment guide](https://architrace-intelligence.github.io/Architrace/guides/deployment/).
-Stop everything with `docker rm -f architrace-agent architrace-control-plane architrace-db`.
-
-To build an image locally, produce a fresh jar first (`./gradlew clean assemble`), then
-`docker build -t architrace-agent architrace-agent` or the same for `architrace-control-plane`.
 
 ---
 

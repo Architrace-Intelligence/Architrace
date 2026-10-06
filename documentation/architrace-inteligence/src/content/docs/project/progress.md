@@ -128,3 +128,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-06 | B1 from the real-data round: the agent hides Kafka Streams internal topics through `topics.ignore` (ARCHI-77) |
 | 2026-10-06 | B4 from the real-data round: latency in microseconds from the agent histogram through the contract and the control plane to the Query API, which reports fractional milliseconds and the map formats (ARCHI-78 to ARCHI-81); B4 closed |
 | 2026-10-06 | `build-logic` JVM 24 pin dropped: Gradle 9.8 embeds Kotlin 2.4.10, which targets JVM 25 (ARCHI-82) |
+| 2026-10-06 | Operator documentation: README front page, step-by-step installation guide with Kubernetes manifests, instrumentation guide for the Java agent and the Spring Boot starter (ARCHI-83) |

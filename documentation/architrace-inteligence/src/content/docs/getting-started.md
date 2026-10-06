@@ -110,5 +110,9 @@ npm run dev
 - [Local Development](../guides/local-development/): run the modules from source, tests,
   dependency changes, versions and release notes.
 - [Docker Demo](../guides/docker-demo/): the demo stack with instrumented services and a collector.
+- [Installing in production](../guides/deployment/): PostgreSQL, the control plane, one agent per
+  environment, the collector route, sizing, security and upgrades, step by step.
+- [Instrumenting services](../guides/instrumenting-services/): the Java agent or the Spring Boot
+  starter without code changes, the attributes Architrace needs, rollout and troubleshooting.
 - [Contributing](../project/contributing/): how a change reaches `main`, the checks it has to
   pass and the commit convention.
