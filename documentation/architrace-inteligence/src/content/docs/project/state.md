@@ -20,12 +20,10 @@ Last updated: **2026-10-06**
   design (ARCHI-50, #63), the pull request size gate (ARCHI-51, #64) and the pipeline order
   (ARCHI-52, #65), M6 (#66–#70, #75–#80), the Snyk hotfix (#71) and Gradle 9.8.0 (#74). The
   `main` pipeline is green end to end; both images are in GHCR.
-- **M0 is complete.** The maintainer checklist on the
-  [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page was worked through
-  on 2026-10-06: ruleset verified active, repository settings applied, both GHCR packages
-  public, seed tag `v0.0.0` on `727f9bf` and the first pipeline release `v0.1.0` (tag, GitHub
-  release with both jars, images `0.1.0` and `latest`), the CodeRabbit app installed (first
-  review on #98). Nothing of the checklist is open.
+- **M0 is complete**, including the maintainer checklist on the
+  [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: the `main`
+  ruleset is active, squash is the only merge method, CodeRabbit reviews every pull request,
+  both GHCR packages are public and `v0.1.0` is released (the seed tag is `v0.0.0`).
 - **M1, M4 and M5 are done**, see the [M1](../features/m1-agent-pipeline/),
   [M4](../features/m4-service-map/) and [M5](../features/m5-drift/) pages. Lesson recorded on
   2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working
@@ -62,27 +60,13 @@ Last updated: **2026-10-06**
   default and groups them into one node `platform` behind the **Platform** chip
   (`platformView` in `map/model.ts`, `platform=on` in the URL; the drift map still shows them
   one by one). Design notes on the M4 and M6 pages.
-- **M7 is in progress.** PR 1 (ARCHI-64, #81) adds `demo/`: `docker-compose.yml` with the
-  control plane, one agent per environment (`agent-dev.yaml`, `agent-stage.yaml`), one
-  OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
-  external host and four Flask services from one parameterised `services/app.py` (`ROLE`), plus
-  the rewritten [Docker demo](../../guides/docker-demo/) guide. Validated end to end with
-  locally built images (DEV: cycle,
-  shared database, three blast radii, unknown external; STAGE drift: version and missing
-  back-call). PR 2 (ARCHI-65, #82) points the README, `AGENTS.md`, `SECURITY.md`, the
-  getting-started, local-development and modules pages, the architecture page and the M7
-  page at `demo/`. Gotchas recorded on the M7 page: the control plane's
-  `architrace.ingestion.snapshot-interval` overrides the agent's interval; the Python
-  requests instrumentation needs `OTEL_SEMCONV_STABILITY_OPT_IN=http` to emit
-  `server.address`; `psycopg2-binary` needs `skip_dep_check`. PR 3 (ARCHI-66, #83) removes
-  `otel-test-app/` and moves the Snyk excludes and the Dependabot pip entry to `demo/`. PR 4
-  (ARCHI-67, #90) closes M7: the deployment guide (control plane, one agent per environment,
-  collector snippet, the Spring Boot instrumentation section of B6, a checklist), B5 (the
-  agent image's health check probes `/health` on `ARCHITRACE_METRICS_PORT`, `4319` is the one
-  default OTLP port, the demo drops its workaround) and B7 (the delay explained next to
-  `buffers.pending-ttl-seconds`). The GHCR packages are still private (maintainer
-  checklist), so `docker compose up` on a clean machine waits for that; the MVP (M0 to M7) is
-  complete once #90 is merged.
+- **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
+  published images (two environments, one collector routing by environment to one agent each,
+  Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
+  Gotchas (the control plane's `architrace.ingestion.snapshot-interval` overrides the agent's
+  interval; the Python requests instrumentation needs `OTEL_SEMCONV_STABILITY_OPT_IN=http`;
+  `psycopg2-binary` needs `skip_dep_check`) are on the [M7](../features/m7-packaging-demo/)
+  page. The MVP (M0 to M7) is complete.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.

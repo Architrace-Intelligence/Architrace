@@ -212,8 +212,14 @@ docker run -d --name architrace-db --network architrace \
   -v architrace-db:/var/lib/postgresql/data \
   postgres:17-alpine
 
+for i in $(seq 1 30); do
+  docker exec architrace-db pg_isready -U architrace -d architrace && break
+  [ "$i" = 30 ] && { echo "PostgreSQL did not become ready" >&2; exit 1; }
+  sleep 1
+done
+
 docker run -d --name architrace-control-plane --network architrace \
-  -p 8085:8085 -p 9090:9090 \
+  -p 127.0.0.1:8085:8085 \
   -e ARCHITRACE_DB_URL=jdbc:postgresql://architrace-db:5432/architrace \
   -e ARCHITRACE_DB_USERNAME=architrace \
   -e ARCHITRACE_DB_PASSWORD=architrace \
@@ -221,7 +227,12 @@ docker run -d --name architrace-control-plane --network architrace \
 ```
 
 `curl localhost:8085/actuator/health` answers `{"status":"UP"}` once the schema is in place;
-the UI is at <http://localhost:8085> and Swagger UI at <http://localhost:8085/swagger-ui>.
+the UI is at <http://localhost:8085> and Swagger UI at <http://localhost:8085/swagger-ui>. The
+examples publish ports on the loopback interface only: the control plane has no user accounts
+and the agent accepts traces from anyone, so put them behind your reverse proxy, authentication
+or firewall before publishing on other interfaces. Add `-p 127.0.0.1:9090:9090` when an agent
+runs on the host instead of the Docker network.
+
 Every property of the [configuration reference](https://architrace-intelligence.github.io/Architrace/reference/configuration/#control-plane)
 can be set as an environment variable in Spring's relaxed form, for example
 `ARCHITRACE_INGESTION_SNAPSHOTINTERVAL=30s`.
@@ -245,19 +256,26 @@ control-plane:
 
 ```bash
 docker run -d --name architrace-agent --network architrace \
-  -p 4319:4319 -p 9464:9464 \
+  -p 127.0.0.1:4319:4319 -p 127.0.0.1:9464:9464 \
   -v "$PWD/architrace-agent.yaml:/config/architrace-agent.yaml:ro" \
   ghcr.io/architrace-intelligence/architrace-agent:latest
 ```
 
 `docker logs architrace-agent` shows the registration with the control plane and
 `curl localhost:9464/health` answers once the receiver listens. Point the OpenTelemetry SDK or
-collector of that environment at the agent, OTLP over gRPC without TLS:
-`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4319` from the host, or
-`http://architrace-agent:4319` from a container on the same network. The scope appears on the
-Projects list after the first snapshot interval (one minute by default). The image entrypoint
-is the agent CLI with the default command `run --config /config/architrace-agent.yaml`, so
-`dry-run` validates a configuration without starting anything:
+collector of that environment at the agent. The agent speaks OTLP over gRPC only, and most SDKs
+default to HTTP/protobuf, so select the transport explicitly:
+
+```bash
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4319        # from the host
+OTEL_EXPORTER_OTLP_ENDPOINT=http://architrace-agent:4319 # from a container on the network
+```
+
+The scope appears on the Projects list after the first snapshot interval (one minute by
+default). The image entrypoint is the agent CLI with the default command
+`run --config /config/architrace-agent.yaml`, so `dry-run` validates a configuration without
+starting anything:
 
 ```bash
 docker run --rm -v "$PWD/architrace-agent.yaml:/config/architrace-agent.yaml:ro" \
