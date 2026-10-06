@@ -28,7 +28,7 @@
   [![TypeScript](https://img.shields.io/github/package-json/dependency-version/Architrace-Intelligence/Architrace/dev/typescript?filename=architrace-ui%2Fpackage.json&label=TypeScript&logo=typescript&color=3178C6)](./architrace-ui/package.json)
   [![Vite](https://img.shields.io/github/package-json/dependency-version/Architrace-Intelligence/Architrace/dev/vite?filename=architrace-ui%2Fpackage.json&label=Vite&logo=vite&color=646CFF)](./architrace-ui/package.json)
 
-  [Documentation](https://architrace-intelligence.github.io/Architrace/) | [Quick Start](#quick-start) | [Docker Demo](#docker-demo) | [Contributing](#contributing)
+  [Documentation](https://architrace-intelligence.github.io/Architrace/) | [Quick Start](#quick-start) | [Docker Demo](#docker-demo) | [Container images](#container-images) | [Contributing](#contributing)
 </div>
 
 ---
@@ -190,16 +190,84 @@ reviews every pull request. Details on the
 
 Every merge to `main` publishes `ghcr.io/architrace-intelligence/architrace-agent` and
 `ghcr.io/architrace-intelligence/architrace-control-plane` tagged `sha-<short>`; releases add
-`X.Y.Z` and `latest`. The images run as a non-root user on Eclipse Temurin 25 JRE.
+`X.Y.Z` and `latest` (the first release is `0.1.0`). The images are public, run as a non-root
+user on Eclipse Temurin 25 JRE and carry a health check. Use `latest` or pin a release:
 
 ```bash
-docker run --rm -p 8085:8085 -p 9090:9090 \
-  -e ARCHITRACE_DB_URL=jdbc:postgresql://db:5432/architrace \
-  ghcr.io/architrace-intelligence/architrace-control-plane:latest
+docker pull ghcr.io/architrace-intelligence/architrace-control-plane:0.1.0
+docker pull ghcr.io/architrace-intelligence/architrace-agent:0.1.0
+```
 
-docker run --rm -p 4317:4317 -v $PWD/architrace-agent.yaml:/config/architrace-agent.yaml \
+### Run the control plane
+
+The control plane needs PostgreSQL 15 or newer; Liquibase applies the schema on start-up.
+Port `8085` serves the UI, the Query API, Swagger UI and the actuator, port `9090` serves the
+agents over gRPC.
+
+```bash
+docker network create architrace
+
+docker run -d --name architrace-db --network architrace \
+  -e POSTGRES_DB=architrace -e POSTGRES_USER=architrace -e POSTGRES_PASSWORD=architrace \
+  -v architrace-db:/var/lib/postgresql/data \
+  postgres:17-alpine
+
+docker run -d --name architrace-control-plane --network architrace \
+  -p 8085:8085 -p 9090:9090 \
+  -e ARCHITRACE_DB_URL=jdbc:postgresql://architrace-db:5432/architrace \
+  -e ARCHITRACE_DB_USERNAME=architrace \
+  -e ARCHITRACE_DB_PASSWORD=architrace \
+  ghcr.io/architrace-intelligence/architrace-control-plane:latest
+```
+
+`curl localhost:8085/actuator/health` answers `{"status":"UP"}` once the schema is in place;
+the UI is at <http://localhost:8085> and Swagger UI at <http://localhost:8085/swagger-ui>.
+Every property of the [configuration reference](https://architrace-intelligence.github.io/Architrace/reference/configuration/#control-plane)
+can be set as an environment variable in Spring's relaxed form, for example
+`ARCHITRACE_INGESTION_SNAPSHOTINTERVAL=30s`.
+
+### Run an agent
+
+Run one agent per environment. The agent reads `/config/architrace-agent.yaml`, receives OTLP
+traces over gRPC on `4319` and serves `/metrics` and `/health` on `9464`. Only `environment`,
+`cluster`, `agent.name` and `control-plane.server` are required:
+
+```yaml
+# architrace-agent.yaml
+project: webshop
+environment: PROD
+cluster: eu-1
+agent:
+  name: eu-1-prod
+control-plane:
+  server: architrace-control-plane:9090
+```
+
+```bash
+docker run -d --name architrace-agent --network architrace \
+  -p 4319:4319 -p 9464:9464 \
+  -v "$PWD/architrace-agent.yaml:/config/architrace-agent.yaml:ro" \
   ghcr.io/architrace-intelligence/architrace-agent:latest
 ```
+
+`docker logs architrace-agent` shows the registration with the control plane and
+`curl localhost:9464/health` answers once the receiver listens. Point the OpenTelemetry SDK or
+collector of that environment at the agent, OTLP over gRPC without TLS:
+`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4319` from the host, or
+`http://architrace-agent:4319` from a container on the same network. The scope appears on the
+Projects list after the first snapshot interval (one minute by default). The image entrypoint
+is the agent CLI with the default command `run --config /config/architrace-agent.yaml`, so
+`dry-run` validates a configuration without starting anything:
+
+```bash
+docker run --rm -v "$PWD/architrace-agent.yaml:/config/architrace-agent.yaml:ro" \
+  ghcr.io/architrace-intelligence/architrace-agent:latest dry-run --config /config/architrace-agent.yaml
+```
+
+Every key is on the [configuration reference](https://architrace-intelligence.github.io/Architrace/reference/configuration/#agent);
+Kubernetes, one agent per environment and collector routing are in the
+[deployment guide](https://architrace-intelligence.github.io/Architrace/guides/deployment/).
+Stop everything with `docker rm -f architrace-agent architrace-control-plane architrace-db`.
 
 To build an image locally, produce a fresh jar first (`./gradlew clean assemble`), then
 `docker build -t architrace-agent architrace-agent` or the same for `architrace-control-plane`.
