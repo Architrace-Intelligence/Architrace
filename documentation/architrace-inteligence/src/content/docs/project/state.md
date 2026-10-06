@@ -22,9 +22,9 @@ Last updated: **2026-10-06**
   `main` pipeline is green end to end; both images are in GHCR.
 - **M0 is complete**, including the maintainer checklist on the
   [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: the `main`
-  ruleset is active, squash is the only merge method, CodeRabbit reviews every non-draft pull
-  request,
-  both GHCR packages are public and `v0.1.0` is released (the seed tag is `v0.0.0`).
+  ruleset is active, squash is the only merge method, CodeRabbit reviews every non-draft
+  pull request, both GHCR packages are public and `v0.1.0` is released (the seed tag is
+  `v0.0.0`).
 - **M1, M4 and M5 are done**, see the [M1](../features/m1-agent-pipeline/),
   [M4](../features/m4-service-map/) and [M5](../features/m5-drift/) pages. Lesson recorded on
   2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working
