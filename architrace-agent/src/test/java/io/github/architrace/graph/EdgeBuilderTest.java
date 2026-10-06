@@ -41,7 +41,7 @@ class EdgeBuilderTest {
         assertThat(sut.onSpan(client)).isEmpty();
         assertThat(sut.pendingSpans()).isEqualTo(1);
         assertThat(sut.onSpan(server))
-                .containsExactly(new EdgeObservation(new EdgeKey(CHECKOUT, ORDERS, EdgeKind.SYNC), 250, false));
+                .containsExactly(new EdgeObservation(new EdgeKey(CHECKOUT, ORDERS, EdgeKind.SYNC), 250_000, false));
         assertThat(sut.pendingSpans()).isZero();
     }
 
@@ -52,7 +52,7 @@ class EdgeBuilderTest {
 
         assertThat(sut.onSpan(server)).isEmpty();
         assertThat(sut.onSpan(client))
-                .containsExactly(new EdgeObservation(new EdgeKey(CHECKOUT, ORDERS, EdgeKind.SYNC), 250, false));
+                .containsExactly(new EdgeObservation(new EdgeKey(CHECKOUT, ORDERS, EdgeKind.SYNC), 250_000, false));
     }
 
     @Test
@@ -77,7 +77,7 @@ class EdgeBuilderTest {
         assertThat(sut.onSpan(client))
                 .containsExactly(new EdgeObservation(
                         new EdgeKey(ORDERS, new DatabaseNode("postgresql", Optional.of("orders")), EdgeKind.SYNC),
-                        250,
+                        250_000,
                         false));
         assertThat(sut.pendingSpans()).isZero();
     }
@@ -89,9 +89,9 @@ class EdgeBuilderTest {
         TopicNode topic = new TopicNode("kafka", "orders");
 
         assertThat(sut.onSpan(producer))
-                .containsExactly(new EdgeObservation(new EdgeKey(CHECKOUT, topic, EdgeKind.PUBLISH), 250, false));
+                .containsExactly(new EdgeObservation(new EdgeKey(CHECKOUT, topic, EdgeKind.PUBLISH), 250_000, false));
         assertThat(sut.onSpan(consumer))
-                .containsExactly(new EdgeObservation(new EdgeKey(topic, ORDERS, EdgeKind.CONSUME), 250, false));
+                .containsExactly(new EdgeObservation(new EdgeKey(topic, ORDERS, EdgeKind.CONSUME), 250_000, false));
     }
 
     @Test
@@ -177,7 +177,7 @@ class EdgeBuilderTest {
 
         assertThat(expiry.externalEdges())
                 .containsExactly(new EdgeObservation(
-                        new EdgeKey(CHECKOUT, new ExternalNode("orders.svc"), EdgeKind.SYNC), 250, false));
+                        new EdgeKey(CHECKOUT, new ExternalNode("orders.svc"), EdgeKind.SYNC), 250_000, false));
         assertThat(expiry.droppedSpans()).isEqualTo(2);
         assertThat(sut.pendingSpans()).isZero();
     }
@@ -197,7 +197,7 @@ class EdgeBuilderTest {
                 new Peer.Database("redis", Optional.empty()));
 
         assertThat(sut.onSpan(failed)).singleElement().satisfies(observation -> {
-            assertThat(observation.latencyMillis()).isEqualTo(40);
+            assertThat(observation.latencyMicros()).isEqualTo(40_000);
             assertThat(observation.error()).isTrue();
         });
     }

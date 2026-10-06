@@ -7,11 +7,13 @@ package io.github.architrace.graph;
 
 public final class EdgeMetrics {
 
+    private static final long MICROS_PER_MILLI = 1_000L;
+
     private final LatencyHistogram histogram = new LatencyHistogram();
     private long errors;
 
-    public void observe(long latencyMillis, boolean error) {
-        histogram.observe(latencyMillis);
+    public void observe(long latencyMicros, boolean error) {
+        histogram.observe(latencyMicros);
         if (error) {
             errors++;
         }
@@ -21,9 +23,13 @@ public final class EdgeMetrics {
         return new EdgeMetricsSummary(
                 histogram.total(),
                 errors,
-                histogram.percentileMillis(0.50),
-                histogram.percentileMillis(0.95),
-                histogram.percentileMillis(0.99),
-                histogram.maxMillis());
+                millis(histogram.percentileMicros(0.50)),
+                millis(histogram.percentileMicros(0.95)),
+                millis(histogram.percentileMicros(0.99)),
+                millis(histogram.maxMicros()));
+    }
+
+    private static long millis(long micros) {
+        return micros / MICROS_PER_MILLI;
     }
 }

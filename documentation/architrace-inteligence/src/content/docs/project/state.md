@@ -61,6 +61,16 @@ Last updated: **2026-10-06**
   default and groups them into one node `platform` behind the **Platform** chip
   (`platformView` in `map/model.ts`, `platform=on` in the URL; the drift map still shows them
   one by one). Design notes on the M4 and M6 pages.
+- B1 from the real-data round (ARCHI-77, #99): `topics.ignore` in the agent configuration
+  drops producer and consumer spans of Kafka Streams internal topics before the edge is
+  built (glob patterns, case folded; defaults for changelog, repartition and foreign-key join
+  topics). Design notes on the M1 page.
+- **B4 (sub-millisecond latency) is in flight**, four pull requests because the twelve-file
+  gate does not fit the stack in two. ARCHI-78 (open): the agent measures latency in
+  microseconds from `SpanRecord.latencyMicros()` through `EdgeObservation` into a
+  `LatencyHistogram` of twenty-seven base-two buckets from 1 µs to 2^26 µs; the bucket index
+  is the bit length of `latency - 1`; `EdgeMetrics.summary()` still truncates to whole
+  milliseconds for the unchanged contract. Design notes in the M1 follow-up.
 - **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
   published images (two environments, one collector routing by environment to one agent each,
   Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
@@ -138,6 +148,11 @@ new agent files are written in palantir format even though the module-wide forma
 stays off until the legacy files are rewritten (M1 PR 5); the agent coverage ratchet only
 moves up. Working assumption: `project` is an agent setting, not a telemetry attribute.
 
+Latency unit since ARCHI-78 (working assumption, to confirm): the agent, the protobuf
+contract and the control plane carry integer microseconds; the Query API keeps the `*Millis`
+field names and reports fractional milliseconds with microsecond precision, so the UI model
+and the field names stay and only the formatter changes.
+
 Working assumption since ARCHI-26: a **scope** is project × environment × cluster, reported by
 the agent at registration and stored on every snapshot. Pending: confirmation of the UI
 direction and the drift refinement proposed on the UI design page (compare deployments in
@@ -145,14 +160,24 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7, the real-data follow-ups B2 and B3 (#94 to #97), the first release
-`v0.1.0` and the checklist (#98) are done. Merge ARCHI-77 (B1, `topics.ignore`). Then continue,
-one pull request against `main` at a time, each with the next free ticket number:
+The MVP queue M0–M7, the real-data follow-ups B1 to B3 (#94 to #99), the first release
+`v0.1.0` and the checklist (#98) are done. B4 continues, one pull request against `main` at a
+time, each with the next free ticket number:
 
-1. B4 (sub-millisecond latency): the histogram, the protobuf contract and the agent first, then
-   the control plane, the Query API and the UI formatting; two pull requests. Then the
-   `build-logic` JVM 24 pin (Kotlin 2.4 targets 25). Dependabot Gradle bumps need a maintainer
-   pull request with regenerated lockfiles, as #74.
+1. ARCHI-78 (open): the agent measures and aggregates latency in microseconds; the summary
+   still truncates to whole milliseconds. Merge it, then:
+2. ARCHI-79: the protobuf contract carries `p50_micros` to `max_micros` on new field numbers
+   with the `*_millis` numbers reserved; `EdgeMetricsSummary` moves to microseconds; the
+   control plane `SnapshotMapper` truncates to milliseconds for the unchanged storage.
+3. ARCHI-80: the control plane domain `EdgeMetrics`, the merger and `snapshot_edge` keep
+   microseconds (a Liquibase changeset renames the columns to `latency_*_us` and multiplies
+   the stored values by one thousand); `ApiModels` truncates for the unchanged Query API.
+4. ARCHI-81: the Query API fields `p50Millis` to `maxMillis` become `number` (fractional
+   milliseconds), `formatMillis` in the UI shows `0.35 ms`; Requirements §9 and Progress
+   close B4.
+
+Then the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25). Dependabot Gradle bumps need a
+maintainer pull request with regenerated lockfiles, as #74.
 
 ## How to resume
 

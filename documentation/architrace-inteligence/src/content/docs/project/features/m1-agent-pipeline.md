@@ -70,7 +70,7 @@ stable ids ([ADR 0007](../../adr/0007-topology-model/)). Edge building by kind a
 | INTERNAL | ignored | |
 
 Edges carry `EdgeMetrics`: calls, errors, latency histogram with logarithmic buckets from
-1 ms to 60 s, `p50`, `p95`, `p99` estimates, max. Metrics are per window and reset on
+1 µs to 67 s, `p50`, `p95`, `p99` estimates, max. Metrics are per window and reset on
 snapshot.
 
 ### Window, snapshot, publishing
@@ -162,7 +162,7 @@ What landed and the decisions behind it:
   sealed `Peer` (`Http`, `Database`, `Messaging`, `None`). Components that may be absent
   (`parentSpanId`, namespace, instance, port, destination) are `Optional` instead of `null`, so
   pattern matching and record deconstruction never meet a null. Compact constructors reject
-  missing required components. `latencyMillis()` is derived from the OTLP nanos and never
+  missing required components. `latencyMicros()` is derived from the OTLP nanos and never
   negative.
 - **Attribute mapping**: `MappedField` is an enum that carries the config key and the default
   key list of every field; `AttributeMapping` is an immutable record over an `EnumMap`, so the
@@ -225,9 +225,10 @@ What landed and the decisions behind it:
   service, a root server, an internal span and a messaging span without a destination produce
   nothing. Expiry turns HTTP clients into `service → external` edges and drops the rest, with a
   count for the metrics of PR 4.
-- **Latency histogram**: seventeen base-two buckets from 1 ms to 65 536 ms plus overflow; a
-  percentile is the upper bound of the bucket where the cumulative count crosses the rank,
-  capped by the observed maximum, so a single 10 ms call reports 10 ms and not 16 ms.
+- **Latency histogram**: twenty-seven base-two buckets from 1 µs to 2^26 µs (about 67 s)
+  plus overflow (ARCHI-78); a percentile is the upper bound of the bucket where the
+  cumulative count crosses the rank, capped by the observed maximum, so a single 10 ms call
+  reports 10 ms and not 16.4 ms.
 - **Window**: `GraphWindow` accumulates per-node versions and placements and per-edge metrics
   in insertion order; `freeze(end)` copies them into the immutable snapshot. `GraphBuilder`
   owns the current window, rejects spans of another environment (one snapshot belongs to one
@@ -372,6 +373,27 @@ streams of a real landscape.
   ignores nothing, so the graph, worker and metrics tests stay as they are; the runtime passes
   the configured filter.
 
+### Follow-up: sub-millisecond latency (ARCHI-78 to ARCHI-81)
+
+B4 from the real-data round: database calls of a few hundred microseconds showed `p50 = 0 ms`
+because every latency was truncated to whole milliseconds at the span.
+
+- **Microseconds from the span to the histogram.** `SpanRecord.latencyMicros()` divides the
+  OTLP nanos by one thousand instead of one million; `EdgeObservation`, `GraphWindow` and
+  `EdgeMetrics` carry that value unchanged, so nothing below the histogram rounds.
+- **Same histogram, finer scale.** The bucket bounds stay powers of two, now from 1 µs to
+  2^26 µs (about 67 s, the reach of the former 1 ms to 65 536 ms) in twenty-seven buckets
+  plus overflow, so the relative error of a percentile estimate stays at most a factor of two
+  at every scale. The bucket index is the bit length of `latency - 1`
+  (`Long.SIZE - Long.numberOfLeadingZeros`), which is `ceil(log2(latency))` in constant time
+  instead of a scan over the bounds for every observed span.
+- **The contract catches up in steps.** The truncation to whole milliseconds moves outwards
+  one pull request at a time: it sits in `EdgeMetrics.summary()` after ARCHI-78, in the
+  control plane `SnapshotMapper` once the protobuf contract carries `*_micros` fields
+  (ARCHI-79), in `ApiModels` once the control plane stores microseconds (ARCHI-80), and
+  disappears when the Query API reports fractional milliseconds (ARCHI-81). Each pull request
+  leaves `main` consistent.
+
 ## Acceptance criteria review
 
 - Standard OTel instrumentation yields service, database, topic and external nodes with sync,
@@ -389,5 +411,6 @@ streams of a real landscape.
 - Topic naming across brokers (Kafka topic vs RabbitMQ exchange/queue) is normalised by
   `messaging.system` + destination; refinements are post-MVP.
 - From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
-  the latency histogram should keep sub-millisecond resolution (B4). B1, the Kafka Streams
-  internal topics, is closed by `topics.ignore` (ARCHI-77, see the follow-up above).
+  B1, the Kafka Streams internal topics, is closed by `topics.ignore` (ARCHI-77); B4, the
+  sub-millisecond latency, is measured in microseconds since ARCHI-78 and reaches the
+  contract, the control plane and the Query API in the follow-ups listed above.

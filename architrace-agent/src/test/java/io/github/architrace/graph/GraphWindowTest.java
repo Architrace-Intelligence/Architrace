@@ -52,8 +52,8 @@ class GraphWindowTest {
     @Test
     void edgeObservationsCreateTheirNodesAndAggregateMetrics() {
         EdgeKey key = new EdgeKey(CHECKOUT, ORDERS_DB, EdgeKind.SYNC);
-        sut.observe(new EdgeObservation(key, 10, false));
-        sut.observe(new EdgeObservation(key, 30, true));
+        sut.observe(new EdgeObservation(key, 10_000, false));
+        sut.observe(new EdgeObservation(key, 30_000, true));
 
         GraphSnapshot snapshot = sut.freeze(END);
 

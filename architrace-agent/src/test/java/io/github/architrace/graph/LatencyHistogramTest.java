@@ -17,8 +17,8 @@ class LatencyHistogramTest {
         LatencyHistogram histogram = new LatencyHistogram();
 
         assertThat(histogram.total()).isZero();
-        assertThat(histogram.percentileMillis(0.5)).isZero();
-        assertThat(histogram.maxMillis()).isZero();
+        assertThat(histogram.percentileMicros(0.5)).isZero();
+        assertThat(histogram.maxMicros()).isZero();
     }
 
     @Test
@@ -27,10 +27,21 @@ class LatencyHistogramTest {
         LongStream.rangeClosed(1, 100).forEach(histogram::observe);
 
         assertThat(histogram.total()).isEqualTo(100);
-        assertThat(histogram.percentileMillis(0.50)).isEqualTo(64);
-        assertThat(histogram.percentileMillis(0.95)).isEqualTo(100);
-        assertThat(histogram.percentileMillis(0.99)).isEqualTo(100);
-        assertThat(histogram.maxMillis()).isEqualTo(100);
+        assertThat(histogram.percentileMicros(0.50)).isEqualTo(64);
+        assertThat(histogram.percentileMicros(0.95)).isEqualTo(100);
+        assertThat(histogram.percentileMicros(0.99)).isEqualTo(100);
+        assertThat(histogram.maxMicros()).isEqualTo(100);
+    }
+
+    @Test
+    void subMillisecondLatenciesKeepTheirResolution() {
+        LatencyHistogram histogram = new LatencyHistogram();
+        LongStream.generate(() -> 350).limit(9).forEach(histogram::observe);
+        histogram.observe(900);
+
+        assertThat(histogram.percentileMicros(0.50)).isEqualTo(512);
+        assertThat(histogram.percentileMicros(0.99)).isEqualTo(900);
+        assertThat(histogram.maxMicros()).isEqualTo(900);
     }
 
     @Test
@@ -38,27 +49,35 @@ class LatencyHistogramTest {
         LatencyHistogram histogram = new LatencyHistogram();
         histogram.observe(10);
 
-        assertThat(histogram.percentileMillis(0.5)).isEqualTo(10);
-        assertThat(histogram.percentileMillis(0.99)).isEqualTo(10);
+        assertThat(histogram.percentileMicros(0.5)).isEqualTo(10);
+        assertThat(histogram.percentileMicros(0.99)).isEqualTo(10);
     }
 
     @Test
     void latenciesBeyondTheLastBucketReportTheMaximum() {
         LatencyHistogram histogram = new LatencyHistogram();
         histogram.observe(1);
-        histogram.observe(250_000);
+        histogram.observe(250_000_000);
 
-        assertThat(histogram.percentileMillis(0.5)).isEqualTo(1);
-        assertThat(histogram.percentileMillis(0.99)).isEqualTo(250_000);
+        assertThat(histogram.percentileMicros(0.5)).isEqualTo(1);
+        assertThat(histogram.percentileMicros(0.99)).isEqualTo(250_000_000);
     }
 
     @Test
-    void edgeMetricsSummariseCallsErrorsAndLatencies() {
+    void edgeMetricsSummariseCallsErrorsAndLatenciesInWholeMillis() {
         EdgeMetrics metrics = new EdgeMetrics();
-        metrics.observe(5, false);
-        metrics.observe(40, true);
-        metrics.observe(900, false);
+        metrics.observe(5_000, false);
+        metrics.observe(40_000, true);
+        metrics.observe(900_000, false);
 
-        assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(3, 1, 64, 900, 900, 900));
+        assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(3, 1, 65, 900, 900, 900));
+    }
+
+    @Test
+    void edgeMetricsTruncateSubMillisecondLatenciesToZero() {
+        EdgeMetrics metrics = new EdgeMetrics();
+        metrics.observe(350, false);
+
+        assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(1, 0, 0, 0, 0, 0));
     }
 }

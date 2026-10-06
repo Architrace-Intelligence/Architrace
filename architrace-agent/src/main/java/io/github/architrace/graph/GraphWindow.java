@@ -48,7 +48,7 @@ public final class GraphWindow {
         state(observation.edge().source());
         state(observation.edge().target());
         edges.computeIfAbsent(observation.edge(), _ -> new EdgeMetrics())
-                .observe(observation.latencyMillis(), observation.error());
+                .observe(observation.latencyMicros(), observation.error());
     }
 
     public GraphSnapshot freeze(Instant end) {

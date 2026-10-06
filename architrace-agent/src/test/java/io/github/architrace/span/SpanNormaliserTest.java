@@ -47,7 +47,7 @@ class SpanNormaliserTest {
             assertThat(normalised.kind()).isEqualTo(SpanKind.SERVER);
             assertThat(normalised.startEpochNanos()).isEqualTo(5_000_000_000L);
             assertThat(normalised.endEpochNanos()).isEqualTo(5_120_000_000L);
-            assertThat(normalised.latencyMillis()).isEqualTo(120L);
+            assertThat(normalised.latencyMicros()).isEqualTo(120_000L);
             assertThat(normalised.error()).isTrue();
             assertThat(normalised.service()).isEqualTo(new ServiceIdentity("PROD", "shop", "checkout", "1.4.2"));
             assertThat(normalised.deployment())
@@ -213,7 +213,7 @@ class SpanNormaliserTest {
 
         assertThat(records)
                 .singleElement()
-                .extracting(SpanRecord::latencyMillis)
+                .extracting(SpanRecord::latencyMicros)
                 .isEqualTo(0L);
     }
 }
