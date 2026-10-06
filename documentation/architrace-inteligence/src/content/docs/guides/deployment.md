@@ -80,11 +80,15 @@ through the usual environment variables:
 ```text
 OTEL_SERVICE_NAME=orders
 OTEL_RESOURCE_ATTRIBUTES=service.namespace=sales,service.version=2.8.1,deployment.environment.name=PROD,k8s.cluster.name=eu-1,k8s.namespace.name=sales
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
 OTEL_TRACES_EXPORTER=otlp
 OTEL_METRICS_EXPORTER=none
 OTEL_LOGS_EXPORTER=none
 ```
+
+`OTEL_EXPORTER_OTLP_PROTOCOL=grpc` matters: the SDKs default to HTTP/protobuf, which a gRPC
+port (`4317` on a collector, `4319` on the agent) does not accept.
 
 The starter covers Spring MVC and WebFlux servers, `RestTemplate`, `WebClient` and
 `RestClient` calls, JDBC and R2DBC, and Spring Kafka listeners and templates. That is enough
