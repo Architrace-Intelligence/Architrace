@@ -7,6 +7,7 @@ package io.github.architrace.graph;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.architrace.core.config.AgentConfig;
 import io.github.architrace.graph.GraphNode.DatabaseNode;
 import io.github.architrace.graph.GraphNode.ExternalNode;
 import io.github.architrace.graph.GraphNode.ServiceNode;
@@ -91,6 +92,66 @@ class EdgeBuilderTest {
                 .containsExactly(new EdgeObservation(new EdgeKey(CHECKOUT, topic, EdgeKind.PUBLISH), 250, false));
         assertThat(sut.onSpan(consumer))
                 .containsExactly(new EdgeObservation(new EdgeKey(topic, ORDERS, EdgeKind.CONSUME), 250, false));
+    }
+
+    @Test
+    void topicsMatchingAnIgnorePatternYieldNeitherNodeNorEdge() {
+        EdgeBuilder filtering = new EdgeBuilder(
+                new PendingSpanIndex(Duration.ofSeconds(120)),
+                clock,
+                new TopicFilter(List.of("*-changelog", "orders.*", "audit", "Ä*", "a*b*c")));
+
+        assertThat(filtering.onSpan(producerTo("shop-orders-store-changelog"))).isEmpty();
+        assertThat(filtering.onSpan(consumerFrom("shop-orders-store-changelog")))
+                .isEmpty();
+        assertThat(filtering.onSpan(producerTo("orders.events"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("audit"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("ordersXevents"))).hasSize(1);
+        assertThat(filtering.onSpan(producerTo("audit-log"))).hasSize(1);
+        assertThat(filtering.onSpan(producerTo("orders"))).hasSize(1);
+        assertThat(filtering.onSpan(producerTo("ä-events"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("axxbxxc"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("axxbxx"))).hasSize(1);
+        assertThat(filtering.onSpan(producerTo("a" + "x".repeat(10_000) + "b"))).hasSize(1);
+        assertThat(filtering.pendingSpans()).isZero();
+    }
+
+    @Test
+    void theDefaultPatternsHideTheKafkaStreamsInternalTopicsOnly() {
+        EdgeBuilder filtering = new EdgeBuilder(
+                new PendingSpanIndex(Duration.ofSeconds(120)),
+                clock,
+                new TopicFilter(AgentConfig.DEFAULT_IGNORED_TOPICS));
+
+        assertThat(filtering.onSpan(producerTo("shop-orders-store-changelog"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("shop-KSTREAM-AGGREGATE-STATE-STORE-0000000003-repartition")))
+                .isEmpty();
+        assertThat(filtering.onSpan(producerTo("shop-KTABLE-SUBSCRIPTION-REGISTRATION-0000000011-topic")))
+                .isEmpty();
+        assertThat(filtering.onSpan(producerTo("shop-join-subscription-response-topic")))
+                .isEmpty();
+        assertThat(filtering.onSpan(producerTo("shop-store-CHANGELOG"))).isEmpty();
+        assertThat(filtering.onSpan(producerTo("order-events"))).hasSize(1);
+        assertThat(filtering.onSpan(producerTo("changelog-feed"))).hasSize(1);
+        assertThat(sut.onSpan(producerTo("shop-orders-store-changelog"))).hasSize(1);
+    }
+
+    private static SpanRecord producerTo(String topic) {
+        return TestSpans.withPeer(
+                SpanKind.PRODUCER,
+                "t",
+                "p-" + topic,
+                "checkout",
+                new Peer.Messaging("kafka", Optional.of(topic), Optional.of("publish")));
+    }
+
+    private static SpanRecord consumerFrom(String topic) {
+        return TestSpans.withPeer(
+                SpanKind.CONSUMER,
+                "t",
+                "k-" + topic,
+                "orders",
+                new Peer.Messaging("kafka", Optional.of(topic), Optional.of("receive")));
     }
 
     @Test

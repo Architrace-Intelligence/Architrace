@@ -66,6 +66,7 @@ stable ids ([ADR 0007](../../adr/0007-topology-model/)). Edge building by kind a
 | CLIENT with `Http` peer | held until a SERVER child arrives or the TTL expires | matched: `sync` to the service; expired: `service → external` |
 | PRODUCER with `Messaging` peer | immediate | `service → topic`, kind `publish` |
 | CONSUMER with `Messaging` peer | immediate | `topic → service`, kind `consume` |
+| PRODUCER or CONSUMER on a topic matching `topics.ignore` | dropped before the edge is built (ARCHI-77) | none: Kafka Streams changelog, repartition and foreign-key join topics are the implementation of one service, not an interface between services |
 | INTERNAL | ignored | |
 
 Edges carry `EdgeMetrics`: calls, errors, latency histogram with logarithmic buckets from
@@ -118,6 +119,8 @@ buffers:
   pending-ttl-seconds: 120
 metrics:
   port: 9464
+topics:
+  ignore: ["*-changelog", "*-repartition", "*-subscription-registration-*topic", "*-subscription-response-*topic"]
 attribute-mapping:
   domain: [service.namespace, team]
 ```
@@ -346,6 +349,29 @@ What landed and the decisions behind it:
   `dry-run`, A9 by the rewritten tests, A10 by Spotless, A11 by the pending index with TTL,
   A12 by the counted queue rejection.
 
+### Follow-up: internal topics (ARCHI-77)
+
+B1 from the real-data round: Kafka Streams internal topics made eleven of the twenty-one data
+streams of a real landscape.
+
+- **Filter where the topic is born.** `EdgeBuilder.topic` turns a messaging destination into
+  a `TopicNode`; the `TopicFilter` sits in that one place, so a matching producer or consumer
+  span yields neither node nor edge, while `GraphBuilder` still records the service and
+  everything else in the pipeline stays untouched. Spans are still counted as received.
+- **Globs, not regular expressions.** `topics.ignore` takes patterns where `*` matches any
+  run of characters and everything else is literal; `TopicFilter` matches them with the
+  classic two-pointer wildcard walk (linear in pattern times topic length, no regular
+  expression and so no backtracking blow-up on a hostile destination) after folding both
+  sides to lower case with `Locale.ROOT`, so a `.` in a topic name never acts as a wildcard
+  and the defaults match the upper-case names Kafka Streams generates.
+- **Defaults in the configuration record.** `AgentConfig.DEFAULT_IGNORED_TOPICS` lists the
+  changelog, repartition and foreign-key join subscription topics; the document applies them
+  when the key is absent, `[]` switches the filter off, and a blank pattern is a validation
+  problem reported with the others.
+- **Constructor overload for the tests.** `EdgeBuilder(pending, clock)` keeps a filter that
+  ignores nothing, so the graph, worker and metrics tests stay as they are; the runtime passes
+  the configured filter.
+
 ## Acceptance criteria review
 
 - Standard OTel instrumentation yields service, database, topic and external nodes with sync,
@@ -363,5 +389,5 @@ What landed and the decisions behind it:
 - Topic naming across brokers (Kafka topic vs RabbitMQ exchange/queue) is normalised by
   `messaging.system` + destination; refinements are post-MVP.
 - From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
-  Kafka Streams internal topics should be folded or hidden by a configurable pattern list
-  (B1), and the latency histogram should keep sub-millisecond resolution (B4).
+  the latency histogram should keep sub-millisecond resolution (B4). B1, the Kafka Streams
+  internal topics, is closed by `topics.ignore` (ARCHI-77, see the follow-up above).

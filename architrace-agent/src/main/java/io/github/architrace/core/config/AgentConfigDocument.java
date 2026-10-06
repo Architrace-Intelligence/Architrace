@@ -12,6 +12,7 @@ import io.github.architrace.core.config.AgentConfig.ControlPlaneSettings;
 import io.github.architrace.core.config.AgentConfig.MetricsSettings;
 import io.github.architrace.core.config.AgentConfig.OtlpSettings;
 import io.github.architrace.core.config.AgentConfig.SnapshotSettings;
+import io.github.architrace.core.config.AgentConfig.TopicSettings;
 import io.github.architrace.grpc.GrpcAddressParser;
 import io.github.architrace.span.AttributeMapping;
 import io.github.architrace.span.MappedField;
@@ -36,6 +37,7 @@ record AgentConfigDocument(
         SnapshotSection snapshot,
         BuffersSection buffers,
         MetricsSection metrics,
+        TopicsSection topics,
         @JsonProperty("attribute-mapping") Map<String, List<String>> attributeMapping) {
 
     private static final int MAX_PORT = 65_535;
@@ -57,6 +59,8 @@ record AgentConfigDocument(
 
     record MetricsSection(Integer port) {}
 
+    record TopicsSection(List<String> ignore) {}
+
     static AgentConfigDocument of(AgentConfig config) {
         return new AgentConfigDocument(
                 config.project(),
@@ -74,6 +78,7 @@ record AgentConfigDocument(
                         config.buffers().ringSize(),
                         config.buffers().pendingTtl().toSeconds()),
                 new MetricsSection(config.metrics().port()),
+                new TopicsSection(config.topics().ignore()),
                 config.attributeMapping().byConfigKey());
     }
 
@@ -92,7 +97,8 @@ record AgentConfigDocument(
                 positive(section(snapshot, SnapshotSection::queueSize), "snapshot.queue-size"),
                 positive(section(buffers, BuffersSection::ringSize), "buffers.ring-size"),
                 positive(section(buffers, BuffersSection::pendingTtlSeconds), "buffers.pending-ttl-seconds"),
-                port(section(metrics, MetricsSection::port), "metrics.port"));
+                port(section(metrics, MetricsSection::port), "metrics.port"),
+                ignoredTopicsProblem());
         return Stream.concat(checks, mappingProblems())
                 .flatMap(Optional::stream)
                 .toList();
@@ -117,7 +123,15 @@ record AgentConfigDocument(
                         seconds(section(buffers, BuffersSection::pendingTtlSeconds), AgentConfig.DEFAULT_PENDING_TTL)),
                 new MetricsSettings(
                         orDefault(section(metrics, MetricsSection::port), AgentConfig.DEFAULT_METRICS_PORT)),
+                new TopicSettings(
+                        orDefault(section(topics, TopicsSection::ignore), AgentConfig.DEFAULT_IGNORED_TOPICS)),
                 AttributeMapping.defaults().with(mappingOverrides()));
+    }
+
+    private Optional<String> ignoredTopicsProblem() {
+        List<String> patterns = section(topics, TopicsSection::ignore);
+        boolean blank = patterns != null && patterns.stream().anyMatch(AgentConfigDocument::isBlank);
+        return invalidIf(blank, "topics.ignore must not contain blank patterns");
     }
 
     private Stream<Optional<String>> mappingProblems() {

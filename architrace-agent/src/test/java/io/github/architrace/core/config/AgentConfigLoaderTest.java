@@ -40,6 +40,8 @@ class AgentConfigLoaderTest {
               pending-ttl-seconds: 45
             metrics:
               port: 9999
+            topics:
+              ignore: ["*-changelog", "internal.*"]
             attribute-mapping:
               domain: [service.namespace, team]
             """;
@@ -72,6 +74,7 @@ class AgentConfigLoaderTest {
         assertThat(config.snapshot()).isEqualTo(new AgentConfig.SnapshotSettings(Duration.ofSeconds(30), 128));
         assertThat(config.buffers()).isEqualTo(new AgentConfig.BufferSettings(1024, Duration.ofSeconds(45)));
         assertThat(config.metrics()).isEqualTo(new AgentConfig.MetricsSettings(9999));
+        assertThat(config.topics()).isEqualTo(new AgentConfig.TopicSettings(List.of("*-changelog", "internal.*")));
         assertThat(config.attributeMapping().keys(MappedField.DOMAIN)).containsExactly("service.namespace", "team");
         assertThat(config.attributeMapping().keys(MappedField.SERVICE)).isEqualTo(MappedField.SERVICE.defaultKeys());
     }
@@ -90,6 +93,7 @@ class AgentConfigLoaderTest {
                 .isEqualTo(
                         new AgentConfig.BufferSettings(AgentConfig.DEFAULT_RING_SIZE, AgentConfig.DEFAULT_PENDING_TTL));
         assertThat(config.metrics().port()).isEqualTo(AgentConfig.DEFAULT_METRICS_PORT);
+        assertThat(config.topics().ignore()).isEqualTo(AgentConfig.DEFAULT_IGNORED_TOPICS);
         assertThat(config.attributeMapping()).isEqualTo(AttributeMapping.defaults());
     }
 
@@ -128,6 +132,8 @@ class AgentConfigLoaderTest {
                   pending-ttl-seconds: 0
                 metrics:
                   port: 0
+                topics:
+                  ignore: ["*-changelog", " "]
                 attribute-mapping:
                   domain: []
                   colour: [a]
@@ -146,6 +152,7 @@ class AgentConfigLoaderTest {
                         "Invalid config field: buffers.ring-size must be > 0",
                         "Invalid config field: buffers.pending-ttl-seconds must be > 0",
                         "Invalid config field: metrics.port must be between 1 and 65535",
+                        "Invalid config field: topics.ignore must not contain blank patterns",
                         "Invalid config field: attribute-mapping.domain must list at least one attribute key",
                         "Unknown attribute-mapping field: colour (known fields: " + MappedField.configKeys() + ")");
     }
@@ -233,6 +240,7 @@ class AgentConfigLoaderTest {
 
         assertThat(rendered)
                 .startsWith("project: webshop\n")
+                .contains("topics:\n")
                 .contains("attribute-mapping:\n")
                 .doesNotContain("---");
         assertThat(reloaded).isEqualTo(config);

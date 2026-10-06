@@ -22,10 +22,16 @@ public final class EdgeBuilder {
 
     private final PendingSpanIndex pending;
     private final InstantSource clock;
+    private final TopicFilter topics;
 
     public EdgeBuilder(PendingSpanIndex pending, InstantSource clock) {
+        this(pending, clock, TopicFilter.none());
+    }
+
+    public EdgeBuilder(PendingSpanIndex pending, InstantSource clock, TopicFilter topics) {
         this.pending = Objects.requireNonNull(pending, "pending");
         this.clock = Objects.requireNonNull(clock, "clock");
+        this.topics = Objects.requireNonNull(topics, "topics");
     }
 
     public List<EdgeObservation> onSpan(SpanRecord span) {
@@ -103,9 +109,9 @@ public final class EdgeBuilder {
                 : Optional.empty();
     }
 
-    private static Optional<TopicNode> topic(SpanRecord span) {
+    private Optional<TopicNode> topic(SpanRecord span) {
         return span.peer() instanceof Peer.Messaging(String system, Optional<String> destination, Optional<String> _)
-                ? destination.map(name -> new TopicNode(system, name))
+                ? destination.filter(name -> !topics.ignores(name)).map(name -> new TopicNode(system, name))
                 : Optional.empty();
     }
 

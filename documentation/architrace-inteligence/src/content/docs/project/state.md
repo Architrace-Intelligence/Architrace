@@ -145,13 +145,14 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7, the real-data follow-ups B2 and B3 (#94 to #97) and the first release
-`v0.1.0` are done. Merge ARCHI-76 (this documentation update). Then continue, one pull request
-against `main` at a time, each with the next free ticket number:
+The MVP queue M0–M7, the real-data follow-ups B2 and B3 (#94 to #97), the first release
+`v0.1.0` and the checklist (#98) are done. Merge ARCHI-77 (B1, `topics.ignore`). Then continue,
+one pull request against `main` at a time, each with the next free ticket number:
 
-1. Agent follow-ups B1 (fold Kafka Streams internal topics, ARCHI-77 next) and B4
-   (sub-millisecond latency) as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
-   Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.
+1. B4 (sub-millisecond latency): the histogram, the protobuf contract and the agent first, then
+   the control plane, the Query API and the UI formatting; two pull requests. Then the
+   `build-logic` JVM 24 pin (Kotlin 2.4 targets 25). Dependabot Gradle bumps need a maintainer
+   pull request with regenerated lockfiles, as #74.
 
 ## How to resume
 

@@ -56,6 +56,7 @@ public final class TestDataProvider {
                 new AgentConfig.SnapshotSettings(snapshotInterval, 64),
                 new AgentConfig.BufferSettings(16, Duration.ofSeconds(120)),
                 new AgentConfig.MetricsSettings(9464),
+                new AgentConfig.TopicSettings(AgentConfig.DEFAULT_IGNORED_TOPICS),
                 AttributeMapping.defaults());
     }
 
