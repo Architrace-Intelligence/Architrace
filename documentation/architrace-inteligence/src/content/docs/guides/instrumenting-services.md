@@ -73,10 +73,13 @@ OTEL_TRACES_SAMPLER=parentbased_always_on
   byte-identical: metric families and sample names do not change when tracing is switched on,
   with the agent as with the starter.
 - Sampling: keep a **parent-based** sampler. Architrace pairs the client span of a call with
-  the server span of the same trace, and parent-based sampling keeps a trace whole, so every
-  edge still appears when you sample. `OTEL_TRACES_SAMPLER=parentbased_traceidratio` with
-  `OTEL_TRACES_SAMPLER_ARG=0.1` keeps one trace in ten; the latency percentiles then describe
-  the sampled calls, the call counts count sampled calls.
+  the server span of the same trace, and parent-based sampling keeps a selected trace whole,
+  so every edge of that trace appears. A ratio drops whole traces, though: a dependency that
+  only occurs in dropped traces (a nightly job, a rare error path) never reaches the map, the
+  latency percentiles describe the sampled calls and the call counts count sampled calls. Run
+  the first rollout with `parentbased_always_on` until the map is complete, then lower the
+  ratio where the volume demands it (`OTEL_TRACES_SAMPLER=parentbased_traceidratio`,
+  `OTEL_TRACES_SAMPLER_ARG=0.1` keeps one trace in ten).
 - The Java agent instruments everything it finds; switch off what you do not need with
   `OTEL_INSTRUMENTATION_<NAME>_ENABLED=false` (for example `OTEL_INSTRUMENTATION_JDBC_DATASOURCE_ENABLED=false`).
 

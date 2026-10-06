@@ -88,7 +88,8 @@ Stop it with `docker compose down -v`.
 
 ## Install in production
 
-Three things: a PostgreSQL database, one control plane and one agent per environment. The
+Three things: a PostgreSQL database, one control plane and one agent per environment (one
+per project, environment and cluster, to be exact). The
 [installation guide](https://architrace-intelligence.github.io/Architrace/guides/deployment/)
 walks through it step by step with Docker and Kubernetes examples, sizing, security and
 upgrades. In short:

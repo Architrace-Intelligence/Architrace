@@ -4,7 +4,8 @@ description: Step by step from an empty cluster to a filled service map - Postgr
 ---
 
 Architrace in production is three things: a **PostgreSQL** database, one **control plane**
-and **one agent per environment**. Your services keep their code; they send traces to the
+and **one agent per scope** (a project in one environment on one cluster; one per environment
+for most teams). Your services keep their code; they send traces to the
 OpenTelemetry Collector you probably already run, and the collector forwards them to the agent
 of that environment. This page walks through the installation in order; each step ends with a
 check you can run before moving on. Plan about an hour for the first environment.
@@ -92,10 +93,15 @@ docker run -d --name architrace-control-plane --network architrace \
   ghcr.io/architrace-intelligence/architrace-control-plane:0.6.0
 ```
 
-**Kubernetes:** a Secret for the database, a Deployment with one replica and a Service that
-exposes both ports inside the cluster.
+**Kubernetes:** a namespace, a Secret for the database, a Deployment with one replica and a
+Service that exposes both ports inside the cluster.
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: architrace
+---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -178,12 +184,14 @@ only the agents need it.
 Liquibase has created the schema (the first start takes a few seconds longer); the UI opens on
 the same port and shows an empty Projects list.
 
-## Step 3: Run one agent per environment
+## Step 3: Run one agent per scope
 
-An agent registers with a **scope**: `project` × `environment` × `cluster`. It accepts the
-traces of that environment and drops spans whose `deployment.environment.name` says otherwise,
-so one agent per environment keeps the scopes clean; run one per cluster as well when the
-clusters are separate scopes for you. An agent is stateless apart from the current window; if it
+An agent registers with exactly one **scope**: `project` × `environment` × `cluster`, the
+three values in its file. It accepts the traces of that environment and drops spans whose
+`deployment.environment.name` says otherwise. So run one agent per scope you want to see on
+the Projects list: for one project that is one agent per environment, and one more per cluster
+when the clusters are separate scopes for you; two projects that share an environment need two
+agents, each with its own `project`. An agent is stateless apart from the current window; if it
 restarts, the next snapshot is complete again a minute later.
 
 The agent reads one YAML file, mounted at `/config/architrace-agent.yaml`. Four keys are
@@ -320,10 +328,9 @@ under its scope.
 
 ## Step 4: Route traces to the agent
 
-Point the collector of the environment at the agent. The agent speaks **OTLP over gRPC only**,
-without TLS, so the exporter needs `tls.insecure: true` and the collector should sit in the
-same network as the agent (a service mesh or an Ingress with TLS termination in front of the
-agent works too).
+Point the collector of the environment at the agent. The agent speaks **OTLP over gRPC only**
+and terminates no TLS itself, so for delivery inside one network the exporter sends plaintext
+with `tls.insecure: true`:
 
 ```yaml
 exporters:
@@ -348,6 +355,19 @@ service:
       receivers: [otlp]
       processors: [resource/scope]
       exporters: [otlp/architrace]
+```
+
+When the collector and the agent are in different networks, put a TLS-terminating proxy
+(an Ingress with gRPC support, or a service mesh sidecar) in front of the agent and point the
+exporter at the proxy with TLS on; `insecure: true` would send plaintext to a TLS listener
+and never connect:
+
+```yaml
+exporters:
+  otlp/architrace:
+    endpoint: architrace-prod.example.com:443
+    tls:
+      ca_file: /etc/ssl/certs/ca-certificates.crt
 ```
 
 The `resource/scope` processor is the best practice for the two attributes the agent keys on:
@@ -425,7 +445,7 @@ counters above.
 
 1. Database created, user owns it, reachable from the control plane.
 2. Control plane up: `/actuator/health` is `UP`, the UI opens behind authentication.
-3. One agent per environment with its file mounted: `/health` says `CONNECTED`.
+3. One agent per scope with its file mounted: `/health` says `CONNECTED`.
 4. The collector of each environment exports OTLP/gRPC to its agent and stamps the environment
    and the cluster.
 5. Services instrumented; `spans_received` grows, `spans_foreign` stays at zero.
