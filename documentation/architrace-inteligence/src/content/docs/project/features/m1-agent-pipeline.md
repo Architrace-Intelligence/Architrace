@@ -387,10 +387,12 @@ because every latency was truncated to whole milliseconds at the span.
   at every scale. The bucket index is the bit length of `latency - 1`
   (`Long.SIZE - Long.numberOfLeadingZeros`), which is `ceil(log2(latency))` in constant time
   instead of a scan over the bounds for every observed span.
-- **The contract catches up in steps.** `EdgeMetrics.summary()` truncates to whole
-  milliseconds until the protobuf contract carries `*_micros` fields (ARCHI-79); the control
-  plane stores microseconds next (ARCHI-80) and the Query API then reports fractional
-  milliseconds (ARCHI-81). Each pull request leaves `main` consistent.
+- **The contract catches up in steps.** The truncation to whole milliseconds moves outwards
+  one pull request at a time: it sits in `EdgeMetrics.summary()` after ARCHI-78, in the
+  control plane `SnapshotMapper` once the protobuf contract carries `*_micros` fields
+  (ARCHI-79), in `ApiModels` once the control plane stores microseconds (ARCHI-80), and
+  disappears when the Query API reports fractional milliseconds (ARCHI-81). Each pull request
+  leaves `main` consistent.
 
 ## Acceptance criteria review
 
