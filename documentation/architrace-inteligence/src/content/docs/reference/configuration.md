@@ -29,6 +29,8 @@ buffers:
   pending-ttl-seconds: 120
 metrics:
   port: 9464
+topics:
+  ignore: ["*-changelog", "*-repartition", "*-subscription-registration-*topic", "*-subscription-response-*topic"]
 attribute-mapping:
   domain: [service.namespace, team]
 ```
@@ -47,6 +49,7 @@ attribute-mapping:
 | `buffers.ring-size` | no | `65536` | bounded span queue between the receiver and the graph worker; spans beyond it are rejected and counted |
 | `buffers.pending-ttl-seconds` | no | `120` | how long a span waits for its partner before eviction; an external host appears only after a client span has waited this long, so a short value shows externals sooner and pairs fewer slow calls (the demo uses `20`) |
 | `metrics.port` | no | `9464` | Prometheus metrics and health endpoint port; the image health check probes `/health` on `ARCHITRACE_METRICS_PORT` (default `9464`) |
+| `topics.ignore` | no | the four Kafka Streams patterns above | glob patterns of topics that never reach the graph (`*` matches any run of characters, everything else is literal, case is ignored): a producer or consumer span on a matching topic yields neither node nor edge while the service itself stays; `[]` keeps every topic |
 | `attribute-mapping.<field>` | no | see below | attribute keys tried in order for one field; replaces the default list of that field |
 
 Unknown keys are rejected, so a typo cannot silently disable a setting. The control plane

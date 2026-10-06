@@ -61,6 +61,11 @@ Last updated: **2026-10-06**
   default and groups them into one node `platform` behind the **Platform** chip
   (`platformView` in `map/model.ts`, `platform=on` in the URL; the drift map still shows them
   one by one). Design notes on the M4 and M6 pages.
+- B1 from the real-data round (ARCHI-77): `topics.ignore` in the agent configuration
+  (`AgentConfig.TopicSettings`, defaults `*-changelog`, `*-repartition`,
+  `*-subscription-registration-*topic`, `*-subscription-response-*topic`) feeds a
+  case-insensitive glob `TopicFilter` that `EdgeBuilder.topic` applies, so a matching producer
+  or consumer span yields neither node nor edge; design notes on the M1 page.
 - **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
   published images (two environments, one collector routing by environment to one agent each,
   Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
@@ -145,13 +150,14 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7, the real-data follow-ups B2 and B3 (#94 to #97) and the first release
-`v0.1.0` are done. Merge ARCHI-76 (this documentation update). Then continue, one pull request
-against `main` at a time, each with the next free ticket number:
+The MVP queue M0–M7, the real-data follow-ups B2 and B3 (#94 to #97), the first release
+`v0.1.0` and the checklist (#98) are done. Merge ARCHI-77 (B1, `topics.ignore`). Then continue,
+one pull request against `main` at a time, each with the next free ticket number:
 
-1. Agent follow-ups B1 (fold Kafka Streams internal topics, ARCHI-77 next) and B4
-   (sub-millisecond latency) as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
-   Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.
+1. B4 (sub-millisecond latency): the histogram, the protobuf contract and the agent first, then
+   the control plane, the Query API and the UI formatting; two pull requests. Then the
+   `build-logic` JVM 24 pin (Kotlin 2.4 targets 25). Dependabot Gradle bumps need a maintainer
+   pull request with regenerated lockfiles, as #74.
 
 ## How to resume
 

@@ -14,6 +14,7 @@ import io.github.architrace.core.config.AgentConfig;
 import io.github.architrace.graph.EdgeBuilder;
 import io.github.architrace.graph.GraphBuilder;
 import io.github.architrace.graph.PendingSpanIndex;
+import io.github.architrace.graph.TopicFilter;
 import io.github.architrace.metrics.AgentMetrics;
 import io.github.architrace.metrics.DropReporter;
 import io.github.architrace.metrics.MetricsServer;
@@ -50,7 +51,10 @@ public final class AgentRuntimeService {
     public void run(AgentConfig config) throws InterruptedException {
         var clock = InstantSource.system();
         var spans = new SpanQueue(config.buffers().ringSize());
-        var edges = new EdgeBuilder(new PendingSpanIndex(config.buffers().pendingTtl()), clock);
+        var edges = new EdgeBuilder(
+                new PendingSpanIndex(config.buffers().pendingTtl()),
+                clock,
+                new TopicFilter(config.topics().ignore()));
         var builder = new GraphBuilder(config.environment(), edges, clock);
         var worker = new GraphWorker(spans, builder, clock, SWEEP_INTERVAL);
         var normaliser = new SpanNormaliser(config.attributeMapping(), config.environment(), config.cluster());

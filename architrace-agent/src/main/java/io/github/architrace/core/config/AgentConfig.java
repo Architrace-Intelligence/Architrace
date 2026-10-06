@@ -7,6 +7,7 @@ package io.github.architrace.core.config;
 
 import io.github.architrace.span.AttributeMapping;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 
 public record AgentConfig(
@@ -19,6 +20,7 @@ public record AgentConfig(
         SnapshotSettings snapshot,
         BufferSettings buffers,
         MetricsSettings metrics,
+        TopicSettings topics,
         AttributeMapping attributeMapping) {
 
     public static final String DEFAULT_PROJECT = "default";
@@ -29,6 +31,8 @@ public record AgentConfig(
     public static final int DEFAULT_RING_SIZE = 65_536;
     public static final Duration DEFAULT_PENDING_TTL = Duration.ofSeconds(120);
     public static final int DEFAULT_METRICS_PORT = 9464;
+    public static final List<String> DEFAULT_IGNORED_TOPICS = List.of(
+            "*-changelog", "*-repartition", "*-subscription-registration-*topic", "*-subscription-response-*topic");
 
     public AgentConfig {
         Objects.requireNonNull(project, "project");
@@ -40,6 +44,7 @@ public record AgentConfig(
         Objects.requireNonNull(snapshot, "snapshot");
         Objects.requireNonNull(buffers, "buffers");
         Objects.requireNonNull(metrics, "metrics");
+        Objects.requireNonNull(topics, "topics");
         Objects.requireNonNull(attributeMapping, "attributeMapping");
     }
 
@@ -65,4 +70,10 @@ public record AgentConfig(
     }
 
     public record MetricsSettings(int port) {}
+
+    public record TopicSettings(List<String> ignore) {
+        public TopicSettings {
+            ignore = List.copyOf(ignore);
+        }
+    }
 }
