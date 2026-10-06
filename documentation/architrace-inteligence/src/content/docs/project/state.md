@@ -69,10 +69,13 @@ Last updated: **2026-10-06**
   gate does not fit the stack in two. ARCHI-78 (#100): the agent measures latency in
   microseconds from `SpanRecord.latencyMicros()` through `EdgeObservation` into a
   `LatencyHistogram` of twenty-seven base-two buckets from 1 µs to 2^26 µs; the bucket index
-  is the bit length of `latency - 1`. ARCHI-79 (open): `EdgeMetricsSummary` and the protobuf
+  is the bit length of `latency - 1`. ARCHI-79: `EdgeMetricsSummary` and the protobuf
   `EdgeMetrics` carry microseconds (`p50_micros` to `max_micros` on field numbers 7 to 10,
-  3 to 6 reserved); the control plane `SnapshotMapper` truncates to whole milliseconds for
-  the unchanged storage. Design notes in the M1 follow-up.
+  3 to 6 reserved). ARCHI-80 (open): the control plane domain `EdgeMetrics`, the merger and
+  `snapshot_edge` keep microseconds (changeset `0006-snapshot-edge-latency-micros` renames
+  the columns to `latency_*_us` and multiplies the stored values by one thousand, with a
+  rollback); `ApiModels` truncates to whole milliseconds for the unchanged Query API. Design
+  notes in the M1 follow-up.
 - **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
   published images (two environments, one collector routing by environment to one agent each,
   Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
@@ -166,13 +169,10 @@ The MVP queue M0–M7, the real-data follow-ups B1 to B3 (#94 to #99), the first
 `v0.1.0` and the checklist (#98) are done. B4 continues, one pull request against `main` at a
 time, each with the next free ticket number:
 
-1. ARCHI-78 (#100) and ARCHI-79 (open): the agent measures, aggregates and publishes latency
-   in microseconds; the control plane `SnapshotMapper` truncates to whole milliseconds.
-   Merge ARCHI-79, then:
-2. ARCHI-80: the control plane domain `EdgeMetrics`, the merger and `snapshot_edge` keep
-   microseconds (a Liquibase changeset renames the columns to `latency_*_us` and multiplies
-   the stored values by one thousand); `ApiModels` truncates for the unchanged Query API.
-3. ARCHI-81: the Query API fields `p50Millis` to `maxMillis` become `number` (fractional
+1. ARCHI-78 (#100), ARCHI-79 and ARCHI-80 (open): the agent measures, aggregates and
+   publishes latency in microseconds and the control plane stores them; `ApiModels` truncates
+   to whole milliseconds. Merge ARCHI-80, then:
+2. ARCHI-81: the Query API fields `p50Millis` to `maxMillis` become `number` (fractional
    milliseconds), `formatMillis` in the UI shows `0.35 ms`; Requirements §9 and Progress
    close B4.
 

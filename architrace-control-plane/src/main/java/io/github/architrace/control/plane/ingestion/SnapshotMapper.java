@@ -30,8 +30,6 @@ import java.util.stream.Stream;
 
 public final class SnapshotMapper {
 
-    private static final long MICROS_PER_MILLI = 1_000L;
-
     public Snapshot toSnapshot(Agent agent, GraphSnapshot proto, Instant receivedAt) {
         try {
             TimeWindow window = new TimeWindow(
@@ -68,14 +66,10 @@ public final class SnapshotMapper {
                 new EdgeMetrics(
                         m.getCalls(),
                         m.getErrors(),
-                        millis(m.getP50Micros()),
-                        millis(m.getP95Micros()),
-                        millis(m.getP99Micros()),
-                        millis(m.getMaxMicros())));
-    }
-
-    private static long millis(long micros) {
-        return micros / MICROS_PER_MILLI;
+                        m.getP50Micros(),
+                        m.getP95Micros(),
+                        m.getP99Micros(),
+                        m.getMaxMicros()));
     }
 
     private static NodeType toType(io.github.architrace.grpc.proto.NodeType type) {

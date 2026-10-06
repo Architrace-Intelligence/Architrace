@@ -48,6 +48,7 @@ import java.util.Optional;
 
 public final class ApiModels {
 
+    private static final long MICROS_PER_MILLI = 1_000L;
     private static final Comparator<Deployment> DEPLOYMENT_ORDER =
             Comparator.comparing(Deployment::cluster).thenComparing(Deployment::namespace);
 
@@ -131,10 +132,10 @@ public final class ApiModels {
         return new EdgeMetricsDto(
                 metrics.calls(),
                 metrics.errors(),
-                metrics.p50Millis(),
-                metrics.p95Millis(),
-                metrics.p99Millis(),
-                metrics.maxMillis());
+                millis(metrics.p50Micros()),
+                millis(metrics.p95Micros()),
+                millis(metrics.p99Micros()),
+                millis(metrics.maxMicros()));
     }
 
     static NodeViewDto toDto(NodeView view) {
@@ -183,5 +184,9 @@ public final class ApiModels {
 
     public static OffsetDateTime atUtc(Instant instant) {
         return instant.atOffset(ZoneOffset.UTC);
+    }
+
+    private static long millis(long micros) {
+        return micros / MICROS_PER_MILLI;
     }
 }
