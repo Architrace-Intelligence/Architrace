@@ -1,22 +1,9 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     `kotlin-dsl`
     alias(libs.plugins.spotless)
 }
 
 description = "Gradle convention plugins of the Architrace build"
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_24
-    targetCompatibility = JavaVersion.VERSION_24
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_24)
-    }
-}
 
 dependencyLocking {
     lockAllConfigurations()
