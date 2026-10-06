@@ -37,8 +37,7 @@ Last updated: **2026-10-06**
   [M6](../features/m6-architecture-rules/) page; candidates B2 and B3 stay open there.
 - Housekeeping merged on 2026-10-05: the Snyk policy of the documentation site (ARCHI-68, #71:
   `overrides` for `postcss-selector-parser`, a time-boxed ignore for `zod`) and Gradle 9.8.0
-  with regenerated lockfiles (ARCHI-69, #74; the unused `guava` catalog entry is gone). Open
-  follow-up: drop the JVM 24 pin in `build-logic` now that Kotlin 2.4 targets 25. The demo's
+  with regenerated lockfiles (ARCHI-69, #74; the unused `guava` catalog entry is gone). The demo's
   Python dependencies move together (ARCHI-70, #91: OpenTelemetry SDK and exporter 1.45.0,
   instrumentations 0.66b0, kafka-python 3.0.11, psycopg2-binary 2.9.13) and Dependabot now
   groups the pip updates of `demo/services`, because the SDK, exporter and instrumentation
@@ -166,10 +165,9 @@ The MVP queue M0–M7, the real-data follow-ups B1 to B4 (#94 to #103), the firs
 `v0.1.0` and the checklist (#98) are done. Continue, one pull request against `main` at a
 time, each with the next free ticket number:
 
-1. Drop the JVM 24 pin in `build-logic` (Kotlin 2.4 targets 25). Dependabot Gradle bumps need
-   a maintainer pull request with regenerated lockfiles, as #74.
-2. Confirm the working assumptions listed under Decisions with the maintainer (M5 drift
-   modes, the `*Millis` names of the Query API) and the next real-data round.
+1. Confirm the working assumptions listed under Decisions with the maintainer (M5 drift
+   modes, the `*Millis` names of the Query API) and run the next real-data round.
+2. Dependabot Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.
 
 ## How to resume
 

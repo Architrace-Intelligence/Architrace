@@ -362,5 +362,7 @@ What landed and the decisions behind it:
   Spotless and are covered by their own tests. Its package is `io.github.architrace.conventions`:
   a package segment named `build` is swallowed by the `**/build` ignore patterns of Docker and
   git, which broke the first in-container build.
-- The Kotlin compiler embedded in Gradle 9.3 emits JVM 24 bytecode at most, so `build-logic`
-  pins both Java and Kotlin tasks to 24; drop the pin when Gradle's Kotlin supports 25.
+- `build-logic` compiles its Java and Kotlin tasks for the JDK that runs Gradle, the 25 of
+  `gradle.properties` locally and in CI (the compiled plugin classes carry class-file major
+  version 69); it carries no JVM pin, because Gradle 9.8 embeds Kotlin 2.4.10, which targets
+  JVM 25.
