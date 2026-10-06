@@ -155,8 +155,8 @@ maintainer's machine may reboot. The repository is therefore the only memory tha
 - Versioning (ADR 0006): `architrace.versioning` wraps axion-release; the version is the last
   `vX.Y.Z` tag plus the highest Conventional Commits bump since it (`X.Y.Z-<sha>-SNAPSHOT`
   between tags, `X.Y.Z` on the tag). Tasks `printVersion`, `printReleaseVersion`,
-  `releaseNotes`; `gradle.properties` carries no version. The first tag `v0.1.0` is created
-  manually by the maintainer.
+  `releaseNotes`; `gradle.properties` carries no version. The maintainer created the seed tag
+  `v0.0.0` once; every release tag (`v0.1.0` first) is created by the main pipeline.
 - Control plane (`architrace-control-plane`): Spring Boot 4 + Spring gRPC. Accepts agent
   streams, answers health, pushes config updates. HTTP `8085`, gRPC `9090`. Persistence:
   PostgreSQL with Liquibase (ADR 0001). Serves the UI bundle (ADR 0004).
