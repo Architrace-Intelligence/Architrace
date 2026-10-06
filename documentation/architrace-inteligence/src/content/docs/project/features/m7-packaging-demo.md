@@ -84,7 +84,7 @@ From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-
 
 - B5: done (ARCHI-67): the image health check probes `/health` on the metrics port
   (`ARCHITRACE_METRICS_PORT`, default `9464`) and exposes `4319`, the one default OTLP port.
-- B6: done (ARCHI-67): the [deployment guide](../../../guides/deployment/) has the section on
-  instrumenting Spring Boot services.
+- B6: done (ARCHI-67): the section on instrumenting Spring Boot services, since ARCHI-83 the
+  [instrumentation guide](../../../guides/instrumenting-services/) of its own.
 - B7: done (ARCHI-64, ARCHI-67): the demo agents wait 20 s for a partner span and the
   configuration page explains the delay next to `buffers.pending-ttl-seconds`.

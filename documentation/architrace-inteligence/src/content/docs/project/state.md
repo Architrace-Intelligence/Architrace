@@ -78,6 +78,13 @@ Last updated: **2026-10-06**
   interval; the Python requests instrumentation needs `OTEL_SEMCONV_STABILITY_OPT_IN=http`;
   `psycopg2-binary` needs `skip_dep_check`) are on the [M7](../features/m7-packaging-demo/)
   page. The MVP (M0 to M7) is complete.
+- Documentation for operators (ARCHI-83): the README is a front page (what it is, how it
+  works, demo, production in five lines, instrumentation, features, develop); the
+  [installation guide](../../guides/deployment/) is a step-by-step from the database to the
+  verified map with Docker and Kubernetes manifests, sizing, security and upgrades; the
+  [instrumentation guide](../../guides/instrumenting-services/) compares the Java agent and the
+  Spring Boot starter, lists the attributes Architrace keys on, sampling, rollout and
+  troubleshooting.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
