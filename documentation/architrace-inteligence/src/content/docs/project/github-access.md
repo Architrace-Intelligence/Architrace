@@ -6,20 +6,22 @@ description: Repository access, automation permissions and the maintainer checkl
 What the automation needs to operate the repository, what it already has, and what only the
 maintainer can do. Written for `Architrace-Intelligence/Architrace`. Companion of [Requirements](../requirements/).
 
-## 1. Current state (observed 2026-10-04)
+## 1. Current state (observed 2026-10-06)
 
 | Item                                   | Value                                                                 |
 |----------------------------------------|-----------------------------------------------------------------------|
 | Repository                             | public, default branch `main`, issues on, wiki off                    |
 | Maintainer role                        | `godmarch33`: admin on the repo, owner of the organisation            |
 | CLI token scopes (`gh auth status`)    | `repo`, `workflow`, `read:org`, `gist`                                |
-| Branch protection                      | ruleset `main-rule` (id `13328234`) exists but is **disabled**; the agreed definition is `.github/rulesets/main.json`, see §5 |
-| Merge methods                          | merge, squash, rebase all allowed; auto-merge off; branch deletion off; target in §5 |
+| Branch protection                      | ruleset `main` (id `13328234`) **active** and identical to `.github/rulesets/main.json` (§5); GitHub adds `required_reviewers`, `dismissal_restriction` and `require_extra_approval_for_unattributed_changes` on its own |
+| Merge methods                          | squash only, title from the pull request, branch deleted on merge; auto-merge off (§5 applied on 2026-10-06) |
 | Actions                                | enabled, all actions allowed, default `GITHUB_TOKEN` permission: read |
 | Secrets                                | `SONAR_TOKEN`, `SNYK_TOKEN`, `NVD_API_KEY`, `PAGES_DEPLOY_TOKEN`; the scanner secrets also exist as Dependabot secrets |
 | Variables                              | `SNYK_ORG=architrace`                                                 |
 | GitHub Apps installed on the org       | SonarQube Cloud, Snyk; CodeRabbit not yet                             |
-| Security features                      | Dependabot alerts on; Dependabot security updates, secret scanning and push protection off; CodeQL through `codeql.yml` |
+| Security features                      | Dependabot alerts and security updates, secret scanning and push protection on; CodeQL through `codeql.yml` |
+| GHCR packages                          | `architrace-agent` and `architrace-control-plane` public since 2026-10-06; the organisation setting *Packages → Package creation → Public* had to be enabled before the package visibility could change |
+| Releases                               | seed tag `v0.0.0` on `727f9bf`; `v0.1.0` released by the main pipeline on 2026-10-06 with both jars and the images `0.1.0` and `latest` |
 | Labels                                 | the set from `LABELS.md`, created in the hygiene PR (#26)             |
 
 ## 2. What the current token already allows
@@ -128,21 +130,24 @@ versioning parses; `COMMIT_MESSAGES` keeps the squashed commit messages in the b
 - [x] Both secrets mirrored as Dependabot secrets, so Dependabot pull requests get the same scanners.
 - [x] Ticket numbering: `ARCHI-<n>` sequential.
 - [x] Copyright holder: `Dmytro Hryshchenko`; header fixed in the hygiene feature.
-- [ ] Apply the `main` ruleset and the repository settings from §5 (after ARCHI-37 is merged);
-      re-apply the ruleset after ARCHI-51, which adds the required check `size` (at most 12
-      changed files per pull request), and after ARCHI-52, which renames the CodeQL checks to
-      `codeql / <language>`.
+- [x] Apply the `main` ruleset and the repository settings from §5: the ruleset was found active
+      and identical to the file (including `size` and the `codeql / <language>` checks), the
+      repository settings were applied on 2026-10-06.
 - [ ] Install the CodeRabbit GitHub App on `Architrace-Intelligence/Architrace` (organisation
       owner, UI only); `.coderabbit.yaml` is already in the repository.
-- [ ] Seed the first release tag on the merge commit of the main pipeline:
-      `git tag -a v0.1.0 -m v0.1.0 <commit> && git push origin v0.1.0`. Every later `feat` or
-      `fix` merge releases automatically ([ADR 0006](../adr/0006-versioning-and-release-flow/)).
-- [ ] Make the two GHCR packages (`architrace-agent`, `architrace-control-plane`) public once;
-      they are created private by the first `main` run.
-- [ ] Close Dependabot pull request #45: it edits the removed `ci-cd.yml`.
-- [ ] Confirm the SonarCloud project key: the build still uses `Architrace-Intelligence_Architrace-agent`;
-      the project in SonarCloud must have *Automatic Analysis* switched off because analysis is
-      CI-driven.
+- [x] Seed the tag history (2026-10-06): `v0.0.0` on `727f9bf`, the commit before the first
+      releasable one, then `gh workflow run main.yml --ref main`; the pipeline computed `0.1.0`,
+      tagged `v0.1.0`, published the GitHub release with both jars and the images `0.1.0` and
+      `latest`. Every later `feat` or `fix` merge releases automatically
+      ([ADR 0006](../adr/0006-versioning-and-release-flow/)).
+- [x] Make the two GHCR packages (`architrace-agent`, `architrace-control-plane`) public
+      (2026-10-06): the organisation setting *Packages → Package creation → Public* has to be
+      on first, otherwise the package dialog greys out *Public*; the confirmation field expects
+      the package name.
+- [x] Close Dependabot pull request #45: it edits the removed `ci-cd.yml`.
+- [x] Confirm the SonarCloud project key: the build uses `Architrace-Intelligence_Architrace-agent`
+      and the CI-driven analysis passes on every pull request, which SonarCloud only allows with
+      *Automatic Analysis* off.
 
 ## 7. Fine-grained token for automation
 

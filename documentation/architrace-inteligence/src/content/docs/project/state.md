@@ -20,11 +20,12 @@ Last updated: **2026-10-06**
   design (ARCHI-50, #63), the pull request size gate (ARCHI-51, #64) and the pipeline order
   (ARCHI-52, #65), M6 (#66–#70, #75–#80), the Snyk hotfix (#71) and Gradle 9.8.0 (#74). The
   `main` pipeline is green end to end; both images are in GHCR.
-- **M0 is complete in the repository.** What remains is the maintainer checklist on the
-  [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
-  ruleset (`.github/rulesets/main.json`) and the repository settings (§5 there), install the
-  CodeRabbit app, make the two GHCR packages public, seed `v0.1.0`. Until the ruleset is active
-  the merge gate is discipline, not platform.
+- **M0 is complete.** The maintainer checklist on the
+  [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page was worked through
+  on 2026-10-06: ruleset verified active, repository settings applied, both GHCR packages
+  public, seed tag `v0.0.0` on `727f9bf` and the first pipeline release `v0.1.0` (tag, GitHub
+  release with both jars, images `0.1.0` and `latest`). Still open: install the CodeRabbit app
+  (UI, organisation owner).
 - **M1, M4 and M5 are done**, see the [M1](../features/m1-agent-pipeline/),
   [M4](../features/m4-service-map/) and [M5](../features/m5-drift/) pages. Lesson recorded on
   2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working
@@ -49,7 +50,7 @@ Last updated: **2026-10-06**
   skipped over every JUnit report) and `badges/version.json` with the documentation site;
   the README shows the pipeline, CodeQL, tests, SonarCloud quality gate and coverage, Snyk, the
   release and the version on `main`, the images, and the stack versions read live from the
-  repository files. The release badge says "no releases found" until `v0.1.0` exists.
+  repository files. The release badge shows `v0.1.0` since 2026-10-06.
 - B2 from the real-data round (ARCHI-72, #94): the rule `DataStreamWithoutProducer` (id
   `data-stream-without-producer`, low, no threshold) reports a topic with consumers but no
   producer in the observed traces as the outbox insight; subject is the topic, evidence the
@@ -130,8 +131,8 @@ the map draws a diff through an overlay prop, not through a second map.
 Build conventions since ARCHI-33: new Java modules apply `architrace.java` (or
 `architrace.spring-boot`); third-party plugins are applied by id, their versions live in the
 catalog and on the `build-logic` classpath; switches stay exhaustive instead of carrying a
-`default`; the first release tag `v0.1.0` is created manually by the maintainer, everything
-after it is computed.
+`default`; the seed tag `v0.0.0` was created by hand, every release tag (`v0.1.0` first) is
+computed and pushed by the main pipeline.
 
 Pipeline conventions since ARCHI-34: every job name is a required-check name; actions are pinned
 by commit SHA with the version in a trailing comment (Dependabot keeps both current); a scanner
@@ -159,14 +160,12 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7 and the follow-ups up to B3 part 2 (#96) are merged. Merge B3 part 3
-(ARCHI-75, the Platform chip on the map). Then continue, one pull request against `main` at a
-time, each with the next free ticket number:
+The MVP queue M0–M7, the real-data follow-ups B2 and B3 (#94 to #97) and the first release
+`v0.1.0` are done. Merge ARCHI-76 (this documentation update). Then continue, one pull request
+against `main` at a time, each with the next free ticket number:
 
-1. The maintainer checklist of M0 (ruleset, CodeRabbit, public GHCR packages, `v0.1.0`); no
-   agent work is pending on it.
-2. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
-   as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
+1. Agent follow-ups B1 (fold Kafka Streams internal topics, ARCHI-77 next) and B4
+   (sub-millisecond latency) as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
    Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.
 
 ## How to resume
