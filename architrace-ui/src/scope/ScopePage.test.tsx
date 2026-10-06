@@ -13,6 +13,7 @@ import {
   demoImpact,
   demoScopes,
   emptyGraph,
+  platformGraph,
   problem,
   respondByPath,
   respondWithJson,
@@ -408,6 +409,51 @@ describe("ScopePage", () => {
     expect(crumbs.getByRole("button", { name: "Project web shop" })).toBeInTheDocument();
     expect(crumbs.queryByRole("button", { name: /^Environment/ })).not.toBeInTheDocument();
     expect(crumbs.getByText("k8s-prod-eu1")).toBeInTheDocument();
+  });
+
+  it("keeps the platform hosts off the map and groups them behind the Platform chip", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", respondByPath({ "/graph": platformGraph, "/scopes": demoScopes }));
+    renderAt(SCOPE, <App />);
+
+    expect(await screen.findByText("orders-service")).toBeInTheDocument();
+    expect(screen.queryByText("flags.internal")).not.toBeInTheDocument();
+    expect(chips().getByRole("button", { name: "External 1" })).toBeInTheDocument();
+    expect(chips().getByRole("button", { name: "Platform 2" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(
+      screen.getByText(
+        "5 services · 2 data stores · 2 data streams · 1 external host · 11 dependencies (7 sync, 4 stream)",
+      ),
+    ).toBeInTheDocument();
+    expect(rail().getByText("Platform hosts").nextElementSibling).toHaveTextContent("2");
+
+    await user.click(chips().getByRole("button", { name: "Platform 2" }));
+
+    expect(await screen.findByTitle("platform")).toHaveTextContent("Platform");
+    expect(screen.getByText("config.internal, flags.internal")).toBeInTheDocument();
+    expect(chips().getByRole("button", { name: "Platform 2" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(
+      screen.getByText(
+        "5 services · 2 data stores · 2 data streams · 2 external hosts · 13 dependencies (9 sync, 4 stream)",
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(count(".react-flow__edge.dimmed")).toBe(2);
+    });
+
+    fireEvent.click(screen.getByTitle("platform"));
+
+    expect(await screen.findByText("External · platform · PROD")).toBeInTheDocument();
+    expect(rail().getByText("config.internal, flags.internal")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(count(".react-flow__edge.touching")).toBe(2);
+    });
   });
 
   it("narrows the map to a namespace and its neighbourhood", async () => {

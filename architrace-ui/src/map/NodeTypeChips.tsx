@@ -8,11 +8,19 @@ import { type MapState, NODE_TYPE_LABELS, NODE_TYPE_TOKENS, NODE_TYPES } from ".
 
 interface NodeTypeChipsProps {
   readonly counts: Record<NodeType, number>;
+  readonly platform: number;
   readonly filter: MapState;
   readonly onToggle: (type: NodeType) => void;
+  readonly onTogglePlatform: () => void;
 }
 
-export function NodeTypeChips({ counts, filter, onToggle }: NodeTypeChipsProps) {
+export function NodeTypeChips({
+  counts,
+  platform,
+  filter,
+  onToggle,
+  onTogglePlatform,
+}: NodeTypeChipsProps) {
   return (
     <fieldset className="chips">
       <legend className="sr-only">Node types</legend>
@@ -34,6 +42,17 @@ export function NodeTypeChips({ counts, filter, onToggle }: NodeTypeChipsProps) 
           </button>
         );
       })}
+      {platform > 0 && (
+        <button
+          type="button"
+          className={filter.platform ? "chip" : "chip chip-off"}
+          aria-pressed={filter.platform}
+          onClick={onTogglePlatform}
+        >
+          <span className={`dot dot-${NODE_TYPE_TOKENS.EXTERNAL}`} aria-hidden="true" />
+          Platform <span className="faint mono chip-count">{platform}</span>
+        </button>
+      )}
     </fieldset>
   );
 }

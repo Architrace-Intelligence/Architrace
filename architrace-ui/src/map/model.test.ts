@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { EdgeMetrics, TopologyNode } from "../api/client";
-import { demoGraph } from "../test/http";
+import { demoGraph, platformGraph } from "../test/http";
 import {
   countByType,
   describeGraph,
@@ -26,6 +26,10 @@ import {
   toggleNodeType,
   toMapParams,
   visibleGraph,
+  isPlatformHost,
+  PLATFORM_GROUP_ID,
+  platformHosts,
+  platformView,
 } from "./model";
 
 function metrics(calls: number, errors: number): EdgeMetrics {
@@ -48,12 +52,13 @@ describe("map state", () => {
   it("reads every field from the URL and writes back only what differs from the defaults", () => {
     const state = parseMapState(
       new URLSearchParams(
-        "hide=TOPIC&hide=SERVICE&hide=BOGUS&lens=streams&q=ord&at=2026-10-01T12:00:00Z&node=service:orders-service",
+        "hide=TOPIC&hide=SERVICE&hide=BOGUS&platform=on&lens=streams&q=ord&at=2026-10-01T12:00:00Z&node=service:orders-service",
       ),
     );
 
     expect(state).toEqual({
       hidden: ["SERVICE", "TOPIC"],
+      platform: true,
       namespace: undefined,
       lens: "streams",
       query: "ord",
@@ -61,7 +66,7 @@ describe("map state", () => {
       selection: { kind: "node", id: "service:orders-service" },
     });
     expect(toMapParams(state).toString()).toBe(
-      "hide=SERVICE&hide=TOPIC&lens=streams&q=ord&at=2026-10-01T12%3A00%3A00Z&node=service%3Aorders-service",
+      "hide=SERVICE&hide=TOPIC&platform=on&lens=streams&q=ord&at=2026-10-01T12%3A00%3A00Z&node=service%3Aorders-service",
     );
     expect(parseMapState(new URLSearchParams())).toEqual(INITIAL_MAP_STATE);
     expect(toMapParams(INITIAL_MAP_STATE).toString()).toBe("");
@@ -150,6 +155,89 @@ describe("visibleGraph", () => {
       "1 service · 0 data stores · 0 data streams · 0 external hosts · 0 dependencies (0 sync, 0 stream)",
     );
     expect(describeMatches(visible, " order ")).toBe("3 of 10 nodes match “order”");
+  });
+});
+
+describe("platform hosts", () => {
+  const shown = { ...INITIAL_MAP_STATE, platform: true };
+
+  it("keeps the platform hosts off the map by default and leaves the rest untouched", () => {
+    expect(platformHosts(platformGraph).map((host) => host.id)).toEqual([
+      "external:flags.internal",
+      "external:config.internal",
+    ]);
+    expect(platformGraph.nodes.filter(isPlatformHost)).toHaveLength(2);
+
+    const visible = visibleGraph(platformGraph, INITIAL_MAP_STATE);
+
+    expect(visible.nodes).toEqual(demoGraph.nodes);
+    expect(visible.edges).toEqual(demoGraph.edges);
+    expect(platformView(demoGraph, shown)).toBe(demoGraph);
+  });
+
+  it("groups the platform hosts into one node and merges the calls of every caller", () => {
+    const slower = {
+      ...platformGraph,
+      edges: platformGraph.edges.map((edge) =>
+        edge.targetId === "external:config.internal"
+          ? { ...edge, metrics: { ...edge.metrics, p95Millis: 40 } }
+          : edge,
+      ),
+    };
+
+    const visible = visibleGraph(slower, shown);
+    const group = visible.nodes.find((node) => node.id === PLATFORM_GROUP_ID);
+
+    expect(visible.nodes).toHaveLength(demoGraph.nodes.length + 1);
+    expect(group).toEqual({
+      id: "platform",
+      type: "EXTERNAL",
+      name: "Platform",
+      versions: [],
+      deployments: [],
+      labels: { category: "platform", hosts: "config.internal, flags.internal" },
+    });
+    expect(group === undefined ? "" : subtitle(group)).toBe("config.internal, flags.internal");
+    expect(group !== undefined && matchesQuery(group, "flags")).toBe(true);
+    expect(visible.edges).toHaveLength(demoGraph.edges.length + 2);
+    expect(
+      visible.edges.find((edge) => edgeId(edge) === "service:orders-service>platform:SYNC")
+        ?.metrics,
+    ).toEqual({
+      calls: 150,
+      errors: 1,
+      p50Millis: 4,
+      p95Millis: 40,
+      p99Millis: 60,
+      maxMillis: 300,
+    });
+    expect(
+      visible.edges.find((edge) => edgeId(edge) === "service:payments-service>platform:SYNC")
+        ?.metrics.calls,
+    ).toBe(30);
+    expect(
+      visibleGraph(platformGraph, { ...shown, hidden: ["EXTERNAL"] }).nodes,
+    ).not.toContainEqual(group);
+  });
+
+  it("dims the calls to the platform group until one of their ends is selected", () => {
+    const visible = visibleGraph(platformGraph, shown);
+    const orders = "service:orders-service>platform:SYNC";
+    const payments = "service:payments-service>platform:SYNC";
+
+    expect(looks(visible, shown).edges.get(orders)).toEqual({ touching: false, dimmed: true });
+    expect(looks(visible, shown).nodes.get(PLATFORM_GROUP_ID)?.dimmed).toBe(false);
+
+    const caller = looks(visible, {
+      ...shown,
+      selection: { kind: "node", id: "service:orders-service" },
+    });
+    expect(caller.edges.get(orders)).toEqual({ touching: true, dimmed: false });
+    expect(caller.edges.get(payments)?.dimmed).toBe(true);
+
+    const group = looks(visible, { ...shown, selection: { kind: "node", id: PLATFORM_GROUP_ID } });
+    expect(group.edges.get(orders)?.dimmed).toBe(false);
+    expect(group.edges.get(payments)?.dimmed).toBe(false);
   });
 });
 

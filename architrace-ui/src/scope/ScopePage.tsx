@@ -16,9 +16,12 @@ import {
   describeMatches,
   graphNamespaces,
   impactOverlay,
+  isPlatformHost,
   type Lens,
   type MapState,
   parseMapState,
+  PLATFORM_GROUP_ID,
+  platformHosts,
   type Selection,
   toggleNodeType,
   toMapParams,
@@ -75,7 +78,11 @@ export function ScopePage() {
   const findings = useQuery({ ...findingsQuery(scope), enabled: state.at === undefined });
   const current = state.at === undefined ? findings.data : undefined;
   const subject =
-    state.lens === "impact" && state.selection?.kind === "node" ? state.selection.id : undefined;
+    state.lens === "impact" &&
+    state.selection?.kind === "node" &&
+    state.selection.id !== PLATFORM_GROUP_ID
+      ? state.selection.id
+      : undefined;
   const impact = useQuery({
     ...impactQuery(scope, subject ?? "", state.at),
     enabled: subject !== undefined,
@@ -209,10 +216,14 @@ function MapView({
           </label>
         )}
         <NodeTypeChips
-          counts={countByType(graph.nodes)}
+          counts={countByType(graph.nodes.filter((node) => !isPlatformHost(node)))}
+          platform={platformHosts(graph).length}
           filter={state}
           onToggle={(type) => {
             onChange(toggleNodeType(state, type));
+          }}
+          onTogglePlatform={() => {
+            onChange({ ...state, platform: !state.platform });
           }}
         />
         <fieldset className="seg">

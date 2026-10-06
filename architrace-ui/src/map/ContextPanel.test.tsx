@@ -6,17 +6,18 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { demoGraph } from "../test/http";
+import { demoGraph, platformGraph } from "../test/http";
 import { ContextPanel } from "./ContextPanel";
-import { INITIAL_MAP_STATE, type Selection } from "./model";
+import { INITIAL_MAP_STATE, type MapState, type Selection } from "./model";
 
-function renderPanel(selection: Selection | undefined) {
+function renderPanel(selection: Selection | undefined, state: Partial<MapState> = {}) {
   const onSelect = vi.fn();
   render(
     <ContextPanel
-      graph={demoGraph}
-      state={{ ...INITIAL_MAP_STATE, selection }}
+      graph={state.platform === undefined ? demoGraph : platformGraph}
+      state={{ ...INITIAL_MAP_STATE, ...state, selection }}
       onSelect={onSelect}
+      onImpact={vi.fn()}
     />,
   );
   return onSelect;
@@ -132,6 +133,32 @@ describe("ContextPanel", () => {
     await user.click(screen.getByRole("button", { name: "to api.stripe.com External" }));
 
     expect(onSelect).toHaveBeenCalledWith({ kind: "node", id: "external:api.stripe.com" });
+  });
+
+  it("counts the platform hosts apart and names the category of their group", () => {
+    renderPanel(undefined, { platform: false });
+
+    expect(value("External hosts")).toHaveTextContent("1");
+    expect(value("Platform hosts")).toHaveTextContent("2");
+    expect(screen.getAllByText("Scope · PROD")).toHaveLength(1);
+
+    renderPanel({ kind: "node", id: "platform" }, { platform: true });
+
+    expect(screen.getByText("External · platform · PROD")).toBeInTheDocument();
+    expect(screen.getByText("Platform")).toBeInTheDocument();
+    expect(value("category")).toHaveTextContent("platform");
+    expect(value("hosts")).toHaveTextContent("config.internal, flags.internal");
+    expect(value("Inbound")).toHaveTextContent("2 dependencies · 180 calls");
+    expect(screen.getByRole("region", { name: "Dependencies · 2 in, 0 out" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "What breaks if it fails" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not know a platform host while the group is off", () => {
+    renderPanel({ kind: "node", id: "external:flags.internal" }, { platform: false });
+
+    expect(screen.getByText("Scope · PROD")).toBeInTheDocument();
   });
 
   it("falls back to the scope when the selection is unknown", () => {

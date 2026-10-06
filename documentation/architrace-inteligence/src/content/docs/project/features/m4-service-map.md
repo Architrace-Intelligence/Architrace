@@ -62,12 +62,13 @@ including the first load of the ELK chunk; the map pans and zooms freely afterwa
 | Scope switcher | project, environment and cluster from `GET /scopes` in the breadcrumb; the scope is the path | PR 5 |
 | Service map | nodes styled by type (service, database, topic, external), edges styled by kind (sync solid, publish and consume dashed), edge width by calls, colour by error rate; minimap; fit to view | PR 3 |
 | Filters | namespace select (the "domain" of the first design), node type toggles (External included, so "hide externals" is a chip), find-in-map with highlight, the Data streams lens | PR 3–5 |
+| Platform hosts | the external nodes the control plane labels `category=platform` (from `architrace.topology.platform-hosts`, ARCHI-73) are off the map by default; the **Platform** chip, with their count, draws them as one node `Platform` whose subtitle lists the hosts, the calls of each caller merged into one edge that stays dimmed until either end is selected; the rail counts them apart from the other external hosts and names the category; `platform=on` in the URL | ARCHI-75 |
 | Node panel | identity, versions seen, clusters and namespaces, labels, inbound and outbound dependencies with metrics, streams | PR 4 |
 | Edge panel | calls, errors, error rate, p50 / p95 / p99 / max latency for the window | PR 4 |
 | Time selector | "live" (latest) or a timestamp; the map re-queries `graph?at=` | PR 4 |
 
-URL carries the scope (path), filters, namespace, lens, find text, time and selection so a view
-can be shared.
+URL carries the scope (path), filters, the platform switch, namespace, lens, find text, time
+and selection so a view can be shared.
 
 ### Quality
 
@@ -310,6 +311,30 @@ What landed and the decisions behind it:
   assert the request for the new scope and the preserved lens, keep the breadcrumb static for an
   unlisted scope, and narrow the map by namespace from the URL and back through the select.
   The `fetch` stub now routes by path (`respondByPath`) because the screen makes two requests.
+
+### Follow-up: platform hosts (ARCHI-75)
+
+B3 from the real-data round: a feature-flag server and a configuration server that every
+service polls had dominated the map as external hosts. The control plane side (the label and
+the rule, ARCHI-73 and ARCHI-74) is on the [M6](../m6-architecture-rules/) page.
+
+- **One pure view transform.** `platformView(graph, state)` is the first step of
+  `visibleGraph` and of the rail's lookups. It drops the platform hosts, or replaces them with
+  one group node and re-targets their edges to it, merging the edges of one caller (calls and
+  errors add up, latencies take the maximum). Everything downstream (layout, looks, panels,
+  find) sees an ordinary `TopologyNode`, so no component learned a new concept.
+- **The group node is data.** Id `platform` (no type prefix, so it cannot collide with a real
+  node), type `EXTERNAL`, labels `category=platform` and `hosts=<names>`: the node panel lists
+  the labels as it does for any node, the card's subtitle shows the hosts, and find-in-map
+  matches them.
+- **Dimmed by default.** `looks` dims every edge that touches the group unless it touches the
+  selection, so the fan-in of the platform does not dominate the picture but is one click
+  away.
+- **Rail and impact.** The scope panel counts the platform hosts apart from the other external
+  hosts, the node kicker names the category, and the group offers no blast radius: the control
+  plane does not know the synthetic id, so the impact lens ignores it.
+- **Out of scope.** The drift map draws the union of two graphs with its own state and keeps
+  showing the hosts one by one; grouping there is a follow-up if real landscapes ask for it.
 
 ## Risks and open points
 

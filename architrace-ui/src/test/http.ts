@@ -185,6 +185,25 @@ export const demoGraph: TopologyGraph = {
 
 export const emptyGraph: TopologyGraph = { ...demoGraph, nodes: [], edges: [] };
 
+export const platformGraph: TopologyGraph = {
+  ...demoGraph,
+  nodes: [
+    ...demoGraph.nodes,
+    node("EXTERNAL", "external:flags.internal", "flags.internal", {
+      labels: { category: "platform" },
+    }),
+    node("EXTERNAL", "external:config.internal", "config.internal", {
+      labels: { category: "platform" },
+    }),
+  ],
+  edges: [
+    ...demoGraph.edges,
+    edge("service:orders-service", "external:flags.internal", "SYNC", 100, 1),
+    edge("service:orders-service", "external:config.internal", "SYNC", 50, 0),
+    edge("service:payments-service", "external:flags.internal", "SYNC", 30, 0),
+  ],
+};
+
 function finding(
   ruleId: string,
   severity: Finding["severity"],

@@ -161,11 +161,10 @@ followed by the follow-ups from the real-data round:
 
 ## Open points
 
-From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
-
-- B3, remaining part: the map groups the platform hosts (one node, dimmed edges, off by
-  default in the external lens) and the rail names the category. The control plane side is
-  done: `architrace.topology.platform-hosts` labels them and `UnknownExternal` skips them.
+B3 from the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round))
+is closed: `architrace.topology.platform-hosts` labels the hosts (ARCHI-73), `UnknownExternal`
+skips them (ARCHI-74) and the map groups them behind the **Platform** chip (ARCHI-75, on the
+[M4](../m4-service-map/) page).
 
 Candidates for a later release, all computable from the graph the agent already reports:
 `ChattyDependency` (a sync edge with a call count far above the median of the graph),
