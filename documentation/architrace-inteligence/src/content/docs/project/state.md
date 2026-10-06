@@ -66,16 +66,14 @@ Last updated: **2026-10-06**
   built (glob patterns, case folded; defaults for changelog, repartition and foreign-key join
   topics). Design notes on the M1 page.
 - **B4 (sub-millisecond latency) is in flight**, four pull requests because the twelve-file
-  gate does not fit the stack in two. ARCHI-78 (#100): the agent measures latency in
-  microseconds from `SpanRecord.latencyMicros()` through `EdgeObservation` into a
-  `LatencyHistogram` of twenty-seven base-two buckets from 1 µs to 2^26 µs; the bucket index
-  is the bit length of `latency - 1`. ARCHI-79: `EdgeMetricsSummary` and the protobuf
-  `EdgeMetrics` carry microseconds (`p50_micros` to `max_micros` on field numbers 7 to 10,
-  3 to 6 reserved). ARCHI-80 (open): the control plane domain `EdgeMetrics`, the merger and
-  `snapshot_edge` keep microseconds (changeset `0006-snapshot-edge-latency-micros` renames
-  the columns to `latency_*_us` and multiplies the stored values by one thousand, with a
-  rollback); `ApiModels` truncates to whole milliseconds for the unchanged Query API. Design
-  notes in the M1 follow-up.
+  gate does not fit the stack in two. Merged: the agent measures latency in microseconds
+  (#100, `LatencyHistogram` of twenty-seven base-two buckets from 1 µs to 2^26 µs) and the
+  protobuf contract carries them (#101, `p50_micros` to `max_micros` on field numbers 7 to
+  10, 3 to 6 reserved). ARCHI-80 (open): the control plane domain `EdgeMetrics`, the merger
+  and `snapshot_edge` keep microseconds (changeset `0006-snapshot-edge-latency-micros`
+  renames the columns to `latency_*_us` and multiplies the stored values by one thousand,
+  with a rollback); `ApiModels` truncates to whole milliseconds for the unchanged Query API.
+  Design notes in the M1 follow-up.
 - **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
   published images (two environments, one collector routing by environment to one agent each,
   Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
@@ -153,9 +151,10 @@ new agent files are written in palantir format even though the module-wide forma
 stays off until the legacy files are rewritten (M1 PR 5); the agent coverage ratchet only
 moves up. Working assumption: `project` is an agent setting, not a telemetry attribute.
 
-Latency unit since ARCHI-78 (working assumption, to confirm): the agent, the protobuf
-contract and the control plane carry integer microseconds; the Query API keeps the `*Millis`
-field names and reports fractional milliseconds with microsecond precision, so the UI model
+Latency unit since ARCHI-78: the agent, the protobuf contract and (with ARCHI-80) the
+control plane carry integer microseconds; `ApiModels` truncates to whole milliseconds until
+ARCHI-81. Working assumption for ARCHI-81, to confirm with the maintainer: the Query API keeps
+the `*Millis` field names and reports fractional milliseconds as `number`, so the UI model
 and the field names stay and only the formatter changes.
 
 Working assumption since ARCHI-26: a **scope** is project × environment × cluster, reported by
@@ -169,9 +168,8 @@ The MVP queue M0–M7, the real-data follow-ups B1 to B3 (#94 to #99), the first
 `v0.1.0` and the checklist (#98) are done. B4 continues, one pull request against `main` at a
 time, each with the next free ticket number:
 
-1. ARCHI-78 (#100), ARCHI-79 and ARCHI-80 (open): the agent measures, aggregates and
-   publishes latency in microseconds and the control plane stores them; `ApiModels` truncates
-   to whole milliseconds. Merge ARCHI-80, then:
+1. ARCHI-80 (open): the control plane domain `EdgeMetrics`, the merger and `snapshot_edge`
+   keep microseconds; `ApiModels` truncates to whole milliseconds. Merge ARCHI-80, then:
 2. ARCHI-81: the Query API fields `p50Millis` to `maxMillis` become `number` (fractional
    milliseconds), `formatMillis` in the UI shows `0.35 ms`; Requirements §9 and Progress
    close B4.
