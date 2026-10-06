@@ -51,7 +51,7 @@ const RULE_TABLE: readonly (readonly [string, string, Severity, string, string?]
     "unknown-external",
     "Unknown external",
     "LOW",
-    "any external host outside the allowlist",
+    "any external host outside the allowlist and the platform hosts",
     "allowlist",
   ],
   [

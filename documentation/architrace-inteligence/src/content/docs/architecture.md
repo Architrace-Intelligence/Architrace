@@ -167,9 +167,9 @@ Packages are organised by feature, each with the same inner shape:
 |---------|--------------------------------|---------------------|----------|
 | `agents` | `Agent`, `AgentHealth` | registry, liveness | gRPC, repository |
 | `ingestion` | `IncomingSnapshot` | validation, mapping to topology | gRPC |
-| `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent`, `NodeView`, `Page` | store, current graph, node views, history, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`: controllers, model mapping, problem details) |
+| `topology` | `Scope`, `Snapshot`, `TopologyNode`, `TopologyEdge`, `Agent`, `NodeView`, `Page` | store, current graph with `PlatformHosts` classification, node views, history, retention | Spring Data JDBC (`topology.persistence`), REST (`topology.web`: controllers, model mapping, problem details) |
 | `drift` | `GraphRef`, `NodeChange`, `TopologyDiff`, `DiffMode` | `GraphDiffer`, `DriftQuery` | REST (`drift.web`) |
-| `rules` | `ArchitectureRule` (sealed, seven rules), `Finding`, `Impact`, `RulesProperties` | `RuleEngine`, `ImpactAnalysis`, `StronglyConnectedComponents`, `RuleEvaluator` (after ingest, bounded per scope), `FindingsQuery` | `FindingStore` over Spring Data JDBC (`rules.persistence`), REST (`rules.web`) |
+| `rules` | `ArchitectureRule` (sealed, eight rules), `Finding`, `Impact`, `RulesProperties` | `RuleEngine`, `ImpactAnalysis`, `StronglyConnectedComponents`, `RuleEvaluator` (after ingest, bounded per scope), `FindingsQuery` | `FindingStore` over Spring Data JDBC (`rules.persistence`), REST (`rules.web`) |
 | `web` | | | OpenAPI document, Swagger UI, UI bundle with single-page fallback |
 
 Design detail: [M2](../project/features/m2-control-plane-storage/), [M3](../project/features/m3-query-api/),

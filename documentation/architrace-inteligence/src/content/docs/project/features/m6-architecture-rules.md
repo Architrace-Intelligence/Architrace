@@ -50,7 +50,7 @@ graph the map and the drift use.
 | CrossDomainCoupling | a service with sync edges into services of more than N other domains (the domain is parsed from `service:{domain}/{name}`) | 3 domains | medium |
 | FanInHub | a service with inbound sync degree above N (direct callers, a coupling hotspot) | 8 | medium |
 | LongSyncChain | the longest sync path from an entry node (a node nobody calls), over the condensation of the strongly connected components: a cycle collapses to its smallest member and has its own finding, a database or external host counts as the last hop | 5 hops | medium |
-| UnknownExternal | an external node not in the allowlist | empty allowlist | low |
+| UnknownExternal | an external node that is neither in the allowlist nor a platform host (label `category=platform`, set from `architrace.topology.platform-hosts` by the topology query; B3) | empty allowlist | low |
 | DataStreamWithoutProducer | a topic with `consume` edges but no `publish` edge in the observed traces, usually an outbox filled by change data capture (B2) | none | low |
 
 ### Blast radius
@@ -138,7 +138,8 @@ Propagation follows the data, edge kind by edge kind:
 
 ## Delivery plan
 
-Delivered as eleven pull requests against `main`, one at a time, each at most twelve files:
+Delivered as eleven pull requests against `main`, one at a time, each at most twelve files,
+followed by the follow-ups from the real-data round:
 
 1. Engine, `CyclicDependency`, `SharedDatabase`, `UnknownExternal`, configuration, tests
    (ARCHI-53).
@@ -155,13 +156,16 @@ Delivered as eleven pull requests against `main`, one at a time, each at most tw
 10. Impact lens and the rail card (ARCHI-62).
 11. User guide and documentation close-out (ARCHI-63).
 12. `DataStreamWithoutProducer`, the B2 insight from the real-data round (ARCHI-72).
+13. B3 in the control plane: the platform hosts labelled in every served graph (ARCHI-73)
+    and treated as known by `UnknownExternal` (ARCHI-74).
 
 ## Open points
 
 From the real-data round ([Requirements §9](../../requirements/#9-backlog-from-the-first-real-data-test-round)):
 
-- B3: a platform category in the external allowlist (feature-flag server, config server) so
-  these hosts are grouped on the map and skipped by `UnknownExternal`.
+- B3, remaining part: the map groups the platform hosts (one node, dimmed edges, off by
+  default in the external lens) and the rail names the category. The control plane side is
+  done: `architrace.topology.platform-hosts` labels them and `UnknownExternal` skips them.
 
 Candidates for a later release, all computable from the graph the agent already reports:
 `ChattyDependency` (a sync edge with a call count far above the median of the graph),

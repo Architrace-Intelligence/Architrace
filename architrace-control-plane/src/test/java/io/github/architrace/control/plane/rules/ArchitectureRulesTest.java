@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.github.architrace.control.plane.topology.EdgeKind;
 import io.github.architrace.control.plane.topology.NodeAttributes;
 import io.github.architrace.control.plane.topology.NodeType;
+import io.github.architrace.control.plane.topology.PlatformHosts;
 import io.github.architrace.control.plane.topology.TestTopology;
 import io.github.architrace.control.plane.topology.TopologyEdge;
 import io.github.architrace.control.plane.topology.TopologyGraph;
@@ -418,6 +419,19 @@ class ArchitectureRulesTest {
             assertThat(findings.getFirst().evidence()).isEmpty();
             assertThat(findings.getFirst().detail())
                     .isEqualTo("api.github.com is not on the allowlist of known external systems");
+        }
+
+        @Test
+        void treatsTheConfiguredPlatformHostsAsKnown() {
+            TopologyNode flags = external("flags.platform.internal");
+            TopologyGraph graph = new PlatformHosts(Set.of("flags.platform.internal"))
+                    .classify(graph(
+                            List.of(checkout, orders, flags, stripe),
+                            List.of(sync(checkout, flags), sync(orders, flags), sync(orders, stripe))));
+
+            List<Finding> findings = new UnknownExternal(Set.of()).evaluate(graph);
+
+            assertThat(findings).extracting(Finding::subjectNodeIds).containsExactly(List.of("ext:api.stripe.com"));
         }
     }
 
