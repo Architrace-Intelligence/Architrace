@@ -27,6 +27,11 @@ export const NODE_TYPE_LABELS: Record<NodeType, NodeTypeLabel> = {
   EXTERNAL: { singular: "External", plural: "External" },
 };
 
+export const PLATFORM_CATEGORY = "platform";
+export const PLATFORM_GROUP_ID = "platform";
+const PLATFORM_GROUP_NAME = "Platform";
+const HOSTS_LABEL = "hosts";
+
 export type NodeTypeToken = "svc" | "db" | "topic" | "ext";
 
 export const NODE_TYPE_TOKENS: Record<NodeType, NodeTypeToken> = {
@@ -58,6 +63,7 @@ export type Selection =
 
 export interface MapState {
   readonly hidden: readonly NodeType[];
+  readonly platform: boolean;
   readonly namespace: string | undefined;
   readonly lens: Lens;
   readonly query: string;
@@ -67,6 +73,7 @@ export interface MapState {
 
 export const INITIAL_MAP_STATE: MapState = {
   hidden: [],
+  platform: false,
   namespace: undefined,
   lens: "all",
   query: "",
@@ -174,6 +181,7 @@ export function parseMapState(params: URLSearchParams): MapState {
   const namespace = params.get("ns");
   return {
     hidden: NODE_TYPES.filter((type) => requested.includes(type)),
+    platform: params.get("platform") === "on",
     namespace: namespace === null || namespace === "" ? undefined : namespace,
     lens: LENSES.find((lens) => lens === params.get("lens")) ?? "all",
     query: params.get("q") ?? "",
@@ -198,6 +206,9 @@ export function toMapParams(state: MapState): URLSearchParams {
   state.hidden.forEach((type) => {
     params.append("hide", type);
   });
+  if (state.platform) {
+    params.set("platform", "on");
+  }
   if (state.namespace !== undefined) {
     params.set("ns", state.namespace);
   }
@@ -232,12 +243,82 @@ export function countByType(nodes: readonly TopologyNode[]): Record<NodeType, nu
   );
 }
 
+export function isPlatformHost(node: TopologyNode): boolean {
+  return node.type === "EXTERNAL" && node.labels.category === PLATFORM_CATEGORY;
+}
+
+export function platformHosts(graph: TopologyGraph): TopologyNode[] {
+  return graph.nodes.filter(isPlatformHost);
+}
+
+export function platformView(graph: TopologyGraph, state: MapState): TopologyGraph {
+  const hosts = platformHosts(graph);
+  if (hosts.length === 0) {
+    return graph;
+  }
+  const ids = new Set(hosts.map((host) => host.id));
+  const nodes = graph.nodes.filter((node) => !ids.has(node.id));
+  const untouched = graph.edges.filter(
+    (edge) => !ids.has(edge.sourceId) && !ids.has(edge.targetId),
+  );
+  if (!state.platform) {
+    return { ...graph, nodes, edges: untouched };
+  }
+  const toGroup = (id: string) => (ids.has(id) ? PLATFORM_GROUP_ID : id);
+  const grouped = graph.edges
+    .filter((edge) => ids.has(edge.sourceId) || ids.has(edge.targetId))
+    .map((edge) => ({
+      ...edge,
+      sourceId: toGroup(edge.sourceId),
+      targetId: toGroup(edge.targetId),
+    }))
+    .filter((edge) => edge.sourceId !== edge.targetId)
+    .reduce<Map<string, TopologyEdge>>((merged, edge) => {
+      const id = edgeId(edge);
+      const previous = merged.get(id);
+      return merged.set(
+        id,
+        previous === undefined
+          ? edge
+          : { ...edge, metrics: mergeMetrics(previous.metrics, edge.metrics) },
+      );
+    }, new Map());
+  return {
+    ...graph,
+    nodes: [...nodes, platformGroup(hosts)],
+    edges: [...untouched, ...grouped.values()],
+  };
+}
+
+function platformGroup(hosts: readonly TopologyNode[]): TopologyNode {
+  const names = hosts.map((host) => host.name).sort((left, right) => left.localeCompare(right));
+  return {
+    id: PLATFORM_GROUP_ID,
+    type: "EXTERNAL",
+    name: PLATFORM_GROUP_NAME,
+    versions: [],
+    deployments: [],
+    labels: { category: PLATFORM_CATEGORY, [HOSTS_LABEL]: names.join(", ") },
+  };
+}
+
+function mergeMetrics(left: EdgeMetrics, right: EdgeMetrics): EdgeMetrics {
+  return {
+    calls: left.calls + right.calls,
+    errors: left.errors + right.errors,
+    p50Millis: Math.max(left.p50Millis, right.p50Millis),
+    p95Millis: Math.max(left.p95Millis, right.p95Millis),
+    p99Millis: Math.max(left.p99Millis, right.p99Millis),
+    maxMillis: Math.max(left.maxMillis, right.maxMillis),
+  };
+}
+
 export function visibleGraph(graph: TopologyGraph, state: MapState): VisibleGraph {
-  const shown = graph.nodes.filter((node) => !state.hidden.includes(node.type));
-  const nodes =
-    state.namespace === undefined ? shown : neighbourhood(graph, shown, state.namespace);
+  const view = platformView(graph, state);
+  const shown = view.nodes.filter((node) => !state.hidden.includes(node.type));
+  const nodes = state.namespace === undefined ? shown : neighbourhood(view, shown, state.namespace);
   const ids = new Set(nodes.map((node) => node.id));
-  const edges = graph.edges.filter((edge) => ids.has(edge.sourceId) && ids.has(edge.targetId));
+  const edges = view.edges.filter((edge) => ids.has(edge.sourceId) && ids.has(edge.targetId));
   return { nodes, edges };
 }
 
@@ -286,6 +367,9 @@ export function edgeId(edge: TopologyEdge): string {
 export function subtitle(node: TopologyNode): string {
   if (node.versions.length > 0) {
     return node.versions.map((version) => `v${version}`).join(", ");
+  }
+  if (node.id === PLATFORM_GROUP_ID) {
+    return node.labels[HOSTS_LABEL] ?? node.id;
   }
   const namespaces = namespacesOf(node);
   return namespaces.length > 0 ? namespaces.join(", ") : node.id;
@@ -391,11 +475,16 @@ export function looks(visible: VisibleGraph, state: MapState, impact?: ImpactOve
         (selection !== undefined &&
           !isTouching &&
           !(state.lens === "impact" && impact !== undefined)) ||
-        (state.lens === "streams" && edge.kind === "SYNC");
+        (state.lens === "streams" && edge.kind === "SYNC") ||
+        (touchesPlatform(edge) && !isTouching);
       return [id, { touching: isTouching, dimmed }];
     }),
   );
   return { nodes, edges };
+}
+
+function touchesPlatform(edge: TopologyEdge): boolean {
+  return edge.sourceId === PLATFORM_GROUP_ID || edge.targetId === PLATFORM_GROUP_ID;
 }
 
 function isPresent(visible: VisibleGraph, selection: Selection | undefined): boolean {

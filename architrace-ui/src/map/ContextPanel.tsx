@@ -22,6 +22,9 @@ import {
   NODE_TYPE_LABELS,
   type NodeDetails,
   nodeDetails,
+  PLATFORM_GROUP_ID,
+  platformHosts,
+  platformView,
   type Selection,
   type StreamSummary,
   streams,
@@ -52,9 +55,10 @@ export function ContextPanel({
   onImpact,
 }: ContextPanelProps) {
   const environment = graph.scope.environment;
-  const node =
-    state.selection?.kind === "node" ? nodeDetails(graph, state.selection.id) : undefined;
+  const view = platformView(graph, state);
+  const node = state.selection?.kind === "node" ? nodeDetails(view, state.selection.id) : undefined;
   if (node !== undefined) {
+    const grouped = node.node.id === PLATFORM_GROUP_ID;
     return (
       <NodePanel
         details={node}
@@ -62,13 +66,12 @@ export function ContextPanel({
         onSelect={onSelect}
         findings={findings === undefined ? undefined : findingsOf(findings, node.node.id)}
         impact={impact?.subject.id === node.node.id ? impact : undefined}
-        onImpact={state.lens === "impact" ? undefined : onImpact}
+        onImpact={state.lens === "impact" || grouped ? undefined : onImpact}
         names={new Map(graph.nodes.map((candidate) => [candidate.id, candidate.name]))}
       />
     );
   }
-  const edge =
-    state.selection?.kind === "edge" ? edgeDetails(graph, state.selection.id) : undefined;
+  const edge = state.selection?.kind === "edge" ? edgeDetails(view, state.selection.id) : undefined;
   if (edge !== undefined) {
     return <EdgePanel details={edge} environment={environment} onSelect={onSelect} />;
   }
@@ -82,6 +85,7 @@ interface ScopePanelProps {
 
 function ScopePanel({ graph, onSelect }: ScopePanelProps) {
   const counts = countByType(graph.nodes);
+  const platform = platformHosts(graph).length;
   const streamEdges = graph.edges.filter((edge) => edge.kind !== "SYNC").length;
   const namespaces = new Set(graph.nodes.flatMap(namespacesOf)).size;
   const summaries = streams(graph);
@@ -105,7 +109,13 @@ function ScopePanel({ graph, onSelect }: ScopePanelProps) {
           <dt>Data streams</dt>
           <dd>{counts.TOPIC}</dd>
           <dt>External hosts</dt>
-          <dd>{counts.EXTERNAL}</dd>
+          <dd>{counts.EXTERNAL - platform}</dd>
+          {platform > 0 && (
+            <>
+              <dt>Platform hosts</dt>
+              <dd>{platform}</dd>
+            </>
+          )}
           <dt>Dependencies</dt>
           <dd>
             {graph.edges.length}{" "}
@@ -166,6 +176,7 @@ function NodePanel({
   names,
 }: NodePanelProps) {
   const { node, inbound, outbound } = details;
+  const category = node.labels.category;
   const namespaces = namespacesOf(node);
   const clusters = clustersOf(node);
   const syncIn = inbound.filter((dependency) => dependency.edge.kind === "SYNC");
@@ -179,7 +190,8 @@ function NodePanel({
       <div className="panel-head">
         <div className="panel-row">
           <span className="panel-kicker">
-            {NODE_TYPE_LABELS[node.type].singular} · {environment}
+            {NODE_TYPE_LABELS[node.type].singular}
+            {category === undefined ? "" : ` · ${category}`} · {environment}
           </span>
           <CloseButton onSelect={onSelect} />
         </div>
