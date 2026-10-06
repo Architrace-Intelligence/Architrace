@@ -52,7 +52,7 @@ class TopologyModelTest {
                 .withMessageContaining("calls");
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new EdgeMetrics(1, 0, 0, 0, -5, 0))
-                .withMessageContaining("p99Millis");
+                .withMessageContaining("p99Micros");
     }
 
     @Test

@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0006-snapshot-edge-latency-micros
+      author: dmytro.hryshchenko
+      changes:
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_p50_ms
+            newColumnName: latency_p50_us
+            columnDataType: bigint
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_p95_ms
+            newColumnName: latency_p95_us
+            columnDataType: bigint
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_p99_ms
+            newColumnName: latency_p99_us
+            columnDataType: bigint
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_max_ms
+            newColumnName: latency_max_us
+            columnDataType: bigint
+        - update:
+            tableName: snapshot_edge
+            columns:
+              - column:
+                  name: latency_p50_us
+                  valueComputed: latency_p50_us * 1000
+              - column:
+                  name: latency_p95_us
+                  valueComputed: latency_p95_us * 1000
+              - column:
+                  name: latency_p99_us
+                  valueComputed: latency_p99_us * 1000
+              - column:
+                  name: latency_max_us
+                  valueComputed: latency_max_us * 1000
+      rollback:
+        - update:
+            tableName: snapshot_edge
+            columns:
+              - column:
+                  name: latency_p50_us
+                  valueComputed: latency_p50_us / 1000
+              - column:
+                  name: latency_p95_us
+                  valueComputed: latency_p95_us / 1000
+              - column:
+                  name: latency_p99_us
+                  valueComputed: latency_p99_us / 1000
+              - column:
+                  name: latency_max_us
+                  valueComputed: latency_max_us / 1000
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_p50_us
+            newColumnName: latency_p50_ms
+            columnDataType: bigint
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_p95_us
+            newColumnName: latency_p95_ms
+            columnDataType: bigint
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_p99_us
+            newColumnName: latency_p99_ms
+            columnDataType: bigint
+        - renameColumn:
+            tableName: snapshot_edge
+            oldColumnName: latency_max_us
+            newColumnName: latency_max_ms
+            columnDataType: bigint

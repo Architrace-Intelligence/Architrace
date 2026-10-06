@@ -14,7 +14,7 @@ record SnapshotEdgeRow(
         String kind,
         long calls,
         long errors,
-        long latencyP50Ms,
-        long latencyP95Ms,
-        long latencyP99Ms,
-        long latencyMaxMs) {}
+        long latencyP50Us,
+        long latencyP95Us,
+        long latencyP99Us,
+        long latencyMaxUs) {}

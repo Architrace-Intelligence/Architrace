@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/0001-initial-schema.yaml
   - include:
       file: db/changelog/0002-finding.yaml
+  - include:
+      file: db/changelog/0003-snapshot-edge-latency-micros.yaml

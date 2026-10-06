@@ -5,15 +5,15 @@
 
 package io.github.architrace.control.plane.topology;
 
-public record EdgeMetrics(long calls, long errors, long p50Millis, long p95Millis, long p99Millis, long maxMillis) {
+public record EdgeMetrics(long calls, long errors, long p50Micros, long p95Micros, long p99Micros, long maxMicros) {
 
     public EdgeMetrics {
         requireNonNegative(calls, "calls");
         requireNonNegative(errors, "errors");
-        requireNonNegative(p50Millis, "p50Millis");
-        requireNonNegative(p95Millis, "p95Millis");
-        requireNonNegative(p99Millis, "p99Millis");
-        requireNonNegative(maxMillis, "maxMillis");
+        requireNonNegative(p50Micros, "p50Micros");
+        requireNonNegative(p95Micros, "p95Micros");
+        requireNonNegative(p99Micros, "p99Micros");
+        requireNonNegative(maxMicros, "maxMicros");
     }
 
     private static void requireNonNegative(long value, String field) {

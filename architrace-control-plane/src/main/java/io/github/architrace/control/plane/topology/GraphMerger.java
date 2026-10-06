@@ -60,9 +60,9 @@ public final class GraphMerger {
                 new EdgeMetrics(
                         a.calls() + b.calls(),
                         a.errors() + b.errors(),
-                        Math.max(a.p50Millis(), b.p50Millis()),
-                        Math.max(a.p95Millis(), b.p95Millis()),
-                        Math.max(a.p99Millis(), b.p99Millis()),
-                        Math.max(a.maxMillis(), b.maxMillis())));
+                        Math.max(a.p50Micros(), b.p50Micros()),
+                        Math.max(a.p95Micros(), b.p95Micros()),
+                        Math.max(a.p99Micros(), b.p99Micros()),
+                        Math.max(a.maxMicros(), b.maxMicros())));
     }
 }

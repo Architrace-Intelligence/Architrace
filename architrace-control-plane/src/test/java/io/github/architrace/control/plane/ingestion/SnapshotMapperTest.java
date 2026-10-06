@@ -54,7 +54,8 @@ class SnapshotMapperTest {
         assertThat(service.attributes().deployments()).containsExactly(new Deployment("k8s-prod-eu1", "orders"));
         assertThat(service.attributes().labels()).containsEntry("replicas", "3");
         assertThat(snapshot.edges()).extracting(TopologyEdge::kind).containsExactly(EdgeKind.SYNC, EdgeKind.PUBLISH);
-        assertThat(snapshot.edges().getFirst().metrics()).isEqualTo(new EdgeMetrics(24000, 3, 3, 9, 22, 140));
+        assertThat(snapshot.edges().getFirst().metrics())
+                .isEqualTo(new EdgeMetrics(24000, 3, 3_000, 9_000, 22_000, 140_000));
     }
 
     @Test

@@ -96,10 +96,10 @@ final class SnapshotRows {
                 edge.kind().name(),
                 m.calls(),
                 m.errors(),
-                m.p50Millis(),
-                m.p95Millis(),
-                m.p99Millis(),
-                m.maxMillis());
+                m.p50Micros(),
+                m.p95Micros(),
+                m.p99Micros(),
+                m.maxMicros());
     }
 
     private static TopologyEdge toEdge(SnapshotEdgeRow row) {
@@ -110,9 +110,9 @@ final class SnapshotRows {
                 new EdgeMetrics(
                         row.calls(),
                         row.errors(),
-                        row.latencyP50Ms(),
-                        row.latencyP95Ms(),
-                        row.latencyP99Ms(),
-                        row.latencyMaxMs()));
+                        row.latencyP50Us(),
+                        row.latencyP95Us(),
+                        row.latencyP99Us(),
+                        row.latencyMaxUs()));
     }
 }

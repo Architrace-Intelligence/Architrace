@@ -34,7 +34,8 @@ public final class TestTopology {
     }
 
     public static TopologyEdge edge(TopologyNode source, TopologyNode target, EdgeKind kind, long calls) {
-        return new TopologyEdge(source.id(), target.id(), kind, new EdgeMetrics(calls, 0, 5, 10, 20, 50));
+        return new TopologyEdge(
+                source.id(), target.id(), kind, new EdgeMetrics(calls, 0, 5_000, 10_000, 20_000, 50_000));
     }
 
     public static Snapshot snapshot(
