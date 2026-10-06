@@ -55,10 +55,10 @@ public final class SnapshotProtoMapper {
                 .setMetrics(EdgeMetrics.newBuilder()
                         .setCalls(metrics.calls())
                         .setErrors(metrics.errors())
-                        .setP50Millis(metrics.p50Millis())
-                        .setP95Millis(metrics.p95Millis())
-                        .setP99Millis(metrics.p99Millis())
-                        .setMaxMillis(metrics.maxMillis()))
+                        .setP50Micros(metrics.p50Micros())
+                        .setP95Micros(metrics.p95Micros())
+                        .setP99Micros(metrics.p99Micros())
+                        .setMaxMicros(metrics.maxMicros()))
                 .build();
     }
 

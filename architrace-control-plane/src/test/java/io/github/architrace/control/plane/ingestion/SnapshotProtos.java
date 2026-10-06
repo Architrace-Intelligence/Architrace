@@ -58,9 +58,9 @@ public final class SnapshotProtos {
                 .setMetrics(EdgeMetrics.newBuilder()
                         .setCalls(calls)
                         .setErrors(errors)
-                        .setP50Millis(3)
-                        .setP95Millis(9)
-                        .setP99Millis(22)
-                        .setMaxMillis(140));
+                        .setP50Micros(3_000)
+                        .setP95Micros(9_000)
+                        .setP99Micros(22_000)
+                        .setMaxMicros(140_000));
     }
 }

@@ -63,7 +63,7 @@ class GraphWindowTest {
             assertThat(node.deployments()).isEmpty();
         });
         assertThat(snapshot.edges())
-                .containsExactly(new SnapshotEdge(key, new EdgeMetricsSummary(2, 1, 16, 30, 30, 30)));
+                .containsExactly(new SnapshotEdge(key, new EdgeMetricsSummary(2, 1, 16_384, 30_000, 30_000, 30_000)));
         assertThat(snapshot.isEmpty()).isFalse();
     }
 

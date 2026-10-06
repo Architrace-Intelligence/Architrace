@@ -6,4 +6,4 @@
 package io.github.architrace.graph;
 
 public record EdgeMetricsSummary(
-        long calls, long errors, long p50Millis, long p95Millis, long p99Millis, long maxMillis) {}
+        long calls, long errors, long p50Micros, long p95Micros, long p99Micros, long maxMicros) {}

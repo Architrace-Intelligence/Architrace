@@ -30,7 +30,9 @@ the agent pipeline (M1).
 A `SnapshotNode` has `id`, `type` (`SERVICE`, `DATABASE`, `TOPIC`, `EXTERNAL`), `name`,
 `versions[]`, `deployments[]` (`cluster`, `namespace`) and free-form `labels`. A
 `SnapshotEdge` has `source_id`, `target_id`, `kind` (`SYNC`, `PUBLISH`, `CONSUME`) and
-`EdgeMetrics`: `calls`, `errors`, `p50_millis`, `p95_millis`, `p99_millis`, `max_millis`.
+`EdgeMetrics`: `calls`, `errors` and the latency percentiles `p50_micros`, `p95_micros`,
+`p99_micros`, `max_micros` in microseconds (field numbers `3` to `6`, the former `*_millis`
+values, are reserved since ARCHI-79).
 Node ids follow the [topology model](../../architecture/#topology-model); every edge must
 reference nodes of the same snapshot.
 

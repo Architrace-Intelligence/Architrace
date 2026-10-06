@@ -64,20 +64,20 @@ class LatencyHistogramTest {
     }
 
     @Test
-    void edgeMetricsSummariseCallsErrorsAndLatenciesInWholeMillis() {
+    void edgeMetricsSummariseCallsErrorsAndLatenciesInMicros() {
         EdgeMetrics metrics = new EdgeMetrics();
         metrics.observe(5_000, false);
         metrics.observe(40_000, true);
         metrics.observe(900_000, false);
 
-        assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(3, 1, 65, 900, 900, 900));
+        assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(3, 1, 65_536, 900_000, 900_000, 900_000));
     }
 
     @Test
-    void edgeMetricsTruncateSubMillisecondLatenciesToZero() {
+    void edgeMetricsKeepSubMillisecondLatencies() {
         EdgeMetrics metrics = new EdgeMetrics();
         metrics.observe(350, false);
 
-        assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(1, 0, 0, 0, 0, 0));
+        assertThat(metrics.summary()).isEqualTo(new EdgeMetricsSummary(1, 0, 350, 350, 350, 350));
     }
 }
