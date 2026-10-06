@@ -212,7 +212,7 @@ jobs:
           version="$(./gradlew -q printReleaseVersion | tail -n 1)"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           if [ -z "$latest" ]; then
-            echo "::notice::No release tag exists yet; create v0.1.0 on main to enable automatic releases."
+            echo "::notice::No release tag exists yet; seed v0.0.0 on the commit before the first releasable one to enable automatic releases."
             echo "released=false" >> "$GITHUB_OUTPUT"
           elif [ "v$version" = "$latest" ]; then
             echo "::notice::Nothing releasable since $latest."

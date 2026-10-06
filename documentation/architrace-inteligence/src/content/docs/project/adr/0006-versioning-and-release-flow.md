@@ -31,7 +31,9 @@ steps (P2). Commit subjects already follow Conventional Commits with the ticket 
   reads; a title check runs in the PR pipeline.
 - A wrong type in a title changes the next version; fixing it means a follow-up commit, not a
   history rewrite.
-- The first release is `v0.1.0`, created manually once to seed the tag history.
+- The tag history is seeded once by hand with `v0.0.0` on the commit before the first
+  releasable one; the pipeline then produces `v0.1.0` like every later release (done on
+  2026-10-06, amended from "`v0.1.0` created manually").
 
 ## Alternatives considered
 

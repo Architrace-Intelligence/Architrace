@@ -75,8 +75,8 @@ main.yml      build ──► quality ──► security ──► release ─�
   edit does not rebuild.
 - `release` (main only): `printReleaseVersion` against the latest `v*` tag; when they differ, write
   the release notes, tag `vX.Y.Z`, rebuild the jars under the tag and publish the GitHub release
-  with the notes and both jars. Without any tag the job only reports that `v0.1.0` has to be
-  seeded.
+  with the notes and both jars. Without any tag the job only reports that a seed tag is
+  missing.
 - `images` (main only): build the agent and control plane images from the prebuilt jars, upload
   a Trivy SARIF to code scanning, fail on fixable critical findings, push to GHCR as
   `sha-<short>` on every merge and additionally as `X.Y.Z` and `latest` on a release.
@@ -148,7 +148,7 @@ What landed and the decisions behind it:
   JGit and applies the highest bump (`!` or `BREAKING CHANGE` → major, `feat` → minor, `fix`,
   `perf`, `refactor`, `build` → patch, anything else → none). Between tags the version is
   `X.Y.Z-<sha>-SNAPSHOT`, on the tag `X.Y.Z`; without any tag it stays `0.1.0-<sha>-SNAPSHOT`
-  until the maintainer seeds `v0.1.0`. Tasks: `printVersion`, `printReleaseVersion`,
+  until a seed tag exists (`v0.0.0` since 2026-10-06; the pipeline released `v0.1.0` from it). Tasks: `printVersion`, `printReleaseVersion`,
   `releaseNotes` (Markdown grouped by type, scope in bold, `#NN` linked to the pull request,
   `-PreleaseNotes.since=<tag>` to pick the base). `gradle.properties` carries no version; the
   CLI (`version`, `--version`) and the agent registration read `Implementation-Version` from
@@ -267,7 +267,8 @@ What landed and the decisions behind it:
   `main` never cancels a run: a release in flight must finish.
 - **`release`** runs after the three gates. It compares `printReleaseVersion` (last line of a
   quiet Gradle run) with `git describe --tags --match 'v*'`: no tag at all → notice to seed
-  `v0.1.0` and no release (ADR 0006 keeps the first tag manual); equal → nothing releasable
+  `v0.0.0` and no release (ADR 0006: the seed tag is manual, every release tag is the
+  pipeline's); equal → nothing releasable
   (docs, ci, chore merges); different → `releaseNotes` first (its default base is the previous
   tag, so it must run before tagging), then the annotated tag is pushed with `GITHUB_TOKEN`
   (events from that token start no workflows, so nothing recurses), the jars are rebuilt under
@@ -348,10 +349,11 @@ What landed and the decisions behind it:
   the step is skipped with a warning wherever it is absent.
 - Snyk runs only where `SNYK_TOKEN` is available (repository and Dependabot secret). The PAT
   expires on 2026-12-31 and has to be rotated before.
-- Open maintainer actions after PR 5: apply the ruleset and the repository settings, install
-  the CodeRabbit app, seed `v0.1.0`, make the GHCR packages public once the first successful
-  `images` run has created them (they start private), close Dependabot #45 (it edits the
-  removed `ci-cd.yml`). Until the ruleset is active the gate is discipline, not platform.
+- Maintainer actions after PR 5, done on 2026-10-06 (ARCHI-76 records them): the ruleset
+  verified active, the repository settings applied, the GHCR packages public (the
+  organisation setting *Package creation → Public* first), the seed tag `v0.0.0` pushed and
+  the first release `v0.1.0` produced by a `workflow_dispatch` of the main pipeline,
+  Dependabot #45 closed, the CodeRabbit app installed (first review on #98).
 - Dependabot cannot regenerate Gradle lockfiles, so its Gradle pull requests fail `build`;
   dependency bumps are taken over in maintainer pull requests until a lockfile-refresh step
   exists.

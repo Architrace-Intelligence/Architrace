@@ -20,11 +20,11 @@ Last updated: **2026-10-06**
   design (ARCHI-50, #63), the pull request size gate (ARCHI-51, #64) and the pipeline order
   (ARCHI-52, #65), M6 (#66–#70, #75–#80), the Snyk hotfix (#71) and Gradle 9.8.0 (#74). The
   `main` pipeline is green end to end; both images are in GHCR.
-- **M0 is complete in the repository.** What remains is the maintainer checklist on the
-  [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: apply the
-  ruleset (`.github/rulesets/main.json`) and the repository settings (§5 there), install the
-  CodeRabbit app, make the two GHCR packages public, seed `v0.1.0`. Until the ruleset is active
-  the merge gate is discipline, not platform.
+- **M0 is complete**, including the maintainer checklist on the
+  [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page: the `main`
+  ruleset is active, squash is the only merge method, CodeRabbit reviews every non-draft
+  pull request, both GHCR packages are public and `v0.1.0` is released (the seed tag is
+  `v0.0.0`).
 - **M1, M4 and M5 are done**, see the [M1](../features/m1-agent-pipeline/),
   [M4](../features/m4-service-map/) and [M5](../features/m5-drift/) pages. Lesson recorded on
   2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working
@@ -49,7 +49,7 @@ Last updated: **2026-10-06**
   skipped over every JUnit report) and `badges/version.json` with the documentation site;
   the README shows the pipeline, CodeQL, tests, SonarCloud quality gate and coverage, Snyk, the
   release and the version on `main`, the images, and the stack versions read live from the
-  repository files. The release badge says "no releases found" until `v0.1.0` exists.
+  repository files. The release badge shows `v0.1.0` since 2026-10-06.
 - B2 from the real-data round (ARCHI-72, #94): the rule `DataStreamWithoutProducer` (id
   `data-stream-without-producer`, low, no threshold) reports a topic with consumers but no
   producer in the observed traces as the outbox insight; subject is the topic, evidence the
@@ -61,27 +61,13 @@ Last updated: **2026-10-06**
   default and groups them into one node `platform` behind the **Platform** chip
   (`platformView` in `map/model.ts`, `platform=on` in the URL; the drift map still shows them
   one by one). Design notes on the M4 and M6 pages.
-- **M7 is in progress.** PR 1 (ARCHI-64, #81) adds `demo/`: `docker-compose.yml` with the
-  control plane, one agent per environment (`agent-dev.yaml`, `agent-stage.yaml`), one
-  OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
-  external host and four Flask services from one parameterised `services/app.py` (`ROLE`), plus
-  the rewritten [Docker demo](../../guides/docker-demo/) guide. Validated end to end with
-  locally built images (DEV: cycle,
-  shared database, three blast radii, unknown external; STAGE drift: version and missing
-  back-call). PR 2 (ARCHI-65, #82) points the README, `AGENTS.md`, `SECURITY.md`, the
-  getting-started, local-development and modules pages, the architecture page and the M7
-  page at `demo/`. Gotchas recorded on the M7 page: the control plane's
-  `architrace.ingestion.snapshot-interval` overrides the agent's interval; the Python
-  requests instrumentation needs `OTEL_SEMCONV_STABILITY_OPT_IN=http` to emit
-  `server.address`; `psycopg2-binary` needs `skip_dep_check`. PR 3 (ARCHI-66, #83) removes
-  `otel-test-app/` and moves the Snyk excludes and the Dependabot pip entry to `demo/`. PR 4
-  (ARCHI-67, #90) closes M7: the deployment guide (control plane, one agent per environment,
-  collector snippet, the Spring Boot instrumentation section of B6, a checklist), B5 (the
-  agent image's health check probes `/health` on `ARCHITRACE_METRICS_PORT`, `4319` is the one
-  default OTLP port, the demo drops its workaround) and B7 (the delay explained next to
-  `buffers.pending-ttl-seconds`). The GHCR packages are still private (maintainer
-  checklist), so `docker compose up` on a clean machine waits for that; the MVP (M0 to M7) is
-  complete once #90 is merged.
+- **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
+  published images (two environments, one collector routing by environment to one agent each,
+  Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
+  Gotchas (the control plane's `architrace.ingestion.snapshot-interval` overrides the agent's
+  interval; the Python requests instrumentation needs `OTEL_SEMCONV_STABILITY_OPT_IN=http`;
+  `psycopg2-binary` needs `skip_dep_check`) are on the [M7](../features/m7-packaging-demo/)
+  page. The MVP (M0 to M7) is complete.
 - Backlog B1–B7 from the first real-data round is in
   [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) and on
   the M1, M6 and M7 pages.
@@ -130,8 +116,8 @@ the map draws a diff through an overlay prop, not through a second map.
 Build conventions since ARCHI-33: new Java modules apply `architrace.java` (or
 `architrace.spring-boot`); third-party plugins are applied by id, their versions live in the
 catalog and on the `build-logic` classpath; switches stay exhaustive instead of carrying a
-`default`; the first release tag `v0.1.0` is created manually by the maintainer, everything
-after it is computed.
+`default`; the seed tag `v0.0.0` was created by hand, every release tag (`v0.1.0` first) is
+computed and pushed by the main pipeline.
 
 Pipeline conventions since ARCHI-34: every job name is a required-check name; actions are pinned
 by commit SHA with the version in a trailing comment (Dependabot keeps both current); a scanner
@@ -159,14 +145,12 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7 and the follow-ups up to B3 part 2 (#96) are merged. Merge B3 part 3
-(ARCHI-75, the Platform chip on the map). Then continue, one pull request against `main` at a
-time, each with the next free ticket number:
+The MVP queue M0–M7, the real-data follow-ups B2 and B3 (#94 to #97) and the first release
+`v0.1.0` are done. Merge ARCHI-76 (this documentation update). Then continue, one pull request
+against `main` at a time, each with the next free ticket number:
 
-1. The maintainer checklist of M0 (ruleset, CodeRabbit, public GHCR packages, `v0.1.0`); no
-   agent work is pending on it.
-2. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
-   as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
+1. Agent follow-ups B1 (fold Kafka Streams internal topics, ARCHI-77 next) and B4
+   (sub-millisecond latency) as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
    Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.
 
 ## How to resume

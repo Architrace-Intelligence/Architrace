@@ -87,6 +87,6 @@ The version is never edited by hand ([ADR 0006](../../project/adr/0006-versionin
 
 `feat` raises the minor version, `fix`, `perf`, `refactor` and `build` the patch version, a `!`
 after the scope or a `BREAKING CHANGE:` footer the major version; `ci`, `docs`, `test` and
-`chore` do not release. Without any tag the version stays `0.1.0-<sha>-SNAPSHOT` until the
-maintainer creates the first tag `v0.1.0`. `releaseNotes` accepts `-PreleaseNotes.since=<tag>`
+`chore` do not release. The tag history starts at the seed tag `v0.0.0`; every release tag
+since, `v0.1.0` first, is created by the main pipeline. `releaseNotes` accepts `-PreleaseNotes.since=<tag>`
 to start from another tag, for example after the release tag has already been created.
