@@ -267,9 +267,9 @@ collector of that environment at the agent. The agent speaks OTLP over gRPC only
 default to HTTP/protobuf, so select the transport explicitly:
 
 ```bash
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4319        # from the host
-OTEL_EXPORTER_OTLP_ENDPOINT=http://architrace-agent:4319 # from a container on the network
+export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4319          # from the host
+# export OTEL_EXPORTER_OTLP_ENDPOINT=http://architrace-agent:4319 # from a container on the network
 ```
 
 The scope appears on the Projects list after the first snapshot interval (one minute by
