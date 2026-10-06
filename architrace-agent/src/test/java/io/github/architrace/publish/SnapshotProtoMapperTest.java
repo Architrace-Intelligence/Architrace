@@ -65,9 +65,9 @@ class SnapshotProtoMapperTest {
         io.github.architrace.grpc.proto.EdgeMetrics metrics = proto.getEdges(0).getMetrics();
         assertThat(metrics.getCalls()).isEqualTo(10);
         assertThat(metrics.getErrors()).isEqualTo(1);
-        assertThat(metrics.getP50Millis()).isEqualTo(8);
-        assertThat(metrics.getP95Millis()).isEqualTo(32);
-        assertThat(metrics.getP99Millis()).isEqualTo(64);
-        assertThat(metrics.getMaxMillis()).isEqualTo(70);
+        assertThat(metrics.getP50Micros()).isEqualTo(8);
+        assertThat(metrics.getP95Micros()).isEqualTo(32);
+        assertThat(metrics.getP99Micros()).isEqualTo(64);
+        assertThat(metrics.getMaxMicros()).isEqualTo(70);
     }
 }

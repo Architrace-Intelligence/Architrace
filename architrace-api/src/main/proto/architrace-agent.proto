@@ -78,12 +78,15 @@ message SnapshotEdge {
 }
 
 message EdgeMetrics {
+  reserved 3 to 6;
+  reserved "p50_millis", "p95_millis", "p99_millis", "max_millis";
+
   int64 calls = 1;
   int64 errors = 2;
-  int64 p50_millis = 3;
-  int64 p95_millis = 4;
-  int64 p99_millis = 5;
-  int64 max_millis = 6;
+  int64 p50_micros = 7;
+  int64 p95_micros = 8;
+  int64 p99_micros = 9;
+  int64 max_micros = 10;
 }
 
 message ControlPlaneCommand {
