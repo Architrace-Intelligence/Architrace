@@ -126,3 +126,5 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-06 | B3 part 3: the map keeps the platform hosts off by default and groups them into one node behind the Platform chip (ARCHI-75); B3 closed |
 | 2026-10-06 | First release `v0.1.0`: seed tag `v0.0.0`, pipeline tag and GitHub release with both jars, images `0.1.0` and `latest`; repository settings applied, GHCR packages public, CodeRabbit installed (ARCHI-76) |
 | 2026-10-06 | B1 from the real-data round: the agent hides Kafka Streams internal topics through `topics.ignore` (ARCHI-77) |
+| 2026-10-06 | B4 from the real-data round: latency in microseconds from the agent histogram through the contract and the control plane to the Query API, which reports fractional milliseconds and the map formats (ARCHI-78 to ARCHI-81); B4 closed |
+| 2026-10-06 | `build-logic` JVM 24 pin dropped: Gradle 9.8 embeds Kotlin 2.4.10, which targets JVM 25 (ARCHI-82) |

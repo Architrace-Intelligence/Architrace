@@ -37,8 +37,7 @@ Last updated: **2026-10-06**
   [M6](../features/m6-architecture-rules/) page; candidates B2 and B3 stay open there.
 - Housekeeping merged on 2026-10-05: the Snyk policy of the documentation site (ARCHI-68, #71:
   `overrides` for `postcss-selector-parser`, a time-boxed ignore for `zod`) and Gradle 9.8.0
-  with regenerated lockfiles (ARCHI-69, #74; the unused `guava` catalog entry is gone) and
-  the JVM 24 pin of `build-logic` dropped (ARCHI-82, Gradle's Kotlin 2.4 targets 25). The demo's
+  with regenerated lockfiles (ARCHI-69, #74; the unused `guava` catalog entry is gone). The demo's
   Python dependencies move together (ARCHI-70, #91: OpenTelemetry SDK and exporter 1.45.0,
   instrumentations 0.66b0, kafka-python 3.0.11, psycopg2-binary 2.9.13) and Dependabot now
   groups the pip updates of `demo/services`, because the SDK, exporter and instrumentation
