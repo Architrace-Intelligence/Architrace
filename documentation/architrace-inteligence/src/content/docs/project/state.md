@@ -65,16 +65,13 @@ Last updated: **2026-10-06**
   drops producer and consumer spans of Kafka Streams internal topics before the edge is
   built (glob patterns, case folded; defaults for changelog, repartition and foreign-key join
   topics). Design notes on the M1 page.
-- **B4 (sub-millisecond latency) is in flight**, four pull requests because the twelve-file
-  gate does not fit the stack in two. Merged: the agent measures latency in microseconds
-  (#100, `LatencyHistogram` of twenty-seven base-two buckets from 1 µs to 2^26 µs) and the
-  protobuf contract carries them (#101, `p50_micros` to `max_micros` on field numbers 7 to
-  10, 3 to 6 reserved) and the control plane stores them (#102, changeset
-  `0006-snapshot-edge-latency-micros` renames the columns to `latency_*_us` and multiplies
-  the stored values by one thousand, with a rollback). ARCHI-81 (open): the Query API fields
-  `p50Millis` to `maxMillis` are `number` (milliseconds with microsecond precision,
-  `ApiModels` divides by one thousand) and `formatMillis` in the UI shows `350 µs`, `3.5 ms`,
-  `1.5 s`; B4 is closed on the progress page. Design notes in the M1 follow-up.
+- **B4 (sub-millisecond latency) is closed** (ARCHI-78 to ARCHI-81, #100 to #103): the
+  agent measures latency in microseconds (`LatencyHistogram` of twenty-seven base-two buckets
+  from 1 µs to 2^26 µs), the protobuf contract carries them (`p50_micros` to `max_micros` on
+  field numbers 7 to 10, 3 to 6 reserved), the control plane stores them (`latency_*_us`,
+  changeset `0006-snapshot-edge-latency-micros`), the Query API fields `p50Millis` to
+  `maxMillis` are `number` with microsecond precision and `formatMillis` in the UI shows
+  `350 µs`, `3.5 ms`, `1.5 s`. Design notes in the M1 follow-up.
 - **M7 is done** (ARCHI-64 to ARCHI-67, #81 to #83 and #90): the demo stack `demo/` on the
   published images (two environments, one collector routing by environment to one agent each,
   Redpanda, PostgreSQL, an external host), the Docker demo and deployment guides, B5 to B7.
@@ -165,14 +162,14 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7, the real-data follow-ups B1 to B3 (#94 to #99), the first release
-`v0.1.0` and the checklist (#98) are done. B4 continues, one pull request against `main` at a
+The MVP queue M0–M7, the real-data follow-ups B1 to B4 (#94 to #103), the first release
+`v0.1.0` and the checklist (#98) are done. Continue, one pull request against `main` at a
 time, each with the next free ticket number:
 
-1. ARCHI-81 (open): the Query API reports fractional milliseconds and the UI formats them.
-   Merge ARCHI-81; B4 is then closed.
-2. The `build-logic` JVM 24 pin (Kotlin 2.4 targets 25). Dependabot Gradle bumps need a
-   maintainer pull request with regenerated lockfiles, as #74.
+1. Drop the JVM 24 pin in `build-logic` (Kotlin 2.4 targets 25). Dependabot Gradle bumps need
+   a maintainer pull request with regenerated lockfiles, as #74.
+2. Confirm the working assumptions listed under Decisions with the maintainer (M5 drift
+   modes, the `*Millis` names of the Query API) and the next real-data round.
 
 ## How to resume
 
