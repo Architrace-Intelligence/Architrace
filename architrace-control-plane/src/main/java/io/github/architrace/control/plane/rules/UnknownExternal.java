@@ -7,6 +7,7 @@ package io.github.architrace.control.plane.rules;
 
 import io.github.architrace.control.plane.topology.EdgeKind;
 import io.github.architrace.control.plane.topology.NodeType;
+import io.github.architrace.control.plane.topology.PlatformHosts;
 import io.github.architrace.control.plane.topology.TopologyEdge;
 import io.github.architrace.control.plane.topology.TopologyGraph;
 import io.github.architrace.control.plane.topology.TopologyNode;
@@ -44,6 +45,7 @@ public record UnknownExternal(Set<String> allowlist) implements ArchitectureRule
         return graph.nodes().stream()
                 .filter(node -> node.type() == NodeType.EXTERNAL)
                 .filter(node -> !allowlist.contains(node.name()))
+                .filter(node -> !PlatformHosts.isPlatform(node))
                 .sorted(Comparator.comparing(TopologyNode::id))
                 .map(node -> report(
                         graph,

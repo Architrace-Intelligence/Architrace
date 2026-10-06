@@ -47,12 +47,15 @@ shows the totals per severity and every rule with its status, threshold and prop
 | Cross-domain coupling | a service calls synchronously into too many other domains | more than 3 domains | medium |
 | Fan-in hub | a service has too many direct callers | more than 8 callers | medium |
 | Long synchronous chain | a request path has too many synchronous hops | more than 5 hops | medium |
-| Unknown external | an external host is not on the allowlist | empty allowlist | low |
+| Unknown external | an external host is neither on the allowlist nor a configured platform host | empty allowlist | low |
 | Data stream without producer | a topic is consumed but nobody publishes to it in the traces (an outbox filled by change data capture looks like this) | none | low |
 
 Self-calls and paths that close through a data stream are never cycles: asynchronous
 decoupling is exactly what the rules give credit for. A cycle counts as one hop of a chain
-and has its own finding. The thresholds are on the
+and has its own finding. Platform services every workload talks to (a feature-flag or
+configuration server) belong in `architrace.topology.platform-hosts` rather than in the
+allowlist: the control plane labels them `category=platform` in every graph, so the rule
+treats them as known and the map can group them. The thresholds are on the
 [configuration](../../reference/configuration/#control-plane) page.
 
 ## What breaks if it fails

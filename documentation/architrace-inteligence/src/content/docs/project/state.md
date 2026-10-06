@@ -7,7 +7,7 @@ Hand-over page. It describes only the present: what is in flight, what is decide
 next. History lives in [Progress](../progress/) and in git. Rewrite it before starting a new
 task; delete anything that is no longer needed to resume.
 
-Last updated: **2026-10-05**
+Last updated: **2026-10-06**
 
 ## Where we are
 
@@ -54,11 +54,13 @@ Last updated: **2026-10-05**
   `data-stream-without-producer`, low, no threshold) reports a topic with consumers but no
   producer in the observed traces as the outbox insight; subject is the topic, evidence the
   consumers. Eight rules now, on the M6 page, the guide and the UI catalogue.
-- B3 from the real-data round, part 1 (ARCHI-73, #95): `architrace.topology.platform-hosts`
-  (`TopologyProperties`) names the platform services; `PlatformHosts.classify` adds the label
-  `category=platform` to their external nodes in `TopologyQuery.currentGraph`, so every graph,
-  diff, finding and view sees it without a schema change. Part 2 makes `UnknownExternal` skip
-  them (and fixes "seven rules" on the architecture page); part 3 groups them on the map.
+- B3 from the real-data round, parts 1 and 2 (ARCHI-73, #95; ARCHI-74):
+  `architrace.topology.platform-hosts` (`TopologyProperties`) names the platform services;
+  `PlatformHosts.classify` adds the label `category=platform` to their external nodes in
+  `TopologyQuery.currentGraph`, so every graph, diff, finding and view sees it without a schema
+  change, and `UnknownExternal` filters on `PlatformHosts.isPlatform` because `RuleEvaluator`
+  evaluates that same graph. The finding text is unchanged (the API tests and UI fixtures
+  assert it). Part 3 groups them on the map.
 - **M7 is in progress.** PR 1 (ARCHI-64, #81) adds `demo/`: `docker-compose.yml` with the
   control plane, one agent per environment (`agent-dev.yaml`, `agent-stage.yaml`), one
   OpenTelemetry Collector routing on `deployment.environment.name`, PostgreSQL, Redpanda, an
@@ -157,14 +159,14 @@ timeline mode only).
 
 ## Next step
 
-The MVP queue M0–M7 and the follow-ups up to the B2 rule (#94) are merged. Merge B3 part 1
-(ARCHI-73, #95). Then continue, one pull request against `main` at a time, each with the
-next free ticket number:
+The MVP queue M0–M7 and the follow-ups up to B3 part 1 (#95) are merged. Merge B3 part 2
+(ARCHI-74, the `UnknownExternal` rule). Then continue, one pull request against `main` at a
+time, each with the next free ticket number:
 
-1. B3 part 2: `UnknownExternal` treats platform hosts as known (rule, test, M6 page, guide,
-   architecture page); part 3: the map groups the platform hosts (one node, dimmed edges,
-   off by default in the external lens) and the rail names the category. Then the
-   maintainer checklist of M0 (ruleset, CodeRabbit, public GHCR packages, `v0.1.0`).
+1. B3 part 3 (ARCHI-75): the map groups the platform hosts (one node, dimmed edges, off by
+   default in the external lens) and the rail names the category; the label
+   `category=platform` is already on the external nodes of `…/graph`. Then the maintainer
+   checklist of M0 (ruleset, CodeRabbit, public GHCR packages, `v0.1.0`).
 2. Agent follow-ups B1 (fold Kafka Streams internal topics) and B4 (sub-millisecond latency)
    as small pull requests; the `build-logic` JVM 24 pin (Kotlin 2.4 targets 25); Dependabot
    Gradle bumps need a maintainer pull request with regenerated lockfiles, as #74.
