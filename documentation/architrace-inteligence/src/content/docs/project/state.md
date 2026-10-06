@@ -24,8 +24,8 @@ Last updated: **2026-10-06**
   [GitHub setup](../github-access/#6-setup-checklist-for-the-maintainer) page was worked through
   on 2026-10-06: ruleset verified active, repository settings applied, both GHCR packages
   public, seed tag `v0.0.0` on `727f9bf` and the first pipeline release `v0.1.0` (tag, GitHub
-  release with both jars, images `0.1.0` and `latest`). Still open: install the CodeRabbit app
-  (UI, organisation owner).
+  release with both jars, images `0.1.0` and `latest`), the CodeRabbit app installed (first
+  review on #98). Nothing of the checklist is open.
 - **M1, M4 and M5 are done**, see the [M1](../features/m1-agent-pipeline/),
   [M4](../features/m4-service-map/) and [M5](../features/m5-drift/) pages. Lesson recorded on
   2026-10-04: **no stacked pull requests**, one pull request against `main` at a time. Working

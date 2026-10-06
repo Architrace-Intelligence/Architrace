@@ -18,7 +18,7 @@ maintainer can do. Written for `Architrace-Intelligence/Architrace`. Companion o
 | Actions                                | enabled, all actions allowed, default `GITHUB_TOKEN` permission: read |
 | Secrets                                | `SONAR_TOKEN`, `SNYK_TOKEN`, `NVD_API_KEY`, `PAGES_DEPLOY_TOKEN`; the scanner secrets also exist as Dependabot secrets |
 | Variables                              | `SNYK_ORG=architrace`                                                 |
-| GitHub Apps installed on the org       | SonarQube Cloud, Snyk; CodeRabbit not yet                             |
+| GitHub Apps installed on the org       | SonarQube Cloud, Snyk, CodeRabbit (first review on #98, 2026-10-06)   |
 | Security features                      | Dependabot alerts and security updates, secret scanning and push protection on; CodeQL through `codeql.yml` |
 | GHCR packages                          | `architrace-agent` and `architrace-control-plane` public since 2026-10-06; the organisation setting *Packages → Package creation → Public* had to be enabled before the package visibility could change |
 | Releases                               | seed tag `v0.0.0` on `727f9bf`; `v0.1.0` released by the main pipeline on 2026-10-06 with both jars and the images `0.1.0` and `latest` |
@@ -133,8 +133,9 @@ versioning parses; `COMMIT_MESSAGES` keeps the squashed commit messages in the b
 - [x] Apply the `main` ruleset and the repository settings from §5: the ruleset was found active
       and identical to the file (including `size` and the `codeql / <language>` checks), the
       repository settings were applied on 2026-10-06.
-- [ ] Install the CodeRabbit GitHub App on `Architrace-Intelligence/Architrace` (organisation
-      owner, UI only); `.coderabbit.yaml` is already in the repository.
+- [x] Install the CodeRabbit GitHub App on `Architrace-Intelligence/Architrace` (organisation
+      owner, UI only): installed on 2026-10-06, `.coderabbit.yaml` was already in the
+      repository; the first review landed on #98.
 - [x] Seed the tag history (2026-10-06): `v0.0.0` on `727f9bf`, the commit before the first
       releasable one, then `gh workflow run main.yml --ref main`; the pipeline computed `0.1.0`,
       tagged `v0.1.0`, published the GitHub release with both jars and the images `0.1.0` and

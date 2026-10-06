@@ -14,7 +14,7 @@ Legend: `todo` · `in progress` · `review` · `done` · `blocked`
 | 0 | Project analysis and requirements       | done        | [Requirements](../requirements/) merged in PR #20      |
 | 1 | MVP scope agreement                     | done        | M0–M7 agreed, [Requirements §8](../requirements/#8-agreed-mvp) |
 | 2 | Design (architecture, ADRs, features)   | done        | Agreed 2026-10-01: architecture, M0–M7, ADR 0001–0010  |
-| 3 | Implementation (feature by feature)     | done        | M1 to M7 done; M0 checklist done on 2026-10-06 (ruleset, settings, public packages, `v0.1.0`), only the CodeRabbit install is open |
+| 3 | Implementation (feature by feature)     | done        | M1 to M7 done; M0 checklist done on 2026-10-06 (ruleset, settings, public packages, CodeRabbit, `v0.1.0`) |
 | 4 | Testing, hardening, release 1.0         | in progress | First real-data round on 2026-10-04: no Architrace change needed, backlog B1–B7 in [Requirements §9](../requirements/#9-backlog-from-the-first-real-data-test-round) |
 
 ## Process foundation
@@ -43,7 +43,7 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 
 | Feature | State | Design | PR | Notes |
 |---------|-------|--------|----|-------|
-| [M0 Engineering platform](../features/m0-engineering-platform/) | done | agreed | ARCHI-24, ARCHI-33, ARCHI-34, ARCHI-36, ARCHI-37 | PR 1 (hygiene, #26), PR 2 (`build-logic`, versioning, #42), PR 3 (PR pipeline, scanners, #44), PR 4 (main pipeline, release, images, #48), PR 5 (ruleset, settings, CodeRabbit, site pages, #49) merged; checklist done on 2026-10-06: ruleset verified, settings applied, packages public, seed tag `v0.0.0` and first release `v0.1.0` (recorded by ARCHI-76); the CodeRabbit install is open |
+| [M0 Engineering platform](../features/m0-engineering-platform/) | done | agreed | ARCHI-24, ARCHI-33, ARCHI-34, ARCHI-36, ARCHI-37 | PR 1 (hygiene, #26), PR 2 (`build-logic`, versioning, #42), PR 3 (PR pipeline, scanners, #44), PR 4 (main pipeline, release, images, #48), PR 5 (ruleset, settings, CodeRabbit, site pages, #49) merged; checklist done on 2026-10-06: ruleset verified, settings applied, packages public, seed tag `v0.0.0` and first release `v0.1.0`, CodeRabbit installed (recorded by ARCHI-76) |
 | [M1 Agent pipeline completion](../features/m1-agent-pipeline/) | done | agreed | ARCHI-38, ARCHI-39, ARCHI-40, ARCHI-41, ARCHI-42 | PR 1–5 merged (#50, #51, #52, #53, #54): span model, graph, publisher, metrics, formatter; acceptance run 6 000 000 spans in 600 s; follow-ups B1 and B4 from the real-data round |
 | [M2 Control plane ingestion and storage](../features/m2-control-plane-storage/) | done | agreed | ARCHI-26, ARCHI-28, ARCHI-29 | schema and stores, ingestion, current graph and retention |
 | [M3 Query API](../features/m3-query-api/) | done | agreed | ARCHI-30, ARCHI-31 | document and generator; scopes, agents, graph, services, snapshot history; typed problem details; reference page |
@@ -124,4 +124,4 @@ Filled in once the MVP scope is agreed. One row per feature, linked to its page 
 | 2026-10-06 | B3 part 1: `architrace.topology.platform-hosts` labels the platform hosts `category=platform` in every served graph (ARCHI-73) |
 | 2026-10-06 | B3 part 2: `UnknownExternal` treats the platform hosts as known (ARCHI-74) |
 | 2026-10-06 | B3 part 3: the map keeps the platform hosts off by default and groups them into one node behind the Platform chip (ARCHI-75); B3 closed |
-| 2026-10-06 | First release `v0.1.0`: seed tag `v0.0.0`, pipeline tag and GitHub release with both jars, images `0.1.0` and `latest`; repository settings applied, GHCR packages public (ARCHI-76) |
+| 2026-10-06 | First release `v0.1.0`: seed tag `v0.0.0`, pipeline tag and GitHub release with both jars, images `0.1.0` and `latest`; repository settings applied, GHCR packages public, CodeRabbit installed (ARCHI-76) |

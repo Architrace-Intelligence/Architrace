@@ -353,7 +353,7 @@ What landed and the decisions behind it:
   verified active, the repository settings applied, the GHCR packages public (the
   organisation setting *Package creation → Public* first), the seed tag `v0.0.0` pushed and
   the first release `v0.1.0` produced by a `workflow_dispatch` of the main pipeline,
-  Dependabot #45 closed. Still open: the CodeRabbit app.
+  Dependabot #45 closed, the CodeRabbit app installed (first review on #98).
 - Dependabot cannot regenerate Gradle lockfiles, so its Gradle pull requests fail `build`;
   dependency bumps are taken over in maintainer pull requests until a lockfile-refresh step
   exists.
