@@ -17,6 +17,7 @@ import io.github.architrace.control.plane.topology.Agent;
 import io.github.architrace.control.plane.topology.AgentId;
 import io.github.architrace.control.plane.topology.Deployment;
 import io.github.architrace.control.plane.topology.EdgeKind;
+import io.github.architrace.control.plane.topology.EdgeMetrics;
 import io.github.architrace.control.plane.topology.NodeType;
 import io.github.architrace.control.plane.topology.Scope;
 import io.github.architrace.control.plane.topology.Snapshot;
@@ -53,8 +54,7 @@ class SnapshotMapperTest {
         assertThat(service.attributes().deployments()).containsExactly(new Deployment("k8s-prod-eu1", "orders"));
         assertThat(service.attributes().labels()).containsEntry("replicas", "3");
         assertThat(snapshot.edges()).extracting(TopologyEdge::kind).containsExactly(EdgeKind.SYNC, EdgeKind.PUBLISH);
-        assertThat(snapshot.edges().getFirst().metrics().calls()).isEqualTo(24000);
-        assertThat(snapshot.edges().getFirst().metrics().maxMillis()).isEqualTo(140);
+        assertThat(snapshot.edges().getFirst().metrics()).isEqualTo(new EdgeMetrics(24000, 3, 3, 9, 22, 140));
     }
 
     @Test
