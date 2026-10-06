@@ -78,11 +78,11 @@ curl -s 'http://localhost:8085/api/v1/scopes/webshop/PROD/k8s-prod-eu1/graph?at=
   ],
   "edges": [
     { "sourceId": "service:orders", "targetId": "db:postgresql/orders", "kind": "SYNC",
-      "metrics": { "calls": 24000, "errors": 3, "p50Millis": 3, "p95Millis": 9,
-                   "p99Millis": 22, "maxMillis": 140 } },
+      "metrics": { "calls": 24000, "errors": 3, "p50Millis": 3.2, "p95Millis": 9.4,
+                   "p99Millis": 22.1, "maxMillis": 140.3 } },
     { "sourceId": "service:orders", "targetId": "topic:kafka/order-events", "kind": "PUBLISH",
-      "metrics": { "calls": 8700, "errors": 0, "p50Millis": 2, "p95Millis": 5,
-                   "p99Millis": 9, "maxMillis": 60 } }
+      "metrics": { "calls": 8700, "errors": 0, "p50Millis": 0.35, "p95Millis": 5.1,
+                   "p99Millis": 9.0, "maxMillis": 60.2 } }
   ]
 }
 ```

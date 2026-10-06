@@ -27,6 +27,9 @@ describe("metrics formatting", () => {
   it("formats the error rate, latencies and the one-line summary", () => {
     expect(formatRate(metrics)).toBe("0.3 %");
     expect(formatRate({ ...metrics, calls: 0, errors: 0 })).toBe("0.0 %");
+    expect(formatMillis(0)).toBe("0 ms");
+    expect(formatMillis(0.35)).toBe("350 µs");
+    expect(formatMillis(3.456)).toBe("3.5 ms");
     expect(formatMillis(12)).toBe("12 ms");
     expect(formatMillis(1_500)).toBe("1.5 s");
     expect(describeMetrics(metrics)).toBe("12.4k · 0.3 %");

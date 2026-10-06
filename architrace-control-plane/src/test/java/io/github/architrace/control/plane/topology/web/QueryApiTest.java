@@ -208,8 +208,8 @@ class QueryApiTest {
               ],
               "edges": [
                 {"sourceId": "service:orders", "targetId": "db:postgresql/orders", "kind": "SYNC",
-                 "metrics": {"calls": 24000, "errors": 0, "p50Millis": 5, "p95Millis": 10,
-                             "p99Millis": 20, "maxMillis": 50}}
+                 "metrics": {"calls": 24000, "errors": 0, "p50Millis": 5.25, "p95Millis": 10.0,
+                             "p99Millis": 20.0, "maxMillis": 50.0}}
               ]
             }
             """);
@@ -340,8 +340,8 @@ class QueryApiTest {
               "edges": [
                 {"sourceId": "service:orders", "targetId": "topic:kafka/order-events",
                  "kind": "PUBLISH",
-                 "metrics": {"calls": 8700, "errors": 0, "p50Millis": 5, "p95Millis": 10,
-                             "p99Millis": 20, "maxMillis": 50}}
+                 "metrics": {"calls": 8700, "errors": 0, "p50Millis": 5.25, "p95Millis": 10.0,
+                             "p99Millis": 20.0, "maxMillis": 50.0}}
               ]
             }
             """);

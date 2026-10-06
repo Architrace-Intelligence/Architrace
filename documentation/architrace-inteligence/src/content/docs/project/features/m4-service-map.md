@@ -64,7 +64,7 @@ including the first load of the ELK chunk; the map pans and zooms freely afterwa
 | Filters | namespace select (the "domain" of the first design), node type toggles (External included, so "hide externals" is a chip), find-in-map with highlight, the Data streams lens | PR 3–5 |
 | Platform hosts | the external nodes the control plane labels `category=platform` (from `architrace.topology.platform-hosts`, ARCHI-73) are off the map by default; the **Platform** chip, with their count, draws them as one node `Platform` whose subtitle lists the hosts, the calls of each caller merged into one edge that stays dimmed until either end is selected; the rail counts them apart from the other external hosts and names the category; `platform=on` in the URL | ARCHI-75 |
 | Node panel | identity, versions seen, clusters and namespaces, labels, inbound and outbound dependencies with metrics, streams | PR 4 |
-| Edge panel | calls, errors, error rate, p50 / p95 / p99 / max latency for the window | PR 4 |
+| Edge panel | calls, errors, error rate, p50 / p95 / p99 / max latency for the window (`µs` below one millisecond, `ms` with one decimal, `s` from one second, since ARCHI-81) | PR 4 |
 | Time selector | "live" (latest) or a timestamp; the map re-queries `graph?at=` | PR 4 |
 
 URL carries the scope (path), filters, the platform switch, namespace, lens, find text, time

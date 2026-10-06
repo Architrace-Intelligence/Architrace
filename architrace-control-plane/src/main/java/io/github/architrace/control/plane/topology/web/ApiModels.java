@@ -48,7 +48,7 @@ import java.util.Optional;
 
 public final class ApiModels {
 
-    private static final long MICROS_PER_MILLI = 1_000L;
+    private static final double MICROS_PER_MILLI = 1_000.0;
     private static final Comparator<Deployment> DEPLOYMENT_ORDER =
             Comparator.comparing(Deployment::cluster).thenComparing(Deployment::namespace);
 
@@ -186,7 +186,7 @@ public final class ApiModels {
         return instant.atOffset(ZoneOffset.UTC);
     }
 
-    private static long millis(long micros) {
+    private static double millis(long micros) {
         return micros / MICROS_PER_MILLI;
     }
 }
