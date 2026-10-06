@@ -20,7 +20,7 @@ public record SpanRecord(
         Deployment deployment,
         Peer peer) {
 
-    private static final long NANOS_PER_MILLI = 1_000_000L;
+    private static final long NANOS_PER_MICRO = 1_000L;
 
     public SpanRecord {
         Objects.requireNonNull(traceId, "traceId");
@@ -32,7 +32,7 @@ public record SpanRecord(
         Objects.requireNonNull(peer, "peer");
     }
 
-    public long latencyMillis() {
-        return Math.max(0L, (endEpochNanos - startEpochNanos) / NANOS_PER_MILLI);
+    public long latencyMicros() {
+        return Math.max(0L, (endEpochNanos - startEpochNanos) / NANOS_PER_MICRO);
     }
 }

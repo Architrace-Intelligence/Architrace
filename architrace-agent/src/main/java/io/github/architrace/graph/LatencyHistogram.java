@@ -11,29 +11,29 @@ import java.util.stream.LongStream;
 
 public final class LatencyHistogram {
 
-    private static final int BUCKETS = 17;
-    private static final long[] UPPER_BOUNDS_MILLIS =
+    private static final int BUCKETS = 27;
+    private static final long[] UPPER_BOUNDS_MICROS =
             LongStream.iterate(1L, bound -> bound * 2).limit(BUCKETS).toArray();
 
     private final long[] counts = new long[BUCKETS + 1];
     private long total;
-    private long maxMillis;
+    private long maxMicros;
 
-    public void observe(long latencyMillis) {
-        counts[bucketOf(latencyMillis)]++;
+    public void observe(long latencyMicros) {
+        counts[bucketOf(latencyMicros)]++;
         total++;
-        maxMillis = Math.max(maxMillis, latencyMillis);
+        maxMicros = Math.max(maxMicros, latencyMicros);
     }
 
     public long total() {
         return total;
     }
 
-    public long maxMillis() {
-        return maxMillis;
+    public long maxMicros() {
+        return maxMicros;
     }
 
-    public long percentileMillis(double percentile) {
+    public long percentileMicros(double percentile) {
         if (total == 0) {
             return 0;
         }
@@ -44,13 +44,11 @@ public final class LatencyHistogram {
                 .filter(index -> cumulative[index] >= target)
                 .findFirst()
                 .orElse(BUCKETS);
-        return bucket < BUCKETS ? Math.min(UPPER_BOUNDS_MILLIS[bucket], maxMillis) : maxMillis;
+        return bucket < BUCKETS ? Math.min(UPPER_BOUNDS_MICROS[bucket], maxMicros) : maxMicros;
     }
 
-    private static int bucketOf(long latencyMillis) {
-        return IntStream.range(0, BUCKETS)
-                .filter(index -> latencyMillis <= UPPER_BOUNDS_MILLIS[index])
-                .findFirst()
-                .orElse(BUCKETS);
+    private static int bucketOf(long latencyMicros) {
+        int bucket = latencyMicros <= 1 ? 0 : Long.SIZE - Long.numberOfLeadingZeros(latencyMicros - 1);
+        return Math.min(bucket, BUCKETS);
     }
 }
